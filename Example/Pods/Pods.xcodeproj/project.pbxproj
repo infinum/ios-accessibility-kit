@@ -7,6 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4F04306D27B5B5AE006DAC5E /* AccessibilityObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04306C27B5B5AE006DAC5E /* AccessibilityObserver.swift */; };
+		4F04307027B5C329006DAC5E /* AssistiveTouchAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04306F27B5C329006DAC5E /* AssistiveTouchAccessibilityObject.swift */; };
+		4F04307227B5D04B006DAC5E /* AccessibilityType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04307127B5D04B006DAC5E /* AccessibilityType.swift */; };
+		4F04307427B5D06A006DAC5E /* AccessibilityState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04307327B5D06A006DAC5E /* AccessibilityState.swift */; };
+		4F04307627B5D0A5006DAC5E /* AccessibilitySubject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04307527B5D0A5006DAC5E /* AccessibilitySubject.swift */; };
+		4F04307827B5D505006DAC5E /* BoldTextAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04307727B5D505006DAC5E /* BoldTextAccessibilityObject.swift */; };
+		4F04307A27B5D592006DAC5E /* AccessibilityName.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04307927B5D592006DAC5E /* AccessibilityName.swift */; };
+		4F04307C27B5D63C006DAC5E /* ClosedCaptionAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04307B27B5D63C006DAC5E /* ClosedCaptionAccessibilityObject.swift */; };
+		4F04307E27B5D6A6006DAC5E /* DarkSystemColorsAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04307D27B5D6A6006DAC5E /* DarkSystemColorsAccessibilityObject.swift */; };
+		4F04308027B5D6FB006DAC5E /* DifferentiateWithoutColorAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04307F27B5D6FB006DAC5E /* DifferentiateWithoutColorAccessibilityObject.swift */; };
+		4F04308227B5D7A1006DAC5E /* GrayscaleAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04308127B5D7A1006DAC5E /* GrayscaleAccessibilityObject.swift */; };
+		4F04308427B5D7E3006DAC5E /* GuidedAccessAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04308327B5D7E3006DAC5E /* GuidedAccessAccessibilityObject.swift */; };
+		4F04308627B5D825006DAC5E /* InvertColorsAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04308527B5D825006DAC5E /* InvertColorsAccessibilityObject.swift */; };
+		4F04308827B5D867006DAC5E /* MonoAudioAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04308727B5D867006DAC5E /* MonoAudioAccessibilityObject.swift */; };
+		4F04308A27B5D8E7006DAC5E /* OnOffSwitchLabelsAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04308927B5D8E7006DAC5E /* OnOffSwitchLabelsAccessibilityObject.swift */; };
+		4F04308C27B5D9AA006DAC5E /* ReduceMotionAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04308B27B5D9AA006DAC5E /* ReduceMotionAccessibilityObject.swift */; };
+		4F04308E27B5D9B6006DAC5E /* ReduceTransparencyAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04308D27B5D9B6006DAC5E /* ReduceTransparencyAccessibilityObject.swift */; };
+		4F04309027B5D9C3006DAC5E /* ShakeToUndoAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04308F27B5D9C3006DAC5E /* ShakeToUndoAccessibilityObject.swift */; };
+		4F04309227B5D9D1006DAC5E /* SpeakScreenAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04309127B5D9D1006DAC5E /* SpeakScreenAccessibilityObject.swift */; };
+		4F04309427B5D9E3006DAC5E /* SpeakSelectionAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04309327B5D9E3006DAC5E /* SpeakSelectionAccessibilityObject.swift */; };
+		4F04309627B5D9F0006DAC5E /* SwitchControlAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04309527B5D9F0006DAC5E /* SwitchControlAccessibilityObject.swift */; };
+		4F04309827B5D9FD006DAC5E /* VideoAutoplayAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04309727B5D9FD006DAC5E /* VideoAutoplayAccessibilityObject.swift */; };
+		4F04309A27B5DA0A006DAC5E /* VoiceOverAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04309927B5DA0A006DAC5E /* VoiceOverAccessibilityObject.swift */; };
+		4F04309C27B5DA17006DAC5E /* ButtonShapesAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04309B27B5DA17006DAC5E /* ButtonShapesAccessibilityObject.swift */; };
+		4F04309E27B5DA26006DAC5E /* CrossFadeTransitionsAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F04309D27B5DA26006DAC5E /* CrossFadeTransitionsAccessibilityObject.swift */; };
 		584A1A055A446E4A464E7E983B27B974 /* AccessibilityKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D4C8CA5005C89A2B4B44AF5586126C5 /* AccessibilityKit.swift */; };
 		6B3882FF98DBDE0A977AEA8612F67556 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73010CC983E3809BECEE5348DA1BB8C6 /* Foundation.framework */; };
 		8A8594E9252A5FF3F525CA9298853B7D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73010CC983E3809BECEE5348DA1BB8C6 /* Foundation.framework */; };
@@ -33,8 +58,33 @@
 		243410B9535472556EA4BB6DBC133A0D /* Pods-Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Example.release.xcconfig"; sourceTree = "<group>"; };
 		31C1D37707DFAA5E6A164BCC07834264 /* Pods-Example-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Example-Info.plist"; sourceTree = "<group>"; };
 		35C305D3797C284E6F5BAA1D3E6F9BF8 /* Pods-Example.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-Example.modulemap"; sourceTree = "<group>"; };
-		42AEB0C77A91A2DE4EE0FEB4826702C3 /* AccessibilityKit.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = AccessibilityKit.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		42AEB0C77A91A2DE4EE0FEB4826702C3 /* AccessibilityKit.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; path = AccessibilityKit.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		441854E35F81731E63E53DC7E4EEAD9D /* Pods-Example-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-Example-acknowledgements.markdown"; sourceTree = "<group>"; };
+		4F04306C27B5B5AE006DAC5E /* AccessibilityObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityObserver.swift; sourceTree = "<group>"; };
+		4F04306F27B5C329006DAC5E /* AssistiveTouchAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistiveTouchAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04307127B5D04B006DAC5E /* AccessibilityType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityType.swift; sourceTree = "<group>"; };
+		4F04307327B5D06A006DAC5E /* AccessibilityState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityState.swift; sourceTree = "<group>"; };
+		4F04307527B5D0A5006DAC5E /* AccessibilitySubject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilitySubject.swift; sourceTree = "<group>"; };
+		4F04307727B5D505006DAC5E /* BoldTextAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoldTextAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04307927B5D592006DAC5E /* AccessibilityName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityName.swift; sourceTree = "<group>"; };
+		4F04307B27B5D63C006DAC5E /* ClosedCaptionAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClosedCaptionAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04307D27B5D6A6006DAC5E /* DarkSystemColorsAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DarkSystemColorsAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04307F27B5D6FB006DAC5E /* DifferentiateWithoutColorAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DifferentiateWithoutColorAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04308127B5D7A1006DAC5E /* GrayscaleAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrayscaleAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04308327B5D7E3006DAC5E /* GuidedAccessAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuidedAccessAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04308527B5D825006DAC5E /* InvertColorsAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvertColorsAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04308727B5D867006DAC5E /* MonoAudioAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoAudioAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04308927B5D8E7006DAC5E /* OnOffSwitchLabelsAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnOffSwitchLabelsAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04308B27B5D9AA006DAC5E /* ReduceMotionAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceMotionAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04308D27B5D9B6006DAC5E /* ReduceTransparencyAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReduceTransparencyAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04308F27B5D9C3006DAC5E /* ShakeToUndoAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShakeToUndoAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04309127B5D9D1006DAC5E /* SpeakScreenAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakScreenAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04309327B5D9E3006DAC5E /* SpeakSelectionAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakSelectionAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04309527B5D9F0006DAC5E /* SwitchControlAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchControlAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04309727B5D9FD006DAC5E /* VideoAutoplayAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoAutoplayAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04309927B5DA0A006DAC5E /* VoiceOverAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceOverAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04309B27B5DA17006DAC5E /* ButtonShapesAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ButtonShapesAccessibilityObject.swift; sourceTree = "<group>"; };
+		4F04309D27B5DA26006DAC5E /* CrossFadeTransitionsAccessibilityObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossFadeTransitionsAccessibilityObject.swift; sourceTree = "<group>"; };
 		5C1685511C7C85DA6A3B6836AB62590D /* AccessibilityKit */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = AccessibilityKit; path = AccessibilityKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		6178C6DBE739A5A1A6A6A2E1269528C0 /* AccessibilityKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = AccessibilityKit.debug.xcconfig; sourceTree = "<group>"; };
 		62F262A69209B87400B4A27770D5552C /* AccessibilityKit-prefix.pch */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "AccessibilityKit-prefix.pch"; sourceTree = "<group>"; };
@@ -43,12 +93,12 @@
 		7825A90E082A1582EB16256B0E722B3F /* Pods-Example-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-Example-umbrella.h"; sourceTree = "<group>"; };
 		8BFFC6A12FCF0F6DC270B48C19EE6B30 /* AccessibilityKit.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = AccessibilityKit.modulemap; sourceTree = "<group>"; };
 		9D433DFA62BF1CA32554031300FB92D2 /* AccessibilityKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = AccessibilityKit.release.xcconfig; sourceTree = "<group>"; };
-		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		AFECBC24E09D0D25F822C27BD944AFD4 /* Pods-Example-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-Example-frameworks.sh"; sourceTree = "<group>"; };
 		B45138496B85A072654D1D0F8EBBEDE5 /* Pods-Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Example.debug.xcconfig"; sourceTree = "<group>"; };
-		C23503A603E1F1A3ADB3AB3F597E5D94 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; path = README.md; sourceTree = "<group>"; };
+		C23503A603E1F1A3ADB3AB3F597E5D94 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		D6D7C498FA339E02BD53ECB8916CEA8E /* Pods-Example-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-Example-dummy.m"; sourceTree = "<group>"; };
-		D767C01C89E87488C1D1EFDD65D9DDC2 /* LICENSE.md */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE.md; sourceTree = "<group>"; };
+		D767C01C89E87488C1D1EFDD65D9DDC2 /* LICENSE.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		EA21B344259B58996DB73382B1B1521F /* Pods-Example-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Example-acknowledgements.plist"; sourceTree = "<group>"; };
 		F9D884E2E8BC52A8F93C2C7AE2835C6C /* AccessibilityKit-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "AccessibilityKit-umbrella.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -84,12 +134,53 @@
 		147D9862DA00D25C67DF2A2C6C75AA28 /* AccessibilityKit */ = {
 			isa = PBXGroup;
 			children = (
+				4F04306E27B5C2F9006DAC5E /* AccessibilityObjects */,
+				4F04309F27B5DDC5006DAC5E /* Internal */,
+				4F04307327B5D06A006DAC5E /* AccessibilityState.swift */,
+				4F04307127B5D04B006DAC5E /* AccessibilityType.swift */,
 				1D4C8CA5005C89A2B4B44AF5586126C5 /* AccessibilityKit.swift */,
 				B33C8836651E91520AF2241E03743BEB /* Pod */,
 				B79036D8D1EAE9FF20792A12802B4BBF /* Support Files */,
 			);
 			name = AccessibilityKit;
 			path = ../..;
+			sourceTree = "<group>";
+		};
+		4F04306E27B5C2F9006DAC5E /* AccessibilityObjects */ = {
+			isa = PBXGroup;
+			children = (
+				4F04306F27B5C329006DAC5E /* AssistiveTouchAccessibilityObject.swift */,
+				4F04307727B5D505006DAC5E /* BoldTextAccessibilityObject.swift */,
+				4F04309B27B5DA17006DAC5E /* ButtonShapesAccessibilityObject.swift */,
+				4F04307B27B5D63C006DAC5E /* ClosedCaptionAccessibilityObject.swift */,
+				4F04309D27B5DA26006DAC5E /* CrossFadeTransitionsAccessibilityObject.swift */,
+				4F04307D27B5D6A6006DAC5E /* DarkSystemColorsAccessibilityObject.swift */,
+				4F04307F27B5D6FB006DAC5E /* DifferentiateWithoutColorAccessibilityObject.swift */,
+				4F04308127B5D7A1006DAC5E /* GrayscaleAccessibilityObject.swift */,
+				4F04308327B5D7E3006DAC5E /* GuidedAccessAccessibilityObject.swift */,
+				4F04308527B5D825006DAC5E /* InvertColorsAccessibilityObject.swift */,
+				4F04308727B5D867006DAC5E /* MonoAudioAccessibilityObject.swift */,
+				4F04308927B5D8E7006DAC5E /* OnOffSwitchLabelsAccessibilityObject.swift */,
+				4F04308B27B5D9AA006DAC5E /* ReduceMotionAccessibilityObject.swift */,
+				4F04308D27B5D9B6006DAC5E /* ReduceTransparencyAccessibilityObject.swift */,
+				4F04308F27B5D9C3006DAC5E /* ShakeToUndoAccessibilityObject.swift */,
+				4F04309127B5D9D1006DAC5E /* SpeakScreenAccessibilityObject.swift */,
+				4F04309327B5D9E3006DAC5E /* SpeakSelectionAccessibilityObject.swift */,
+				4F04309527B5D9F0006DAC5E /* SwitchControlAccessibilityObject.swift */,
+				4F04309727B5D9FD006DAC5E /* VideoAutoplayAccessibilityObject.swift */,
+				4F04309927B5DA0A006DAC5E /* VoiceOverAccessibilityObject.swift */,
+			);
+			path = AccessibilityObjects;
+			sourceTree = "<group>";
+		};
+		4F04309F27B5DDC5006DAC5E /* Internal */ = {
+			isa = PBXGroup;
+			children = (
+				4F04307927B5D592006DAC5E /* AccessibilityName.swift */,
+				4F04306C27B5B5AE006DAC5E /* AccessibilityObserver.swift */,
+				4F04307527B5D0A5006DAC5E /* AccessibilitySubject.swift */,
+			);
+			path = Internal;
 			sourceTree = "<group>";
 		};
 		578452D2E740E91742655AC8F1636D1F /* iOS */ = {
@@ -287,8 +378,33 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4F04308427B5D7E3006DAC5E /* GuidedAccessAccessibilityObject.swift in Sources */,
+				4F04308C27B5D9AA006DAC5E /* ReduceMotionAccessibilityObject.swift in Sources */,
+				4F04308027B5D6FB006DAC5E /* DifferentiateWithoutColorAccessibilityObject.swift in Sources */,
+				4F04309627B5D9F0006DAC5E /* SwitchControlAccessibilityObject.swift in Sources */,
+				4F04308E27B5D9B6006DAC5E /* ReduceTransparencyAccessibilityObject.swift in Sources */,
+				4F04309227B5D9D1006DAC5E /* SpeakScreenAccessibilityObject.swift in Sources */,
+				4F04308827B5D867006DAC5E /* MonoAudioAccessibilityObject.swift in Sources */,
+				4F04309027B5D9C3006DAC5E /* ShakeToUndoAccessibilityObject.swift in Sources */,
+				4F04309C27B5DA17006DAC5E /* ButtonShapesAccessibilityObject.swift in Sources */,
+				4F04307E27B5D6A6006DAC5E /* DarkSystemColorsAccessibilityObject.swift in Sources */,
+				4F04307827B5D505006DAC5E /* BoldTextAccessibilityObject.swift in Sources */,
+				4F04307227B5D04B006DAC5E /* AccessibilityType.swift in Sources */,
+				4F04308A27B5D8E7006DAC5E /* OnOffSwitchLabelsAccessibilityObject.swift in Sources */,
+				4F04308227B5D7A1006DAC5E /* GrayscaleAccessibilityObject.swift in Sources */,
+				4F04309E27B5DA26006DAC5E /* CrossFadeTransitionsAccessibilityObject.swift in Sources */,
 				584A1A055A446E4A464E7E983B27B974 /* AccessibilityKit.swift in Sources */,
+				4F04307C27B5D63C006DAC5E /* ClosedCaptionAccessibilityObject.swift in Sources */,
+				4F04308627B5D825006DAC5E /* InvertColorsAccessibilityObject.swift in Sources */,
+				4F04307A27B5D592006DAC5E /* AccessibilityName.swift in Sources */,
+				4F04309A27B5DA0A006DAC5E /* VoiceOverAccessibilityObject.swift in Sources */,
+				4F04306D27B5B5AE006DAC5E /* AccessibilityObserver.swift in Sources */,
+				4F04307027B5C329006DAC5E /* AssistiveTouchAccessibilityObject.swift in Sources */,
+				4F04307627B5D0A5006DAC5E /* AccessibilitySubject.swift in Sources */,
 				D26EF7A6D8829B9D5A6D086CD28E9CAF /* AccessibilityKit-dummy.m in Sources */,
+				4F04307427B5D06A006DAC5E /* AccessibilityState.swift in Sources */,
+				4F04309427B5D9E3006DAC5E /* SpeakSelectionAccessibilityObject.swift in Sources */,
+				4F04309827B5D9FD006DAC5E /* VideoAutoplayAccessibilityObject.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

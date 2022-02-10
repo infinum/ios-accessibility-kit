@@ -1,6 +1,17 @@
-public struct AccessibilityKit {
-    public private(set) var text = "Hello, World!"
+//
+//  AccessibilityKit.swift
+//  AccessibilityKit
+//
+//  Created by Nikola Majcen on 08.02.2022..
+//
 
-    public init() {
-    }
+public struct AccessibilityKit {
+
+    // MARK: - Public properties
+
+    public static let shared = AccessibilityKit()
+
+    // MARK: - Lifecycle
+
+    private init() { }
 }
