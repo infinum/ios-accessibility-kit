@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class ClosedCaptionAccessibilityObject: AccessibilitySubject {
+final class ClosedCaptionAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .closedCaption }
+
+    public var enabled: Bool { UIAccessibility.isClosedCaptioningEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class ClosedCaptionAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: ClosedCaptionAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension ClosedCaptionAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .closedCaption }
-
-    public var enabled: Bool { UIAccessibility.isClosedCaptioningEnabled }
 }

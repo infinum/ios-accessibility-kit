@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class GrayscaleAccessibilityObject: AccessibilitySubject {
+final class GrayscaleAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .grayscale }
+
+    public var enabled: Bool { UIAccessibility.isGrayscaleEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class GrayscaleAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: GrayscaleAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension GrayscaleAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .grayscale }
-
-    public var enabled: Bool { UIAccessibility.isGrayscaleEnabled }
 }

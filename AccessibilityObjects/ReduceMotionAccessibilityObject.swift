@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class ReduceMotionAccessibilityObject: AccessibilitySubject {
+final class ReduceMotionAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .reduceMotion }
+
+    public var enabled: Bool { UIAccessibility.isReduceMotionEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class ReduceMotionAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: ReduceMotionAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension ReduceMotionAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .reduceMotion }
-
-    public var enabled: Bool { UIAccessibility.isReduceMotionEnabled }
 }

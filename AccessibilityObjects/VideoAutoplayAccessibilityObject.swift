@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class VideoAutoplayAccessibilityObject: AccessibilitySubject {
+final class VideoAutoplayAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .videoAutoplay }
+
+    public var enabled: Bool { UIAccessibility.isVideoAutoplayEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class VideoAutoplayAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: VideoAutoplayAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension VideoAutoplayAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .videoAutoplay }
-
-    public var enabled: Bool { UIAccessibility.isVideoAutoplayEnabled }
 }

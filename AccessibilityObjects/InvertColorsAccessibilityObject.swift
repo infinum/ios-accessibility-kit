@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class InvertColorsAccessibilityObject: AccessibilitySubject {
+final class InvertColorsAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .invertColors }
+
+    public var enabled: Bool { UIAccessibility.isInvertColorsEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class InvertColorsAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: InvertColorsAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension InvertColorsAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .invertColors }
-
-    public var enabled: Bool { UIAccessibility.isInvertColorsEnabled }
 }

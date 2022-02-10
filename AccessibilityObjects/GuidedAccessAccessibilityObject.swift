@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class GuidedAccessAccessibilityObject: AccessibilitySubject {
+final class GuidedAccessAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .guidedAccess }
+
+    public var enabled: Bool { UIAccessibility.isGuidedAccessEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class GuidedAccessAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: GuidedAccessAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension GuidedAccessAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .guidedAccess }
-
-    public var enabled: Bool { UIAccessibility.isGuidedAccessEnabled }
 }

@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class AssistiveTouchAccessibilityObject: AccessibilitySubject {
+final class AssistiveTouchAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .assistiveTouch }
+
+    public var enabled: Bool { UIAccessibility.isAssistiveTouchRunning }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class AssistiveTouchAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: AssistiveTouchAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension AssistiveTouchAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .assistiveTouch }
-
-    public var enabled: Bool { UIAccessibility.isAssistiveTouchRunning }
 }

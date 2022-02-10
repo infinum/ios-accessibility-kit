@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class BoldTextAccessibilityObject: AccessibilitySubject {
+final class BoldTextAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .boldText }
+
+    public var enabled: Bool { UIAccessibility.isBoldTextEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class BoldTextAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: BoldTextAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension BoldTextAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .boldText }
-
-    public var enabled: Bool { UIAccessibility.isBoldTextEnabled }
 }

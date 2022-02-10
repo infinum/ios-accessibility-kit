@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class SwitchControlAccessibilityObject: AccessibilitySubject {
+final class SwitchControlAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .switchControl }
+
+    public var enabled: Bool { UIAccessibility.isSwitchControlRunning }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class SwitchControlAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: SwitchControlAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension SwitchControlAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .switchControl }
-
-    public var enabled: Bool { UIAccessibility.isSwitchControlRunning }
 }

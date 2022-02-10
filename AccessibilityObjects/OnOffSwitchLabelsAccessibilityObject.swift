@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class OnOffSwitchLabelsAccessibilityObject: AccessibilitySubject {
+final class OnOffSwitchLabelsAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .onOffSwitchLabels }
+
+    public var enabled: Bool { UIAccessibility.isOnOffSwitchLabelsEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class OnOffSwitchLabelsAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: OnOffSwitchLabelsAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension OnOffSwitchLabelsAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .onOffSwitchLabels }
-
-    public var enabled: Bool { UIAccessibility.isOnOffSwitchLabelsEnabled }
 }

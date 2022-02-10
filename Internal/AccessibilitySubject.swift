@@ -13,8 +13,7 @@ protocol Subject: AnyObject {
     func removeObservers()
 }
 
-@objc
-class AccessibilitySubject: NSObject {
+class AccessibilitySubject {
 
     // MARK: - Internal properties
 
@@ -23,7 +22,6 @@ class AccessibilitySubject: NSObject {
     // MARK: - Lifecycle
 
     init(notificationName: Notification.Name) {
-        super.init()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(accessibilityDidChange(_:)),

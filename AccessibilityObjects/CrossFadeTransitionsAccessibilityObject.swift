@@ -8,7 +8,13 @@
 import Foundation
 
 @available(iOS 14.0, *)
-final class CrossFadeTransitionsAccessibilityObject: AccessibilitySubject {
+final class CrossFadeTransitionsAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .crossFadeTransitions }
+
+    public var enabled: Bool { UIAccessibility.prefersCrossFadeTransitions }
 
     // MARK: - Lifecycle
 
@@ -19,14 +25,4 @@ final class CrossFadeTransitionsAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: CrossFadeTransitionsAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-@available(iOS 14.0, *)
-extension CrossFadeTransitionsAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .crossFadeTransitions }
-
-    public var enabled: Bool { UIAccessibility.prefersCrossFadeTransitions }
 }

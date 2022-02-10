@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class DifferentiateWithoutColorAccessibilityObject: AccessibilitySubject {
+final class DifferentiateWithoutColorAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .differentiateWithoutColor }
+
+    public var enabled: Bool { UIAccessibility.shouldDifferentiateWithoutColor }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class DifferentiateWithoutColorAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: DifferentiateWithoutColorAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension DifferentiateWithoutColorAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .differentiateWithoutColor }
-
-    public var enabled: Bool { UIAccessibility.shouldDifferentiateWithoutColor }
 }

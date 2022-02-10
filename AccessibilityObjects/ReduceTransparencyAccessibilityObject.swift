@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class ReduceTransparencyAccessibilityObject: AccessibilitySubject {
+final class ReduceTransparencyAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .reduceTransparency }
+
+    public var enabled: Bool { UIAccessibility.isReduceTransparencyEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class ReduceTransparencyAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: ReduceTransparencyAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension ReduceTransparencyAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .reduceTransparency }
-
-    public var enabled: Bool { UIAccessibility.isReduceTransparencyEnabled }
 }

@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class DarkSystemColorsAccessibilityObject: AccessibilitySubject {
+final class DarkSystemColorsAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .darkSystemColors }
+
+    public var enabled: Bool { UIAccessibility.isDarkerSystemColorsEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class DarkSystemColorsAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: DarkSystemColorsAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension DarkSystemColorsAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .darkSystemColors }
-
-    public var enabled: Bool { UIAccessibility.isDarkerSystemColorsEnabled }
 }

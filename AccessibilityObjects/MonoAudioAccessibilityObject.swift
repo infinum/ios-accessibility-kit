@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class MonoAudioAccessibilityObject: AccessibilitySubject {
+final class MonoAudioAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .monoAudio }
+
+    public var enabled: Bool { UIAccessibility.isMonoAudioEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class MonoAudioAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: MonoAudioAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension MonoAudioAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .monoAudio }
-
-    public var enabled: Bool { UIAccessibility.isMonoAudioEnabled }
 }

@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class VoiceOverAccessibilityObject: AccessibilitySubject {
+final class VoiceOverAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .voiceOver }
+
+    public var enabled: Bool { UIAccessibility.isVoiceOverRunning }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class VoiceOverAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: VoiceOverAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension VoiceOverAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .voiceOver }
-
-    public var enabled: Bool { UIAccessibility.isVoiceOverRunning }
 }

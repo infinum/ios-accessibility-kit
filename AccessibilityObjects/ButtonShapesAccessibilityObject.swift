@@ -8,7 +8,13 @@
 import Foundation
 
 @available(iOS 14.0, *)
-final class ButtonShapesAccessibilityObject: AccessibilitySubject {
+final class ButtonShapesAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .buttonShapes }
+
+    public var enabled: Bool { UIAccessibility.buttonShapesEnabled }
 
     // MARK: - Lifecycle
 
@@ -19,14 +25,4 @@ final class ButtonShapesAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: ButtonShapesAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-@available(iOS 14.0, *)
-extension ButtonShapesAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .buttonShapes }
-
-    public var enabled: Bool { UIAccessibility.buttonShapesEnabled }
 }

@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class SpeakSelectionAccessibilityObject: AccessibilitySubject {
+final class SpeakSelectionAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .speakSelection }
+
+    public var enabled: Bool { UIAccessibility.isSpeakSelectionEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class SpeakSelectionAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: SpeakSelectionAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension SpeakSelectionAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .speakSelection }
-
-    public var enabled: Bool { UIAccessibility.isSpeakSelectionEnabled }
 }

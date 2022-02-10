@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class SpeakScreenAccessibilityObject: AccessibilitySubject {
+final class SpeakScreenAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .speakScreen }
+
+    public var enabled: Bool { UIAccessibility.isSpeakScreenEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class SpeakScreenAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: SpeakScreenAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension SpeakScreenAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .speakScreen }
-
-    public var enabled: Bool { UIAccessibility.isSpeakScreenEnabled }
 }

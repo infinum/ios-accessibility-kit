@@ -7,7 +7,13 @@
 
 import Foundation
 
-final class ShakeToUndoAccessibilityObject: AccessibilitySubject {
+final class ShakeToUndoAccessibilityObject: AccessibilityObject {
+
+    // MARK: - Public properties
+
+    public var type: AccessibilityType { .shakeToUndo }
+
+    public var enabled: Bool { UIAccessibility.isShakeToUndoEnabled }
 
     // MARK: - Lifecycle
 
@@ -18,13 +24,4 @@ final class ShakeToUndoAccessibilityObject: AccessibilitySubject {
     override func accessibilityDidChange(_ notification: Notification) {
         publish(state: ShakeToUndoAccessibilityObject())
     }
-}
-
-// MARK: - AccessibilityState
-
-extension ShakeToUndoAccessibilityObject: AccessibilityState {
-
-    public var type: AccessibilityType { .shakeToUndo }
-
-    public var enabled: Bool { UIAccessibility.isShakeToUndoEnabled }
 }

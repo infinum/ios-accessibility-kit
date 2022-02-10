@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct AccessibilityName {
+enum AccessibilityName {
 
     static func name(for type: AccessibilityType) -> String {
         switch type {
