@@ -1,0 +1,16 @@
+PODS:
+  - AccessibilityKit (0.0.1)
+
+DEPENDENCIES:
+  - AccessibilityKit (from `../`)
+
+EXTERNAL SOURCES:
+  AccessibilityKit:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  AccessibilityKit: f56c320cc95f95c31f9f4e95591d614cc500c889
+
+PODFILE CHECKSUM: b4274deb2d6a594164b7d24679e9d018fc698b60
+
+COCOAPODS: 1.11.2

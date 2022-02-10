@@ -1,0 +1,23 @@
+{
+  "name": "AccessibilityKit",
+  "version": "0.0.1",
+  "summary": "A helper tool for accessibility features of the app.",
+  "homepage": "https://github.com/infinum/AccessibilityKit",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE.md"
+  },
+  "authors": {
+    "Nikola Majcen": "nikola.majcen@infinum.com"
+  },
+  "source": {
+    "git": "https://github.com/infinum/AccessibilityKit.git",
+    "tag": "0.0.1"
+  },
+  "platforms": {
+    "ios": "13.0"
+  },
+  "swift_versions": "5.0",
+  "source_files": "Sources/AccessibilityKit/**/*",
+  "swift_version": "5.0"
+}

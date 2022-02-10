@@ -1,0 +1,6 @@
+framework module AccessibilityKit {
+  umbrella header "AccessibilityKit-umbrella.h"
+
+  export *
+  module * { export * }
+}
