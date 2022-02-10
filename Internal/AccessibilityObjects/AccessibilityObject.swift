@@ -48,7 +48,7 @@ enum AccessibilityObjectFactory {
         case .reduceMotion:
             return ReduceMotionAccessibilityObject()
         case .reduceTransparency:
-            return ReduceMotionAccessibilityObject()
+            return ReduceTransparencyAccessibilityObject()
         case .shakeToUndo:
             return ShakeToUndoAccessibilityObject()
         case .speakScreen:
