@@ -23,7 +23,7 @@ public final class AccessibilityMonitorViewController: UIViewController {
 
     public static func loadViewController() -> UIViewController? {
         let storyboard = UIStoryboard(name: "AccessibilityMonitor", bundle: Bundle(for: AccessibilityMonitorViewController.self))
-        let viewController = storyboard.instantiateViewController(withIdentifier: "AccessibilityMonitorViewController")
+        let viewController = storyboard.instantiateInitialViewController()
         return viewController
     }
 
@@ -31,7 +31,18 @@ public final class AccessibilityMonitorViewController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
+        title = "Accessibility Monitor"
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .close,
+            target: self,
+            action: #selector(closeAction)
+        )
+
         AccessibilityKit.shared.observeStateChanges { [unowned self] in items = $0.states }
+    }
+
+    @objc func closeAction() {
+        dismiss(animated: true, completion: nil)
     }
 }
 
