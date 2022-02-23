@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  AccessibilityKit: f56c320cc95f95c31f9f4e95591d614cc500c889
+  AccessibilityKit: 5fc4a26dfad4749c3a679a5baae5952c48306a84
 
 PODFILE CHECKSUM: b4274deb2d6a594164b7d24679e9d018fc698b60
 

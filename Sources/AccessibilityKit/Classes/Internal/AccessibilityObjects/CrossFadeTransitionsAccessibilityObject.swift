@@ -5,7 +5,7 @@
 //  Created by Nikola Majcen on 10.02.2022..
 //
 
-import Foundation
+import UIKit
 
 @available(iOS 14.0, *)
 final class CrossFadeTransitionsAccessibilityObject: AccessibilityObject {
