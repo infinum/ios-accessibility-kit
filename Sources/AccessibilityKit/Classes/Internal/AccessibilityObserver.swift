@@ -10,5 +10,5 @@ import Foundation
 protocol Observer: AnyObject {}
 
 protocol AccessibilityObserver: Observer {
-    func accessibilityStateDidChange(_ accessibilityState: AccessibilityState)
+    func accessibilityDidChange(_ accessibilityChange: AccessibilityChange)
 }

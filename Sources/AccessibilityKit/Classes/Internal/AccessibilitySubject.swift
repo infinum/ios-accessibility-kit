@@ -63,11 +63,11 @@ extension AccessibilitySubject: Subject {
 
 extension AccessibilitySubject {
 
-    func publish(state: AccessibilityState) {
+    func publish(change: AccessibilityChange) {
         observers
             .forEach {
                 guard let observer = $0 as? AccessibilityObserver else { return }
-                observer.accessibilityStateDidChange(state)
+                observer.accessibilityDidChange(change)
             }
     }
 }

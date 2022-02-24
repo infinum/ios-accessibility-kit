@@ -38,7 +38,7 @@ public final class AccessibilityMonitorViewController: UIViewController {
             action: #selector(closeAction)
         )
 
-        AccessibilityKit.shared.observeStateChanges { [unowned self] in items = $0.states }
+        AccessibilityKit.shared.observeTrackingChanges { [unowned self] in items = $0.states }
     }
 
     @objc func closeAction() {
@@ -54,7 +54,7 @@ extension AccessibilityMonitorViewController: UITableViewDelegate, UITableViewDa
 
     public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "AccessibilityMonitorTableViewCell", for: indexPath) as! AccessibilityMonitorTableViewCell
-        cell.configure(title: items[indexPath.row].name, enabled: items[indexPath.row].enabled)
+        cell.configure(title: items[indexPath.row].name, enabled: items[indexPath.row].value as? Bool ?? false)
         return cell
     }
 }

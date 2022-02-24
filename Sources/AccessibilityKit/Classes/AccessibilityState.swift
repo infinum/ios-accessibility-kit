@@ -7,16 +7,28 @@
 
 import Foundation
 
-public protocol AccessibilityState {
-    var type: AccessibilityType { get }
-    var identifier: String { get }
-    var name: String { get }
-    var enabled: Bool { get }
+public enum AccessibilityValue {
+    case flag(Bool)
+    case number(Double)
 }
 
-extension AccessibilityState {
+public struct AccessibilityChange {
+    let type: AccessibilityType
+    let value: AccessibilityValue
+    let timestamp: Double
+}
 
-    public var identifier: String { type.rawValue }
+public struct AccessibilityState {
 
-    public var name: String { AccessibilityName.name(for: type) }
+    public let type: AccessibilityType
+    public let identifier: String
+    public let value: Codable
+
+    public var name: String { type.rawValue }
+
+    init(type: AccessibilityType, customIdentifier: String? = nil) {
+        self.type = type
+        self.identifier = customIdentifier ?? type.rawValue
+        self.value = true
+    }
 }

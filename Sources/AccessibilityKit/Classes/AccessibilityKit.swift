@@ -17,11 +17,11 @@ public final class AccessibilityKit {
 
     // MARK: - Public methods
 
-    public func configureTracking(for accessibilityTypes: [AccessibilityType]) {
-        AccessibilityMonitor.default.configureMonitoring(for: accessibilityTypes)
+    public func configureTracking(with configuration: AccessibilityTrackingConfiguration) {
+        AccessibilityMonitor.default.configureTracking(with: configuration)
     }
 
-    public func observeStateChanges(completion: @escaping (AccessibilitySnapshot) -> Void) {
-        AccessibilityMonitor.default.observeChanges(completion: completion)
+    public func observeTrackingChanges(completion: @escaping (AccessibilitySnapshot) -> Void) {
+        AccessibilityMonitor.default.observeTrackingChanges(completion: completion)
     }
 }
