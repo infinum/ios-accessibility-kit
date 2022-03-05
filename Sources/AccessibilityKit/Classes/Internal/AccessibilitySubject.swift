@@ -17,15 +17,18 @@ class AccessibilitySubject {
 
     // MARK: - Internal properties
 
+    private let object: AccessibilityObject
     private var observers = [Observer]()
 
     // MARK: - Lifecycle
 
-    init(notificationName: Notification.Name) {
+    init(type: AccessibilityType) {
+        object = AccessibilityObjectFactory.object(for: type)
+
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(accessibilityDidChange(_:)),
-            name: notificationName,
+            selector: #selector(accessibilityStateDidChange(_:)),
+            name: object.notificationName,
             object: nil
         )
     }
@@ -37,8 +40,8 @@ class AccessibilitySubject {
     // MARK: - Internal methods
 
     @objc
-    func accessibilityDidChange(_ notification: Notification) {
-        fatalError("Method `accessibilityDidChange(_:)` should be implemented in the subclass.")
+    func accessibilityStateDidChange(_ notification: Notification) {
+        notifyObservers(with: object.state(customIdentifier: nil))
     }
 }
 
@@ -63,11 +66,11 @@ extension AccessibilitySubject: Subject {
 
 extension AccessibilitySubject {
 
-    func publish(change: AccessibilityChange) {
+    func notifyObservers(with state: AccessibilityState) {
         observers
             .forEach {
                 guard let observer = $0 as? AccessibilityObserver else { return }
-                observer.accessibilityDidChange(change)
+                observer.accessibilityStateDidChange(state)
             }
     }
 }

@@ -15,7 +15,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         AccessibilityKit.shared.configureTracking(
-            for: [.boldText, .buttonShapes, .onOffSwitchLabels, .reduceMotion, .reduceTransparency, .voiceOver]
+            with: AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [
+                    AccessibilityTrackingObject(type: .boldText),
+                    AccessibilityTrackingObject(type: .buttonShapes),
+                    AccessibilityTrackingObject(type: .onOffSwitchLabels),
+                    AccessibilityTrackingObject(type: .reduceMotion),
+                    AccessibilityTrackingObject(type: .reduceTransparency),
+                    AccessibilityTrackingObject(type: .voiceOver),
+                ]
+            )
         )
         return true
     }

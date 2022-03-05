@@ -22,7 +22,10 @@ public final class AccessibilityMonitorViewController: UIViewController {
     }
 
     public static func loadViewController() -> UIViewController? {
-        let storyboard = UIStoryboard(name: "AccessibilityMonitor", bundle: Bundle(for: AccessibilityMonitorViewController.self))
+        let storyboard = UIStoryboard(
+            name: "AccessibilityMonitorViewController",
+            bundle: Bundle.frameworkBundle(for: AccessibilityMonitorViewController.self)
+        )
         let viewController = storyboard.instantiateInitialViewController()
         return viewController
     }
@@ -53,8 +56,21 @@ extension AccessibilityMonitorViewController: UITableViewDelegate, UITableViewDa
     }
 
     public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "AccessibilityMonitorTableViewCell", for: indexPath) as! AccessibilityMonitorTableViewCell
-        cell.configure(title: items[indexPath.row].name, enabled: items[indexPath.row].value as? Bool ?? false)
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: "AccessibilityMonitorTableViewCell",
+            for: indexPath
+        ) as! AccessibilityMonitorTableViewCell
+
+        let item = items[indexPath.row]
+        let enabled: Bool
+        switch item.value {
+        case .flag(let flag):
+            enabled = flag
+        case .number:
+            enabled = false
+        }
+
+        cell.configure(title: item.name, enabled: enabled)
         return cell
     }
 }

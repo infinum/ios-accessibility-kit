@@ -12,7 +12,15 @@ public struct AccessibilitySnapshot {
     public let states: [AccessibilityState]
 
     init(states: [AccessibilityState]) {
-        self.states = states.sorted(by: { left, right in left.name < right.name })
+        self.states = states.sorted()
+    }
+
+    init(trackingObjects: [AccessibilityTrackingObject]) {
+        self.states = trackingObjects.map {
+            AccessibilityObjectFactory
+                .object(for: $0.type)
+                .state(customIdentifier: $0.customIdentifier)
+        }
     }
 
     func toDictionary() -> [String: Any] {

@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class AccessibilityMonitor: AccessibilityObserver {
+final class AccessibilityMonitor {
 
     // MARK: - Public methods
 
@@ -15,17 +15,20 @@ final class AccessibilityMonitor: AccessibilityObserver {
 
     // MARK: - Private properties
 
+    private let concurrentQueue = DispatchQueue(
+        label: "com.infinum.accessibilityKit.accessibilityMonitor.queue",
+        attributes: .concurrent
+    )
     private var configuration: AccessibilityTrackingConfiguration? {
         didSet {
-            if let configuration = configuration {
-                configureSubjects(for: configuration)
-            }
             clearSnapshots()
+            guard let configuration = configuration else { return }
+            configureSubjects(for: configuration)
         }
     }
     private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
     private var snapshots = [AccessibilitySnapshot]()
-    private var subjects = [AccessibilitySubject]()
+    private var subjects = [Subject]()
 
     // MARK: - Lifecycle
 
@@ -39,25 +42,20 @@ final class AccessibilityMonitor: AccessibilityObserver {
 
     public func observeTrackingChanges(completion: @escaping (AccessibilitySnapshot) -> Void) {
         snapshotChangeHandler = completion
-        publishSnapshot()
+        publishSnapshotChanges()
     }
 }
 
 // MARK: - AccessibilityObserver
 
-extension AccessibilityMonitor {
+extension AccessibilityMonitor: AccessibilityObserver {
 
-    func accessibilityDidChange(_ accessibilityChange: AccessibilityChange) {
-        guard let configuration = configuration, configuration.fetchType == .continuous else {
-            return
+    func accessibilityStateDidChange(_ state: AccessibilityState) {
+        concurrentQueue.async(flags: .barrier) { [unowned self] in
+            guard let configuration = self.configuration, configuration.fetchType == .continuous else { return }
+            self.snapshots.append(AccessibilitySnapshot(trackingObjects: configuration.objects))
+            self.publishSnapshotChanges()
         }
-
-        #warning("TODO: Update state creation.")
-        let states = configuration.objects
-            .map { AccessibilityState(type: $0.type, customIdentifier: $0.customIdentifier) }
-
-        snapshots.append(AccessibilitySnapshot(states: states))
-        publishSnapshot()
     }
 }
 
@@ -66,16 +64,16 @@ extension AccessibilityMonitor {
 private extension AccessibilityMonitor {
 
     func configureSubjects(for configuration: AccessibilityTrackingConfiguration) {
-        subjects.forEach { $0.removeObservers() }
-        subjects = Set(configuration.objects.map(\.type))
-            .compactMap(AccessibilitySubjectFactory.object(for:))
-        subjects.forEach { $0.addObserver(self) }
+        concurrentQueue.async(flags: .barrier) { [unowned self] in
+            self.subjects.forEach { $0.removeObservers() }
+            self.subjects = Set(configuration.objects.map(\.type))
+                .map(AccessibilitySubject.init(type: ))
+            self.subjects.forEach { $0.addObserver(self) }
+        }
     }
 
-    func publishSnapshot() {
-        guard let snapshot = snapshots.last else {
-            return
-        }
+    func publishSnapshotChanges() {
+        guard let snapshot = snapshots.last else { return }
         snapshotChangeHandler?(snapshot)
     }
 

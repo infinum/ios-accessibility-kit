@@ -12,10 +12,10 @@ public enum AccessibilityType: String {
     case boldText = "bold_text"
     @available(iOS 14.0, *)
     case buttonShapes = "button_shapes"
-    case closedCaption = "closed_caption"
+    case closedCaptioning = "closed_captioning"
     @available(iOS 14.0, *)
     case crossFadeTransitions = "cross_fade_transitions"
-    case darkSystemColors = "dark_system_colors"
+    case darkerSystemColors = "darker_system_colors"
     case differentiateWithoutColor = "differentiate_without_color"
     case grayscale = "grayscale"
     case guidedAccess = "guided_access"
