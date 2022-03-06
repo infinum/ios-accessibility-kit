@@ -42,7 +42,7 @@ final class AccessibilityMonitor {
 
     public func observeTrackingChanges(completion: @escaping (AccessibilitySnapshot) -> Void) {
         snapshotChangeHandler = completion
-        publishSnapshotChanges()
+        createSnapshot(isInitial: true)
     }
 }
 
@@ -51,11 +51,7 @@ final class AccessibilityMonitor {
 extension AccessibilityMonitor: AccessibilityObserver {
 
     func accessibilityStateDidChange(_ state: AccessibilityState) {
-        concurrentQueue.async(flags: .barrier) { [unowned self] in
-            guard let configuration = self.configuration, configuration.fetchType == .continuous else { return }
-            self.snapshots.append(AccessibilitySnapshot(trackingObjects: configuration.objects))
-            self.publishSnapshotChanges()
-        }
+        createSnapshot()
     }
 }
 
@@ -72,9 +68,19 @@ private extension AccessibilityMonitor {
         }
     }
 
-    func publishSnapshotChanges() {
-        guard let snapshot = snapshots.last else { return }
-        snapshotChangeHandler?(snapshot)
+    func createSnapshot(isInitial: Bool = false) {
+        guard
+            let configuration = configuration,
+            (configuration.fetchType == .continuous || isInitial)
+        else { return }
+
+        concurrentQueue.async(flags: .barrier) { [unowned self] in
+            let snapshot = AccessibilitySnapshot(trackingObjects: configuration.objects)
+            self.snapshots.append(snapshot)
+            DispatchQueue.main.async {
+                snapshotChangeHandler?(snapshot)
+            }
+        }
     }
 
     func clearSnapshots() {
