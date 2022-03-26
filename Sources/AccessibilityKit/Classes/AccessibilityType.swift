@@ -17,6 +17,7 @@ public enum AccessibilityType: String {
     case crossFadeTransitions = "cross_fade_transitions"
     case darkerSystemColors = "darker_system_colors"
     case differentiateWithoutColor = "differentiate_without_color"
+    case fontScale = "font_scale"
     case grayscale = "grayscale"
     case guidedAccess = "guided_access"
     case invertColors = "invert_colors"

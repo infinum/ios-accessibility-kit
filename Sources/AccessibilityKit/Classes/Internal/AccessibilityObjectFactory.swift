@@ -33,6 +33,8 @@ public enum AccessibilityObjectFactory {
             return DarkerSystemColorsAccessibilityObject()
         case .differentiateWithoutColor:
             return DifferentiateWithoutColorAccessibilityObject()
+        case .fontScale:
+            return FontScaleAccessibilityObject()
         case .grayscale:
             return GrayscaleAccessibilityObject()
         case .guidedAccess:
