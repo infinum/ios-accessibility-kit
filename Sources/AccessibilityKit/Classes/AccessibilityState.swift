@@ -8,19 +8,14 @@
 import Foundation
 import UIKit
 
-public enum AccessibilityValue {
-    case flag(Bool)
-    case number(Double)
-}
-
 public struct AccessibilityState {
 
     // MARK: - Public methods
 
-    let type: AccessibilityType
-    let name: String
-    let value: AccessibilityValue
-    let identifier: String
+    public let type: AccessibilityType
+    public let name: String
+    public let value: AccessibilityValue
+    public let identifier: String
 
     // MARK: - Lifecycle
 
@@ -37,6 +32,28 @@ public struct AccessibilityState {
     }
 }
 
+// MARK: - Encodable
+
+extension AccessibilityState: Encodable {
+
+    enum CodingKeys: String, CodingKey {
+        case identifier, value
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(identifier, forKey: .identifier)
+        switch value {
+        case .number(let value):
+            try container.encode(value, forKey: .value)
+        case .flag(let value):
+            try container.encode(value, forKey: .value)
+        }
+    }
+}
+
+// MARK: - Equatable
+
 extension AccessibilityState: Equatable {
     
     public static func == (lhs: AccessibilityState, rhs: AccessibilityState) -> Bool {
@@ -44,6 +61,7 @@ extension AccessibilityState: Equatable {
     }
 }
 
+// MARK: - Comparable
 
 extension AccessibilityState: Comparable {
 

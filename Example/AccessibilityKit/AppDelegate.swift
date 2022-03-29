@@ -20,10 +20,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 objects: [
                     AccessibilityTrackingObject(type: .boldText),
                     AccessibilityTrackingObject(type: .buttonShapes),
-                    AccessibilityTrackingObject(type: .onOffSwitchLabels),
                     AccessibilityTrackingObject(type: .reduceMotion),
-                    AccessibilityTrackingObject(type: .reduceTransparency),
                     AccessibilityTrackingObject(type: .voiceOver),
+                    AccessibilityTrackingObject(type: .fontScale)
                 ]
             )
         )

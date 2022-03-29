@@ -22,10 +22,11 @@ public struct AccessibilitySnapshot {
                 .state(customIdentifier: $0.customIdentifier)
         }
     }
+}
 
-    func toDictionary() -> [String: Any] {
-        // TODO: Add the implementation for returning the dictionary from accessibility states.
-        return [:]
+extension AccessibilitySnapshot: Encodable {
+
+    enum CodingKeys: String, CodingKey {
+        case states = "values"
     }
-
 }

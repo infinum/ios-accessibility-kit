@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum AccessibilityType: String {
+public enum AccessibilityType: String, Encodable {
     case assistiveTouch = "assistive_touch"
     case boldText = "bold_text"
     @available(iOS 14.0, *)
