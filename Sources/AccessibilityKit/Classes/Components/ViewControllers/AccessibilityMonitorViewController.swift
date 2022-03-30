@@ -7,7 +7,7 @@
 
 import UIKit
 
-public final class AccessibilityMonitorViewController: UIViewController {
+final class AccessibilityMonitorViewController: UIViewController {
 
     // MARK: - IBOutlets
 
@@ -21,7 +21,7 @@ public final class AccessibilityMonitorViewController: UIViewController {
         }
     }
 
-    public static func loadViewController() -> UIViewController? {
+    static func loadViewController() -> UIViewController? {
         let storyboard = UIStoryboard(
             name: "AccessibilityMonitorViewController",
             bundle: Bundle.frameworkBundle(for: AccessibilityMonitorViewController.self)
@@ -32,7 +32,7 @@ public final class AccessibilityMonitorViewController: UIViewController {
 
     // MARK: - Lifecycle
 
-    public override func viewDidLoad() {
+    override func viewDidLoad() {
         super.viewDidLoad()
         title = "Accessibility Monitor"
         navigationItem.rightBarButtonItem = UIBarButtonItem(
@@ -41,7 +41,7 @@ public final class AccessibilityMonitorViewController: UIViewController {
             action: #selector(closeAction)
         )
 
-        AccessibilityKit.shared.observeTrackingChanges { [unowned self] in items = $0.states }
+        AccessibilityKit.shared.observeAccessibilityTracking { [unowned self] in items = $0.states }
     }
 
     @objc func closeAction() {
@@ -51,11 +51,11 @@ public final class AccessibilityMonitorViewController: UIViewController {
 
 extension AccessibilityMonitorViewController: UITableViewDelegate, UITableViewDataSource {
 
-    public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         items.count
     }
 
-    public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(
             withIdentifier: "AccessibilityMonitorTableViewCell",
             for: indexPath

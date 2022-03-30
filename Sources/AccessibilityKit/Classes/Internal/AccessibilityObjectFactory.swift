@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum AccessibilityObjectFactory {
+enum AccessibilityObjectFactory {
 
     static func object(for type: AccessibilityType) -> AccessibilityObject {
         switch type {

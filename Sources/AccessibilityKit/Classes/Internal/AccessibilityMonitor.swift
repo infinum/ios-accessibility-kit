@@ -11,7 +11,7 @@ final class AccessibilityMonitor {
 
     // MARK: - Public methods
 
-    public static let `default` = AccessibilityMonitor()
+    static let shared = AccessibilityMonitor()
 
     // MARK: - Private properties
 
@@ -36,11 +36,15 @@ final class AccessibilityMonitor {
 
     // MARK: - Public methods
 
-    func configureTracking(with configuration: AccessibilityTrackingConfiguration) {
+    func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) -> AccessibilitySnapshot {
+        return AccessibilitySnapshot(trackingObjects: objects)
+    }
+
+    func configureAccessibilityTracking(with configuration: AccessibilityTrackingConfiguration) {
         self.configuration = configuration
     }
 
-    public func observeTrackingChanges(completion: @escaping (AccessibilitySnapshot) -> Void) {
+    func observeAccessibilityTracking(completion: @escaping (AccessibilitySnapshot) -> Void) {
         snapshotChangeHandler = completion
         createSnapshot(isInitial: true)
     }
@@ -74,8 +78,10 @@ private extension AccessibilityMonitor {
             (configuration.fetchType == .continuous || isInitial)
         else { return }
 
+        let snapshot = AccessibilitySnapshot(
+            trackingObjects: configuration.objects
+        )
         concurrentQueue.async(flags: .barrier) { [unowned self] in
-            let snapshot = AccessibilitySnapshot(trackingObjects: configuration.objects)
             self.snapshots.append(snapshot)
             DispatchQueue.main.async {
                 snapshotChangeHandler?(snapshot)
