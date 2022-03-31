@@ -7,61 +7,46 @@
 
 import UIKit
 
-class AccessibilityMonitorTableViewCell: UITableViewCell {
+final class AccessibilityMonitorTableViewCell: UITableViewCell {
 
-    @IBOutlet private weak var statusContainerView: UIView!
-    @IBOutlet private weak var statusImageView: UIImageView!
-    @IBOutlet private weak var titleLabel: UILabel!
-    @IBOutlet private weak var settingsActionButton: UIButton!
+    // MARK: - IBOutlets
 
-    func configure(title: String, enabled: Bool) {
-        titleLabel.text = title
+    @IBOutlet private weak var nameLabel: UILabel!
+    @IBOutlet private weak var statusTitleLabel: UILabel!
+    @IBOutlet private weak var statusValueLabel: UILabel!
+    @IBOutlet private weak var identifierTitleLabel: UILabel!
+    @IBOutlet private weak var identifierValueLabel: UILabel!
 
-        statusContainerView.layer.cornerRadius = statusContainerView.bounds.height / 2
-        statusContainerView.backgroundColor = enabled ? greenColor : greyColor
-        statusContainerView.layer.borderColor = blueishColor.cgColor
-        statusContainerView.layer.borderWidth = 1
 
-        statusImageView.backgroundColor = .clear
-        statusImageView.image = enabled ? checkmarkImage?.withRenderingMode(.alwaysTemplate) : nil
-        statusImageView.tintColor = .white
+    // MARK: - Public methods
 
-        settingsActionButton.layer.cornerRadius = 8
-        settingsActionButton.setImage(arrowImage, for: .normal)
-        settingsActionButton.backgroundColor = blueishColor
-        settingsActionButton.tintColor = darkBlueColor
-        settingsActionButton.contentEdgeInsets = UIEdgeInsets(top: 5, left: 5, bottom: 5, right: 5)
+    func configure(with item: AccessibilityState) {
+        configureName(with: item.name)
+        configureStatus(with: item.value)
+        configureIdentifier(with: item.identifier)
+    }
+}
+
+private extension AccessibilityMonitorTableViewCell {
+
+    func configureName(with name: String) {
+        nameLabel.text = name
     }
 
-    var checkmarkImage: UIImage? {
-        return UIImage(
-            named: "Checkmark",
-            in: Bundle(for: AccessibilityMonitorTableViewCell.self),
-            with: nil
-        )
+    func configureStatus(with value: AccessibilityValue) {
+        switch value {
+        case .number(let value):
+            statusTitleLabel.text = "Value:"
+            statusValueLabel.text = String(value)
+        case .flag(let value):
+            statusTitleLabel.text = "Enabled:"
+            statusValueLabel.text = value ? "Yes" : "No"
+            statusValueLabel.textColor = value ? .black : .darkGray
+        }
     }
 
-    var arrowImage: UIImage? {
-        return UIImage(
-            named: "RightArrow",
-            in: Bundle(for: AccessibilityMonitorTableViewCell.self),
-            with: nil
-        )
-    }
-
-    var greenColor: UIColor {
-        return UIColor(red: 38/255.0, green: 194/255.0, blue: 129/255.0, alpha: 1)
-    }
-
-    var greyColor: UIColor {
-        return UIColor(red: 236/255.0, green: 236/255.0, blue: 236/255.0, alpha: 1)
-    }
-
-    var blueishColor: UIColor {
-        return UIColor(red: 218/255.0, green: 223/255.0, blue: 225/255.0, alpha: 1)
-    }
-
-    var darkBlueColor: UIColor {
-        return UIColor(red: 108/255.0, green: 122/255.0, blue: 137/255.0, alpha: 1)
+    func configureIdentifier(with value: String) {
+        identifierTitleLabel.text = "Identifier:"
+        identifierValueLabel.text = value
     }
 }

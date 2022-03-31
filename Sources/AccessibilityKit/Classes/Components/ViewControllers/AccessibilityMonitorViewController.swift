@@ -61,16 +61,7 @@ extension AccessibilityMonitorViewController: UITableViewDelegate, UITableViewDa
             for: indexPath
         ) as! AccessibilityMonitorTableViewCell
 
-        let item = items[indexPath.row]
-        let enabled: Bool
-        switch item.value {
-        case .flag(let flag):
-            enabled = flag
-        case .number:
-            enabled = false
-        }
-
-        cell.configure(title: item.name, enabled: enabled)
+        cell.configure(with: items[indexPath.row])
         return cell
     }
 }
