@@ -12,20 +12,19 @@ final class AccessibilityMonitorTableViewCell: UITableViewCell {
     // MARK: - IBOutlets
 
     @IBOutlet private weak var nameLabel: UILabel!
-    @IBOutlet private weak var statusTitleLabel: UILabel!
     @IBOutlet private weak var statusValueLabel: UILabel!
-    @IBOutlet private weak var identifierTitleLabel: UILabel!
     @IBOutlet private weak var identifierValueLabel: UILabel!
-
 
     // MARK: - Public methods
 
-    func configure(with item: AccessibilityState) {
+    func configure(with item: AccessibilityState, formatter: NumberFormatter) {
         configureName(with: item.name)
-        configureStatus(with: item.value)
+        configureValue(with: item.value, formatter: formatter)
         configureIdentifier(with: item.identifier)
     }
 }
+
+// MARK: - Private methods
 
 private extension AccessibilityMonitorTableViewCell {
 
@@ -33,20 +32,32 @@ private extension AccessibilityMonitorTableViewCell {
         nameLabel.text = name
     }
 
-    func configureStatus(with value: AccessibilityValue) {
+    func configureValue(with value: AccessibilityValue, formatter: NumberFormatter) {
         switch value {
         case .number(let value):
-            statusTitleLabel.text = "Value:"
-            statusValueLabel.text = String(value)
+            formatter.numberStyle = .decimal
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 2
+            statusValueLabel.text = formatter.string(for: value)
+            statusValueLabel.textColor = .label
+        case .percentage(let value):
+            formatter.numberStyle = .percent
+            formatter.maximumFractionDigits = 0
+            statusValueLabel.text = formatter.string(for: value)
+            statusValueLabel.textColor = .label
+        case .scale(let value):
+            formatter.numberStyle = .decimal
+            formatter.minimumFractionDigits = 2
+            formatter.maximumFractionDigits = 2
+            statusValueLabel.text = "\(formatter.string(for: value) ?? "")x"
+            statusValueLabel.textColor = .label
         case .flag(let value):
-            statusTitleLabel.text = "Enabled:"
-            statusValueLabel.text = value ? "Yes" : "No"
-            statusValueLabel.textColor = value ? .black : .darkGray
+            statusValueLabel.text = value ? "Enabled" : "Disabled"
+            statusValueLabel.textColor = value ? .systemGreen : .secondaryLabel
         }
     }
 
     func configureIdentifier(with value: String) {
-        identifierTitleLabel.text = "Identifier:"
         identifierValueLabel.text = value
     }
 }

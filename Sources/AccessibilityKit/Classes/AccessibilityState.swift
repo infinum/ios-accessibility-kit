@@ -44,7 +44,7 @@ extension AccessibilityState: Encodable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(identifier, forKey: .identifier)
         switch value {
-        case .number(let value):
+        case .number(let value), .percentage(let value), .scale(let value):
             try container.encode(value, forKey: .value)
         case .flag(let value):
             try container.encode(value, forKey: .value)

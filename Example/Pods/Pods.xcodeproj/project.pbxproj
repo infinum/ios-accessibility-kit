@@ -23,6 +23,7 @@
 		4A3C6418E1DC9ED6BA56127A88291985 /* Bundle+Framework.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77179375216B1457C982E80CE1C5B5BD /* Bundle+Framework.swift */; };
 		4D5C222FD5301CDDF244D94C3E0839AC /* FontScaleAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA2212516AF606A630DF24787B2D0701 /* FontScaleAccessibilityObject.swift */; };
 		4E3003391BFFA8CFF12E2C935264D46E /* SpeakSelectionAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB9DD5A18DA101CD07FDBD386D64D4E7 /* SpeakSelectionAccessibilityObject.swift */; };
+		4FE768CA27FDFB6500FDFC90 /* UITableView+Dequeue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FE768C927FDFB6500FDFC90 /* UITableView+Dequeue.swift */; };
 		59E8073BA15BE95933C3F04679910F1E /* AccessibilityState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01A5F608984A390DC687845EE8F320B9 /* AccessibilityState.swift */; };
 		5C3406C6334CF7F0A886EFCD7F0F9D4D /* AccessibilityObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FA83E74E09A7A165D7FE9BF1D0C3B80 /* AccessibilityObserver.swift */; };
 		5DDE40EC53F6BE6C9E4987D1FFE9E6AE /* VoiceOverAccessibilityObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = F19F0ACDEE9699EA906B1091692A7D36 /* VoiceOverAccessibilityObject.swift */; };
@@ -78,8 +79,8 @@
 		0D3486EA1F3D6BF8F6AD95CE367C3896 /* OnOffSwitchLabelsAccessibilityObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnOffSwitchLabelsAccessibilityObject.swift; sourceTree = "<group>"; };
 		0DE1579F7BD4AFBCD15E951EEF34BAF4 /* VideoAutoplayAccessibilityObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VideoAutoplayAccessibilityObject.swift; sourceTree = "<group>"; };
 		0FA83E74E09A7A165D7FE9BF1D0C3B80 /* AccessibilityObserver.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccessibilityObserver.swift; sourceTree = "<group>"; };
-		1643B45C06D4B5D39A2470819D0DD016 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; path = README.md; sourceTree = "<group>"; };
-		1F40CFC3286D018A4A142B0F5CB2104A /* LICENSE.md */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE.md; sourceTree = "<group>"; };
+		1643B45C06D4B5D39A2470819D0DD016 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		1F40CFC3286D018A4A142B0F5CB2104A /* LICENSE.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
 		1F667CC0E19EAF34E5A4119E2121F585 /* Pods-Example */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Pods-Example"; path = Pods_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		243410B9535472556EA4BB6DBC133A0D /* Pods-Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Example.release.xcconfig"; sourceTree = "<group>"; };
 		3119DC9D1CABDB917FFBC33D1E3F0A74 /* AssistiveTouchAccessibilityObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AssistiveTouchAccessibilityObject.swift; sourceTree = "<group>"; };
@@ -91,6 +92,7 @@
 		441854E35F81731E63E53DC7E4EEAD9D /* Pods-Example-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-Example-acknowledgements.markdown"; sourceTree = "<group>"; };
 		473ED4EF98ED378A4B12259FDD4120F6 /* SwitchControlAccessibilityObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SwitchControlAccessibilityObject.swift; sourceTree = "<group>"; };
 		4795A520AABB98DF789C9D26280609AA /* AccessibilityKit-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "AccessibilityKit-umbrella.h"; sourceTree = "<group>"; };
+		4FE768C927FDFB6500FDFC90 /* UITableView+Dequeue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UITableView+Dequeue.swift"; sourceTree = "<group>"; };
 		5C1685511C7C85DA6A3B6836AB62590D /* AccessibilityKit */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = AccessibilityKit; path = AccessibilityKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E336A5E7C81355265F9158A15639039 /* AccessibilityTrackingConfiguration.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccessibilityTrackingConfiguration.swift; sourceTree = "<group>"; };
 		6332CAC9C3A065762130891162DAF76D /* AccessibilityKit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = AccessibilityKit.debug.xcconfig; sourceTree = "<group>"; };
@@ -108,7 +110,7 @@
 		8D985855DB7C775E510FA77C99F3775E /* BoldTextAccessibilityObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoldTextAccessibilityObject.swift; sourceTree = "<group>"; };
 		921FD40601AC33870D888F4753703FAE /* DarkSystemColorsAccessibilityObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DarkSystemColorsAccessibilityObject.swift; sourceTree = "<group>"; };
 		92822E61B79044AAFC4190073D667B8C /* SpeakScreenAccessibilityObject.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SpeakScreenAccessibilityObject.swift; sourceTree = "<group>"; };
-		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		AFECBC24E09D0D25F822C27BD944AFD4 /* Pods-Example-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-Example-frameworks.sh"; sourceTree = "<group>"; };
 		B1DB642B368E176B4D0A3F70D1AB2C14 /* Encodable+Dictionary.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "Encodable+Dictionary.swift"; sourceTree = "<group>"; };
 		B3536ADD29B30CDC9802719AE7942B83 /* AccessibilityKit.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = AccessibilityKit.modulemap; sourceTree = "<group>"; };
@@ -119,7 +121,7 @@
 		C733E895D188C89665F243EEA302236B /* AccessibilityMonitorTableViewCell.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccessibilityMonitorTableViewCell.swift; sourceTree = "<group>"; };
 		C83C60EAD6F8A5C2547CDCC2A80F54F4 /* AccessibilityKit-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "AccessibilityKit-dummy.m"; sourceTree = "<group>"; };
 		CA27CCF9231B882ED7FB182858499437 /* AccessibilityKit-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "AccessibilityKit-Info.plist"; sourceTree = "<group>"; };
-		D039D3F5C906812F9D1C57201FCE9C2D /* AccessibilityKit.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = AccessibilityKit.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		D039D3F5C906812F9D1C57201FCE9C2D /* AccessibilityKit.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; path = AccessibilityKit.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		D134D5D392ABEBE649E8B485155D5CFB /* AccessibilityKit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = AccessibilityKit.release.xcconfig; sourceTree = "<group>"; };
 		D6A0A07D5A0B7D328A6E44DAFA8F648A /* AccessibilityKit.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = AccessibilityKit.swift; path = Sources/AccessibilityKit/Classes/AccessibilityKit.swift; sourceTree = "<group>"; };
 		D6D7C498FA339E02BD53ECB8916CEA8E /* Pods-Example-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-Example-dummy.m"; sourceTree = "<group>"; };
@@ -167,7 +169,6 @@
 			children = (
 				05A282FD0CE15E0C7899EF3AE7370A36 /* AccessibilityMonitorViewController.swift */,
 			);
-			name = ViewControllers;
 			path = ViewControllers;
 			sourceTree = "<group>";
 		};
@@ -214,7 +215,6 @@
 			children = (
 				C733E895D188C89665F243EEA302236B /* AccessibilityMonitorTableViewCell.swift */,
 			);
-			name = Cells;
 			path = Cells;
 			sourceTree = "<group>";
 		};
@@ -282,7 +282,6 @@
 				0DE1579F7BD4AFBCD15E951EEF34BAF4 /* VideoAutoplayAccessibilityObject.swift */,
 				F19F0ACDEE9699EA906B1091692A7D36 /* VoiceOverAccessibilityObject.swift */,
 			);
-			name = AccessibilityObjects;
 			path = AccessibilityObjects;
 			sourceTree = "<group>";
 		};
@@ -316,6 +315,7 @@
 			children = (
 				77179375216B1457C982E80CE1C5B5BD /* Bundle+Framework.swift */,
 				B1DB642B368E176B4D0A3F70D1AB2C14 /* Encodable+Dictionary.swift */,
+				4FE768C927FDFB6500FDFC90 /* UITableView+Dequeue.swift */,
 			);
 			name = Extensions;
 			path = Sources/AccessibilityKit/Classes/Extensions;
@@ -515,6 +515,7 @@
 			files = (
 				15E6900640130A68989379BE7D70CC10 /* AccessibilityKit.swift in Sources */,
 				76FC28D8DE590FB237212B160DCAD90F /* AccessibilityKit-dummy.m in Sources */,
+				4FE768CA27FDFB6500FDFC90 /* UITableView+Dequeue.swift in Sources */,
 				24599CA081634CEEC3B9C52DFADD17F9 /* AccessibilityMonitor.swift in Sources */,
 				B22A169FEC5E86FE31F42C2E611B60FE /* AccessibilityMonitorTableViewCell.swift in Sources */,
 				BD2EBE49FD9A179AD8C17FD8A247BC13 /* AccessibilityMonitorViewController.swift in Sources */,

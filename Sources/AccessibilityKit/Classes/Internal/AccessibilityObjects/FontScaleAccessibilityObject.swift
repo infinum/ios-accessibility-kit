@@ -29,7 +29,7 @@ struct FontScaleAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .number(fontScale),
+            value: .scale(fontScale),
             customIdentifier: customIdentifier
         )
     }

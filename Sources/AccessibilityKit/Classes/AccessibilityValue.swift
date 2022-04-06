@@ -10,4 +10,6 @@ import Foundation
 public enum AccessibilityValue {
     case flag(Bool)
     case number(Double)
+    case scale(Double)
+    case percentage(Double)
 }
