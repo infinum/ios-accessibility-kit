@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.2
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -10,7 +10,8 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "AccessibilityKit",
-            targets: ["AccessibilityKit"]),
+            targets: ["AccessibilityKit"]
+        ),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -21,10 +22,12 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "AccessibilityKit",
-            dependencies: []),
+            dependencies: []
+        ),
         .testTarget(
             name: "AccessibilityKitTests",
-            dependencies: ["AccessibilityKit"]),
+            dependencies: ["AccessibilityKit"]
+        ),
     ],
     swiftLanguageVersions: [.v5]
 )

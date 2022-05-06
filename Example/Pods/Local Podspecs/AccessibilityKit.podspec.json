@@ -18,6 +18,11 @@
     "ios": "13.0"
   },
   "swift_versions": "5.0",
-  "source_files": "Sources/AccessibilityKit/**/*",
+  "source_files": "Sources/AccessibilityKit/Classes/**/*",
+  "resource_bundles": {
+    "AccessibilityKit": [
+      "Sources/AccessibilityKit/Assets/**/*"
+    ]
+  },
   "swift_version": "5.0"
 }
