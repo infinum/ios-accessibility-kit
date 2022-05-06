@@ -25,7 +25,7 @@ enum AccessibilityObjectFactory {
             return ClosedCaptioningAccessibilityObject()
         case .crossFadeTransitions:
             if #available(iOS 14.0, *) {
-                return CrossFadeTransitionsAccesibilityObject()
+                return CrossFadeTransitionsAccessibilityObject()
             } else {
                 fatalError("This functionality is available from iOS 14.0 and above.")
             }

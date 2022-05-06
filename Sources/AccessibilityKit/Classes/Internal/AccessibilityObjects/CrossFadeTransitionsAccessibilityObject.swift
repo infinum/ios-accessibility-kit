@@ -1,5 +1,5 @@
 //
-//  CrossFadeTransitionsAccesibilityObject.swift
+//  CrossFadeTransitionsAccessibilityObject.swift
 //  AccessibilityKit
 //
 //  Created by Nikola Majcen on 10.02.2022..
@@ -8,7 +8,7 @@
 import UIKit
 
 @available(iOS 14.0, *)
-struct CrossFadeTransitionsAccesibilityObject: AccessibilityObject {
+struct CrossFadeTransitionsAccessibilityObject: AccessibilityObject {
 
     // MARK: - Public properties
 

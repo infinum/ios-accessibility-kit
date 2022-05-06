@@ -31,7 +31,7 @@ final class AccessibilityMonitorViewController: UIViewController {
         super.viewDidLoad()
         setupView()
 
-        AccessibilityKit.shared .observeAccessibilityTracking { [weak self] snapshot in
+        AccessibilityKit.shared.observeAccessibilityTracking { [weak self] snapshot in
             self?.items = snapshot.states
         }
     }

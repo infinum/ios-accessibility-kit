@@ -65,10 +65,10 @@ private extension AccessibilityMonitor {
 
     func configureSubjects(for configuration: AccessibilityTrackingConfiguration) {
         concurrentQueue.async(flags: .barrier) { [unowned self] in
-            self.subjects.forEach { $0.removeObservers() }
-            self.subjects = Set(configuration.objects.map(\.type))
+            subjects.forEach { $0.removeObservers() }
+            subjects = Set(configuration.objects.map(\.type))
                 .map(AccessibilitySubject.init(type: ))
-            self.subjects.forEach { $0.addObserver(self) }
+            subjects.forEach { $0.addObserver(self) }
         }
     }
 
@@ -82,7 +82,7 @@ private extension AccessibilityMonitor {
             trackingObjects: configuration.objects
         )
         concurrentQueue.async(flags: .barrier) { [unowned self] in
-            self.snapshots.append(snapshot)
+            snapshots.append(snapshot)
             DispatchQueue.main.async {
                 snapshotChangeHandler?(snapshot)
             }
