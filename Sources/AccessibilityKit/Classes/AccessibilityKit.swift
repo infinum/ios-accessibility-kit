@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 public final class AccessibilityKit {
 
@@ -32,8 +33,8 @@ public final class AccessibilityKit {
     }
 
     public func presentAccessibilityMonitor(on viewController: UIViewController) {
-        guard let monitorViewController = AccessibilityMonitorViewController.loadViewController() else { return }
-        
+        let monitorViewController = UIHostingController(rootView: AccessibilityMonitorView(onDismiss: { viewController.dismiss(animated: true) }))
+
         viewController.present(
             monitorViewController,
             animated: true,

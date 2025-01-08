@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
     s.version               = '0.0.1'
     s.summary               = 'A helper tool for accessibility features of the app.'
     s.homepage              = 'https://github.com/infinum/AccessibilityKit'
-    s.license               = { :type => 'MIT', :file => 'LICENSE.md' }
+    s.license               = { :type => 'Apache License, Version 2.0', :file => 'LICENSE' }
     s.author                = { 'Nikola Majcen' => 'nikola.majcen@infinum.com' }
     s.source                = { :git => 'https://github.com/infinum/AccessibilityKit.git', :tag => s.version.to_s }
     s.ios.deployment_target = '14.0'
