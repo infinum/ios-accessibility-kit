@@ -7,7 +7,6 @@
 
 import UIKit
 
-@available(iOS 14.0, *)
 struct ButtonShapesAccessibilityObject: AccessibilityObject {
 
     // MARK: - Public properties

@@ -10,10 +10,8 @@ import Foundation
 public enum AccessibilityType: String, Encodable {
     case assistiveTouch = "assistive_touch"
     case boldText = "bold_text"
-    @available(iOS 14.0, *)
     case buttonShapes = "button_shapes"
     case closedCaptioning = "closed_captioning"
-    @available(iOS 14.0, *)
     case crossFadeTransitions = "cross_fade_transitions"
     case darkerSystemColors = "darker_system_colors"
     case differentiateWithoutColor = "differentiate_without_color"
