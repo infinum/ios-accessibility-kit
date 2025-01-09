@@ -1,6 +1,6 @@
 # AccessibilityKit
 
-## About
+## Description
 
 **AccessibilityKit** is a simple library that gives developers the ability to track accessibility features enabled by the user in real-time (through the application lifecycle).
 
@@ -8,16 +8,21 @@ The main idea of the library is to give the developer an update whenever a user 
 
 This library currently supports the **Swift** programming language.
 
-## Example
+## Table of contents
 
-To run the example project, clone the repo, and run `pod install` from the Example directory.
+* [Requirements](#requirements)
+* [Getting started](#getting-started)
+* [Usage](#usage)
+* [Contributing](#contributing)
+* [License](#license)
+* [Credits](#credits)
 
 ## Requirements
 
-* iOS 10 and above
-* Xcode 10 and above
+* iOS 14 and above
+* Xcode 12 and above
 
-## Installation
+## Getting started
 
 AccessibilityKit is available through [CocoaPods](https://cocoapods.org) and [Swift Package Manager](https://www.swift.org/package-manager/).
 
@@ -168,16 +173,42 @@ Also, when **AccessibilityKit** is configured for active tracking, the activity 
 AccessibilityKit.shared.presentAccessibilityMonitor(on: viewController)
 ```
 
-## Authors
+## Contributing
 
-Nikola Majcen, nikola.majcen@infinum.com
+We believe that the community can help us improve and build better a product.
+Please refer to our [contributing guide](CONTRIBUTING.md) to learn about the types of contributions we accept and the process for submitting them.
+
+To ensure that our community remains respectful and professional, we defined a [code of conduct](CODE_OF_CONDUCT.md) that we expect all contributors to follow.
+
+We appreciate your interest and look forward to your contributions.
 
 ## License
 
-AccessibilityKit is available under the MIT license. See the [license](LICENSE.md) for more information.
+```text
+Copyright 2024 Infinum
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
 
 ## Credits
 
-Maintained and sponsored by [Infinum](http://www.infinum.com).
+Maintained and sponsored by [Infinum](https://infinum.com).
 
-![Infinum logo](https://cloud.githubusercontent.com/assets/1422973/24369980/9c36b0a6-12da-11e7-898a-b711ed7ca52f.png)
+<div align="center">
+    <a href='https://infinum.com'>
+    <picture>
+        <source srcset="https://assets.infinum.com/brand/logo/static/white.svg" media="(prefers-color-scheme: dark)">
+        <img src="https://assets.infinum.com/brand/logo/static/default.svg">
+    </picture>
+    </a>
+</div>
