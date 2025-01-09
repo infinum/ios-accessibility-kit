@@ -16,19 +16,11 @@ enum AccessibilityObjectFactory {
         case .boldText:
             return BoldTextAccessibilityObject()
         case .buttonShapes:
-            if #available(iOS 14.0, *) {
-                return ButtonShapesAccessibilityObject()
-            } else {
-                fatalError("This functionality is available from iOS 14.0 and above.")
-            }
+            return ButtonShapesAccessibilityObject()
         case .closedCaptioning:
             return ClosedCaptioningAccessibilityObject()
         case .crossFadeTransitions:
-            if #available(iOS 14.0, *) {
-                return CrossFadeTransitionsAccessibilityObject()
-            } else {
-                fatalError("This functionality is available from iOS 14.0 and above.")
-            }
+            return CrossFadeTransitionsAccessibilityObject()
         case .darkerSystemColors:
             return DarkerSystemColorsAccessibilityObject()
         case .differentiateWithoutColor:
