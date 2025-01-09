@@ -202,8 +202,6 @@ limitations under the License.
 
 ## Credits
 
-Created by Nikola Majcen, nikola.majcen@infinum.com
-
 Maintained and sponsored by [Infinum](https://infinum.com).
 
 <div align="center">
