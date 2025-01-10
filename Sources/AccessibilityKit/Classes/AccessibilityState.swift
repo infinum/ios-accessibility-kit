@@ -69,3 +69,10 @@ extension AccessibilityState: Comparable {
         return lhs.type.rawValue < rhs.type.rawValue
     }
 }
+
+// MARK: - Identifiable
+
+extension AccessibilityState: Identifiable {
+
+    public var id: String { UUID().uuidString }
+}

@@ -1,19 +1,16 @@
 //
-//  AppDelegate.swift
-//  AccessibilityKit
+//  AccessibilityKitApp.swift
+//  Example
 //
-//  Created by Nikola Majcen on 08.02.2022..
+//  Created by Igor Vatavuk on 08.01.2025..
 //
 
-import UIKit
+import SwiftUI
 import AccessibilityKit
 
 @main
-class AppDelegate: UIResponder, UIApplicationDelegate {
-
-    var window: UIWindow?
-
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+struct AccessibilityKitApp: App {
+    init() {
         AccessibilityKit.shared.configureAccessibilityTracking(
             with: AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
@@ -26,6 +23,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 ]
             )
         )
-        return true
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            AccessibilityKitView()
+        }
     }
 }
