@@ -9,8 +9,8 @@ import SwiftUI
 
 public struct AccessibilityMonitorView: View {
 
-    let onDismiss: () -> Void
     @ObservedObject private var viewModel = AccessibilityMonitorViewModel()
+    let onDismiss: () -> Void
 
     public init(onDismiss: @escaping () -> Void ) {
         self.onDismiss = onDismiss
