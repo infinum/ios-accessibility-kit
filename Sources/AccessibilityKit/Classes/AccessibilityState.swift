@@ -57,7 +57,7 @@ extension AccessibilityState: Encodable {
 extension AccessibilityState: Equatable {
     
     public static func == (lhs: AccessibilityState, rhs: AccessibilityState) -> Bool {
-        return lhs.type == rhs.type
+        return lhs.type == rhs.type && lhs.value == rhs.value
     }
 }
 
@@ -74,5 +74,5 @@ extension AccessibilityState: Comparable {
 
 extension AccessibilityState: Identifiable {
 
-    public var id: String { UUID().uuidString }
+    public var id: String { identifier }
 }
