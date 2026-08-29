@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 protocol Subject: AnyObject {
     func addObserver(_ observer: Observer)
     func removeObserver(_ observer: Observer)
@@ -22,6 +23,7 @@ protocol Subject: AnyObject {
 ///
 /// Observers are held weakly, so a subject never keeps its listeners alive.
 ///
+@MainActor
 class AccessibilitySubject {
 
     // MARK: - Internal properties
@@ -50,9 +52,18 @@ class AccessibilitySubject {
 
     // MARK: - Internal methods
 
+    ///
+    /// `NotificationCenter` dispatches this selector on whichever thread
+    /// posted, so it cannot be main-actor isolated by declaration. UIKit posts
+    /// its accessibility status notifications on the main thread, and this
+    /// asserts that rather than assuming it silently: a post from any other
+    /// thread traps here instead of racing on the observer list.
+    ///
     @objc
-    func accessibilityStateDidChange(_ notification: Notification) {
-        notifyObservers(with: object.state(customIdentifier: nil))
+    nonisolated func accessibilityStateDidChange(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            notifyObservers(with: object.state(customIdentifier: nil))
+        }
     }
 }
 

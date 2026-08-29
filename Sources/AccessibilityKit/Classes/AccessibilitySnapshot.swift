@@ -28,7 +28,7 @@ import Foundation
 /// }
 /// ```
 ///
-public struct AccessibilitySnapshot {
+public struct AccessibilitySnapshot: Sendable {
 
     ///
     /// The states of the tracked features, sorted by accessibility type.
@@ -49,6 +49,7 @@ public struct AccessibilitySnapshot {
         self.states = states.sorted()
     }
 
+    @MainActor
     init(trackingObjects: [AccessibilityTrackingObject]) {
         self.init(
             states: trackingObjects.map { trackingObject in

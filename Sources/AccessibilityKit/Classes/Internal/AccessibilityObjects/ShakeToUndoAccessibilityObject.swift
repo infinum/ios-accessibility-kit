@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct ShakeToUndoAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isShakeToUndoEnabled: () -> Bool
+    private let isShakeToUndoEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isShakeToUndoEnabled: @escaping () -> Bool = { UIAccessibility.isShakeToUndoEnabled }) {
+    init(isShakeToUndoEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isShakeToUndoEnabled }) {
         self.isShakeToUndoEnabled = isShakeToUndoEnabled
     }
 

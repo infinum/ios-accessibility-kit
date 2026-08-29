@@ -22,7 +22,7 @@ import Foundation
 /// When encoded, only the payload is written — the case itself is not part of
 /// the output.
 ///
-public enum AccessibilityValue {
+public enum AccessibilityValue: Sendable {
 
     /// A setting that is either on or off.
     case flag(Bool)

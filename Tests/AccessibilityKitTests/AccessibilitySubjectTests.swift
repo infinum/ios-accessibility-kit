@@ -9,6 +9,7 @@ import UIKit
 @testable import AccessibilityKit
 
 @Suite("AccessibilitySubject")
+@MainActor
 struct AccessibilitySubjectTests {
 
     @Test("Notifies a registered observer when the notification is posted")

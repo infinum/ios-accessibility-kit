@@ -32,13 +32,13 @@ import Foundation
 /// snapshot, and two entries reported under the same identifier collide in
 /// the accessibility monitor's list.
 ///
-public struct AccessibilityTrackingObject {
+public struct AccessibilityTrackingObject: Sendable {
 
     // MARK: - Internal properties
 
     let customIdentifier: String?
     let type: AccessibilityType
-    let transform: (@Sendable (AccessibilityValue) -> AccessibilityValue)?
+    let transform: (@MainActor @Sendable (AccessibilityValue) -> AccessibilityValue)?
 
     // MARK: - Lifecycle
 
@@ -52,12 +52,13 @@ public struct AccessibilityTrackingObject {
     ///   - transform: A correction applied to the value wherever this feature
     ///     is produced — direct snapshots, observed changes, the encoded
     ///     output and the accessibility monitor. Defaults to `nil`, which
-    ///     reports the value the system gives.
+    ///     reports the value the system gives. Runs on the main actor, where
+    ///     accessibility state is read, so it may touch main-actor state.
     ///
     public init (
         type: AccessibilityType,
         customIdentifier: String? = nil,
-        transform: (@Sendable (AccessibilityValue) -> AccessibilityValue)? = nil
+        transform: (@MainActor @Sendable (AccessibilityValue) -> AccessibilityValue)? = nil
     ) {
         self.type = type
         self.customIdentifier = customIdentifier
@@ -68,7 +69,7 @@ public struct AccessibilityTrackingObject {
 ///
 /// How often tracking should report.
 ///
-public enum AccessibilityFetchType {
+public enum AccessibilityFetchType: Sendable {
 
     /// Report once, when observation begins.
     case initial
@@ -98,7 +99,7 @@ public enum AccessibilityFetchType {
 /// )
 /// ```
 ///
-public struct AccessibilityTrackingConfiguration {
+public struct AccessibilityTrackingConfiguration: Sendable {
 
     // MARK: - Internal properties
 

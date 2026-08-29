@@ -8,6 +8,7 @@ import Testing
 @testable import AccessibilityKit
 
 @Suite("Accessibility tracking")
+@MainActor
 struct AccessibilityTrackingTests {
 
     ///

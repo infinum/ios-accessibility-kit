@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct BoldTextAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isBoldTextEnabled: () -> Bool
+    private let isBoldTextEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isBoldTextEnabled: @escaping () -> Bool = { UIAccessibility.isBoldTextEnabled }) {
+    init(isBoldTextEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isBoldTextEnabled }) {
         self.isBoldTextEnabled = isBoldTextEnabled
     }
 

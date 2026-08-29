@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct GuidedAccessAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isGuidedAccessEnabled: () -> Bool
+    private let isGuidedAccessEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isGuidedAccessEnabled: @escaping () -> Bool = { UIAccessibility.isGuidedAccessEnabled }) {
+    init(isGuidedAccessEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isGuidedAccessEnabled }) {
         self.isGuidedAccessEnabled = isGuidedAccessEnabled
     }
 

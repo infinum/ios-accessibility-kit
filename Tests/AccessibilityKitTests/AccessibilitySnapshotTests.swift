@@ -8,6 +8,7 @@ import Testing
 @testable import AccessibilityKit
 
 @Suite("AccessibilitySnapshot")
+@MainActor
 struct AccessibilitySnapshotTests {
 
     @Test("Sorts states produced from tracking objects")

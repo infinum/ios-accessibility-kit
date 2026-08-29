@@ -15,6 +15,7 @@ import UIKit
 /// releases it after its final use and the notification reaches nobody.
 ///
 @Suite("AccessibilityMonitor")
+@MainActor
 struct AccessibilityMonitorTests {
 
     @Test("Emits the initial snapshot on the main queue")
@@ -159,23 +160,16 @@ private extension AccessibilityMonitorTests {
 }
 
 ///
-/// Written on the main queue, where the monitor delivers, and read from the
-/// test task that polls it, so the count is guarded.
+/// Main-actor isolated, like everything else here: the monitor delivers on
+/// the main actor and the tests poll from it, so the count needs no lock of
+/// its own - the isolation is the guarantee, and the compiler checks it.
 ///
+@MainActor
 private final class EmissionCounter {
 
-    private let lock = NSLock()
-    private var value = 0
-
-    var count: Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return value
-    }
+    private(set) var count = 0
 
     func increment() {
-        lock.lock()
-        defer { lock.unlock() }
-        value += 1
+        count += 1
     }
 }

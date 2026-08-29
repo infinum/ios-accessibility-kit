@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct VoiceOverAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isVoiceOverRunning: () -> Bool
+    private let isVoiceOverRunning: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isVoiceOverRunning: @escaping () -> Bool = { UIAccessibility.isVoiceOverRunning }) {
+    init(isVoiceOverRunning: @escaping @MainActor () -> Bool = { UIAccessibility.isVoiceOverRunning }) {
         self.isVoiceOverRunning = isVoiceOverRunning
     }
 
