@@ -69,6 +69,24 @@ A default identifier is used for every tracked accessibility feature when a cust
 | Video autoplay                | video_autoplay                | Bool          |
 | VoiceOver                     | voice_over                    | Bool          |
 
+#### Correcting a value
+
+Sometimes the value a feature reports is not the value an app wants to record — for example, a font scale of `1.29` may only be interesting as "large text is enabled". Pass a `transform` to `AccessibilityTrackingObject` to correct the value where it is produced, so the correction applies to snapshots, observed changes, the encoded output and the accessibility monitor alike.
+
+```swift
+AccessibilityTrackingObject(
+    type: .fontScale,
+    customIdentifier: "large_text_enabled",
+    transform: { value in .flag((value.scaleValue ?? 1) >= 1.2) }
+)
+```
+
+A state can also be corrected after the fact with `withValue(_:)`, which preserves the feature's `type`, `name` and `identifier`:
+
+```swift
+let corrected = state.withValue(.flag(true))
+```
+
 #### Configuration
 
 To track accessibility states in real-time, `AccessibilityKit` should be configured via the method `configureAccessibilityTracking(with:)`.
