@@ -16,6 +16,7 @@ import UIKit
 /// The release test is the exception: letting go of it is what it checks.
 ///
 @Suite("AccessibilityMonitor")
+@MainActor
 struct AccessibilityMonitorTests {
 
     @Test("Emits the initial snapshot on the main queue")
@@ -228,46 +229,25 @@ private extension AccessibilityMonitorTests {
 }
 
 ///
-/// Written on the main queue, where the monitor delivers, and read from the
-/// test task that polls it, so the count and the delivery thread are guarded.
+/// Main-actor isolated, like everything else here: the monitor delivers on
+/// the main actor and the tests poll from it, so the count needs no lock of
+/// its own - the isolation is the guarantee, and the compiler checks it.
 ///
+@MainActor
 private final class EmissionCounter {
 
-    private let lock = NSLock()
-    private var value = 0
-    private var types = [[AccessibilityType]]()
-    private var lastWasOnMainThread: Bool?
-
-    var count: Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return value
-    }
-
+    private(set) var count = 0
     /// The features each emitted snapshot reported, in delivery order.
-    var emittedTypes: [[AccessibilityType]] {
-        lock.lock()
-        defer { lock.unlock() }
-        return types
-    }
-
-    var lastDeliveryWasOnMainThread: Bool? {
-        lock.lock()
-        defer { lock.unlock() }
-        return lastWasOnMainThread
-    }
+    private(set) var emittedTypes = [[AccessibilityType]]()
+    private(set) var lastDeliveryWasOnMainThread: Bool?
 
     func increment() {
-        lock.lock()
-        defer { lock.unlock() }
-        value += 1
-        lastWasOnMainThread = Thread.isMainThread
+        count += 1
+        lastDeliveryWasOnMainThread = Thread.isMainThread
     }
 
     func record(_ snapshot: AccessibilitySnapshot) {
-        lock.lock()
-        types.append(snapshot.states.map(\.type))
-        lock.unlock()
+        emittedTypes.append(snapshot.states.map(\.type))
         increment()
     }
 }

@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct OnOffSwitchLabelsAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isOnOffSwitchLabelsEnabled: () -> Bool
+    private let isOnOffSwitchLabelsEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isOnOffSwitchLabelsEnabled: @escaping () -> Bool = { UIAccessibility.isOnOffSwitchLabelsEnabled }) {
+    init(isOnOffSwitchLabelsEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isOnOffSwitchLabelsEnabled }) {
         self.isOnOffSwitchLabelsEnabled = isOnOffSwitchLabelsEnabled
     }
 

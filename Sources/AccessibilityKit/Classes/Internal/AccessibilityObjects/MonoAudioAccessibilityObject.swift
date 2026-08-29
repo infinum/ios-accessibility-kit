@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct MonoAudioAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isMonoAudioEnabled: () -> Bool
+    private let isMonoAudioEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isMonoAudioEnabled: @escaping () -> Bool = { UIAccessibility.isMonoAudioEnabled }) {
+    init(isMonoAudioEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isMonoAudioEnabled }) {
         self.isMonoAudioEnabled = isMonoAudioEnabled
     }
 

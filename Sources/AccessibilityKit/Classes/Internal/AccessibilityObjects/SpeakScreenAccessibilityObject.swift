@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct SpeakScreenAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isSpeakScreenEnabled: () -> Bool
+    private let isSpeakScreenEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isSpeakScreenEnabled: @escaping () -> Bool = { UIAccessibility.isSpeakScreenEnabled }) {
+    init(isSpeakScreenEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isSpeakScreenEnabled }) {
         self.isSpeakScreenEnabled = isSpeakScreenEnabled
     }
 

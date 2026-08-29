@@ -33,7 +33,7 @@ import Foundation
 /// )
 /// ```
 ///
-public enum AccessibilityType: String, CaseIterable, Encodable {
+public enum AccessibilityType: String, CaseIterable, Encodable, Sendable {
 
     /// Whether AssistiveTouch is running, which replaces gestures the user
     /// cannot perform with an on-screen menu. Reports a flag.

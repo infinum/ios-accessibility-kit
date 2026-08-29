@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct InvertColorsAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isInvertColorsEnabled: () -> Bool
+    private let isInvertColorsEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isInvertColorsEnabled: @escaping () -> Bool = { UIAccessibility.isInvertColorsEnabled }) {
+    init(isInvertColorsEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isInvertColorsEnabled }) {
         self.isInvertColorsEnabled = isInvertColorsEnabled
     }
 

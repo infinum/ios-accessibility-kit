@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct VideoAutoplayAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isVideoAutoplayEnabled: () -> Bool
+    private let isVideoAutoplayEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isVideoAutoplayEnabled: @escaping () -> Bool = { UIAccessibility.isVideoAutoplayEnabled }) {
+    init(isVideoAutoplayEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isVideoAutoplayEnabled }) {
         self.isVideoAutoplayEnabled = isVideoAutoplayEnabled
     }
 

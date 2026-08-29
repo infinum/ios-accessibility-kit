@@ -9,6 +9,7 @@ import UIKit
 @testable import AccessibilityKit
 
 @Suite("AccessibilitySubject")
+@MainActor
 struct AccessibilitySubjectTests {
 
     @Test("Notifies a registered observer when the notification is posted")
@@ -191,7 +192,9 @@ struct AccessibilitySubjectTests {
 
 // MARK: - Spies
 
-private final class SpyNotificationCenter: NotificationCenter {
+// `NotificationCenter` is `@unchecked Sendable`, so a subclass has to restate
+// it. The spy is only ever touched from the test that owns it.
+private final class SpyNotificationCenter: NotificationCenter, @unchecked Sendable {
 
     private(set) var removedObservers = [ObjectIdentifier?]()
 

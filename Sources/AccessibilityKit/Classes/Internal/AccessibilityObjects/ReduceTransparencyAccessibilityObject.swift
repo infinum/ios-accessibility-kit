@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct ReduceTransparencyAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isReduceTransparencyEnabled: () -> Bool
+    private let isReduceTransparencyEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isReduceTransparencyEnabled: @escaping () -> Bool = { UIAccessibility.isReduceTransparencyEnabled }) {
+    init(isReduceTransparencyEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isReduceTransparencyEnabled }) {
         self.isReduceTransparencyEnabled = isReduceTransparencyEnabled
     }
 

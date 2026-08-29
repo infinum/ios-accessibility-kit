@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@MainActor
 final class AccessibilityMonitorViewModel: ObservableObject {
 
     @Published var states: [AccessibilityState] = []

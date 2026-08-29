@@ -40,6 +40,7 @@ import SwiftUI
 /// }
 /// ```
 ///
+@MainActor
 public final class AccessibilityKit {
 
     // MARK: - Public properties
