@@ -44,7 +44,7 @@ final class AccessibilityMonitor {
         self.notificationCenter = notificationCenter
     }
 
-    // MARK: - Public methods
+    // MARK: - Internal methods
 
     func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) -> AccessibilitySnapshot {
         return AccessibilitySnapshot(trackingObjects: objects)

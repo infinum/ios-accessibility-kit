@@ -26,7 +26,7 @@ protocol Subject: AnyObject {
 @MainActor
 class AccessibilitySubject {
 
-    // MARK: - Internal properties
+    // MARK: - Private properties
 
     private let object: AccessibilityObject
     private let notificationCenter: NotificationCenter
