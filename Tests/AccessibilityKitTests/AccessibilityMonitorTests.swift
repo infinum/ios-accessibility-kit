@@ -19,9 +19,9 @@ import UIKit
 struct AccessibilityMonitorTests {
 
     @Test("Emits the initial snapshot on the main queue")
-    func emitsInitialSnapshotOnMainQueue() async {
+    func emitsInitialSnapshotOnMainQueue() async throws {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .initial))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let isMain: Bool = await withCheckedContinuation { continuation in
             monitor.observeAccessibilityTracking { _ in
@@ -34,10 +34,10 @@ struct AccessibilityMonitorTests {
     }
 
     @Test("Does not emit again for a change when fetching once")
-    func doesNotEmitAgainForInitialFetch() async {
+    func doesNotEmitAgainForInitialFetch() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .initial))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
@@ -51,10 +51,10 @@ struct AccessibilityMonitorTests {
     }
 
     @Test("Emits again for every change when observing continuously")
-    func emitsForEveryChangeWhenContinuous() async {
+    func emitsForEveryChangeWhenContinuous() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
@@ -68,12 +68,12 @@ struct AccessibilityMonitorTests {
     }
 
     @Test("Observes the features supplied by the newest configuration")
-    func observesTheNewestConfiguration() async {
+    func observesTheNewestConfiguration() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
         monitor.configureAccessibilityTracking(
-            with: AccessibilityTrackingConfiguration(
+            with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
@@ -100,17 +100,17 @@ struct AccessibilityMonitorTests {
     }
 
     @Test("Keeps an existing observation when tracking is reconfigured")
-    func keepsObservationAcrossReconfiguration() async {
+    func keepsObservationAcrossReconfiguration() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
         await Self.wait(until: { counter.count == 1 })
 
         monitor.configureAccessibilityTracking(
-            with: AccessibilityTrackingConfiguration(
+            with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
@@ -129,8 +129,8 @@ struct AccessibilityMonitorTests {
 
 private extension AccessibilityMonitorTests {
 
-    static func configuration(fetchType: AccessibilityFetchType) -> AccessibilityTrackingConfiguration {
-        return AccessibilityTrackingConfiguration(
+    static func configuration(fetchType: AccessibilityFetchType) throws -> AccessibilityTrackingConfiguration {
+        return try AccessibilityTrackingConfiguration(
             fetchType: fetchType,
             objects: [AccessibilityTrackingObject(type: .voiceOver)]
         )

@@ -11,8 +11,8 @@ import AccessibilityKit
 @main
 struct AccessibilityKitApp: App {
     init() {
-        AccessibilityKit.shared.configureAccessibilityTracking(
-            with: AccessibilityTrackingConfiguration(
+        do {
+            let configuration = try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [
                     AccessibilityTrackingObject(type: .boldText),
@@ -22,7 +22,12 @@ struct AccessibilityKitApp: App {
                     AccessibilityTrackingObject(type: .fontScale)
                 ]
             )
-        )
+            AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+        } catch {
+            // A duplicate accessibility type is a mistake in the configuration
+            // above, not a runtime condition, so surface it during development.
+            assertionFailure("Invalid accessibility tracking configuration: \(error)")
+        }
     }
 
     var body: some Scene {

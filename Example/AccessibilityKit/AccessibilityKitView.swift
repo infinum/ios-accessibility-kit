@@ -35,16 +35,20 @@ private extension AccessibilityKitView {
     /// library reports this feature, the accessibility monitor included.
     ///
     var correctedAtSource: String {
-        let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
-            for: [
-                AccessibilityTrackingObject(
-                    type: .fontScale,
-                    customIdentifier: "large_text_enabled",
-                    transform: { value in .flag(Self.isLargeText(value)) }
-                )
-            ]
-        )
-        return Self.label(for: snapshot)
+        do {
+            let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
+                for: [
+                    AccessibilityTrackingObject(
+                        type: .fontScale,
+                        customIdentifier: "large_text_enabled",
+                        transform: { value in .flag(Self.isLargeText(value)) }
+                    )
+                ]
+            )
+            return Self.label(for: snapshot)
+        } catch {
+            return "unavailable: \(error)"
+        }
     }
 
     ///
@@ -52,20 +56,24 @@ private extension AccessibilityKitView {
     /// for cases where the tracking configuration cannot be changed.
     ///
     var correctedAfterTheFact: String {
-        let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
-            for: [
-                AccessibilityTrackingObject(type: .fontScale),
-                AccessibilityTrackingObject(type: .voiceOver)
-            ]
-        )
+        do {
+            let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
+                for: [
+                    AccessibilityTrackingObject(type: .fontScale),
+                    AccessibilityTrackingObject(type: .voiceOver)
+                ]
+            )
 
-        let corrected = AccessibilitySnapshot(
-            states: snapshot.states.map { state in
-                guard state.type == .fontScale else { return state }
-                return state.withValue(.flag(Self.isLargeText(state.value)))
-            }
-        )
-        return Self.label(for: corrected)
+            let corrected = AccessibilitySnapshot(
+                states: snapshot.states.map { state in
+                    guard state.type == .fontScale else { return state }
+                    return state.withValue(.flag(Self.isLargeText(state.value)))
+                }
+            )
+            return Self.label(for: corrected)
+        } catch {
+            return "unavailable: \(error)"
+        }
     }
 
     static func isLargeText(_ value: AccessibilityValue) -> Bool {

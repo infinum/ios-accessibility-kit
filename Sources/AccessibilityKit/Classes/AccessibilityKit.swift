@@ -65,10 +65,15 @@ public final class AccessibilityKit {
     ///
     /// Tracking does not need to be configured to call this.
     ///
-    /// - Parameter objects: The features to read.
+    /// - Parameter objects: The features to read. Each ``AccessibilityType``
+    ///   must appear at most once.
     /// - Returns: A snapshot of those features, as they are right now.
+    /// - Throws: ``AccessibilityTrackingError/duplicateType(_:)`` if a feature
+    ///   is supplied more than once.
     ///
-    public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) -> AccessibilitySnapshot {
+    public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) throws -> AccessibilitySnapshot {
+        try objects.validateUniqueTypes()
+
         return monitor.currentAccessibilitySnapshot(for: objects)
     }
 

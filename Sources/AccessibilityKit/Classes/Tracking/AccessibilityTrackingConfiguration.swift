@@ -8,6 +8,20 @@
 import Foundation
 
 ///
+/// An error raised while setting up accessibility tracking.
+///
+public enum AccessibilityTrackingError: Error, Equatable {
+
+    ///
+    /// The same accessibility feature was supplied more than once.
+    ///
+    /// A feature has a single identifier, so tracking it twice would report it
+    /// twice — once under each identifier — rather than reporting it once.
+    ///
+    case duplicateType(AccessibilityType)
+}
+
+///
 /// One accessibility feature to track, and how to report it.
 ///
 /// ## Overview
@@ -111,11 +125,31 @@ public struct AccessibilityTrackingConfiguration: Sendable {
     ///
     /// - Parameters:
     ///   - fetchType: Whether to report once or on every change.
-    ///   - objects: The features to track. Each ``AccessibilityType`` should
+    ///   - objects: The features to track. Each ``AccessibilityType`` must
     ///     appear at most once.
+    /// - Throws: ``AccessibilityTrackingError/duplicateType(_:)`` if a feature
+    ///   is supplied more than once.
     ///
-    public init(fetchType: AccessibilityFetchType, objects: [AccessibilityTrackingObject]) {
+    public init(fetchType: AccessibilityFetchType, objects: [AccessibilityTrackingObject]) throws {
+        try objects.validateUniqueTypes()
+
         self.fetchType = fetchType
         self.objects = objects
+    }
+}
+
+// MARK: - Validation
+
+extension Array where Element == AccessibilityTrackingObject {
+
+    ///
+    /// Checks that no accessibility feature is tracked more than once.
+    ///
+    func validateUniqueTypes() throws {
+        var seen = Set<AccessibilityType>()
+
+        for object in self where seen.insert(object.type).inserted == false {
+            throw AccessibilityTrackingError.duplicateType(object.type)
+        }
     }
 }
