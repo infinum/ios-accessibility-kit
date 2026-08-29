@@ -53,6 +53,7 @@ extension AccessibilitySubject: Subject {
 
     func addObserver(_ observer: Observer) {
         removeReleasedObservers()
+        guard !observers.contains(where: { $0.observer === observer }) else { return }
         observers.append(WeakObserver(observer: observer))
     }
 
