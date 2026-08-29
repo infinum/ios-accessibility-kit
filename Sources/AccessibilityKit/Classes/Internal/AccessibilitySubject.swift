@@ -19,7 +19,6 @@ class AccessibilitySubject {
 
     private let object: AccessibilityObject
     private let notificationCenter: NotificationCenter
-    // Held weakly: the monitor observing a subject also owns it.
     private var observers = [WeakObserver]()
 
     // MARK: - Lifecycle
@@ -53,11 +52,12 @@ class AccessibilitySubject {
 extension AccessibilitySubject: Subject {
 
     func addObserver(_ observer: Observer) {
-        observers.append(WeakObserver(value: observer))
+        removeReleasedObservers()
+        observers.append(WeakObserver(observer: observer))
     }
 
     func removeObserver(_ observer: Observer) {
-        observers.removeAll(where: { $0.value == nil || $0.value === observer })
+        observers.removeAll(where: { $0.observer === observer || $0.observer == nil })
     }
 
     func removeObservers() {
@@ -70,15 +70,29 @@ extension AccessibilitySubject: Subject {
 extension AccessibilitySubject {
 
     func notifyObservers(with state: AccessibilityState) {
+        removeReleasedObservers()
         observers
-            .compactMap(\.value)
-            .forEach {
-                guard let observer = $0 as? AccessibilityObserver else { return }
-                observer.accessibilityStateDidChange(state)
-            }
+            .compactMap { $0.observer as? AccessibilityObserver }
+            .forEach { $0.accessibilityStateDidChange(state) }
     }
 }
 
+// MARK: - Private methods
+
+private extension AccessibilitySubject {
+
+    func removeReleasedObservers() {
+        observers.removeAll(where: { $0.observer == nil })
+    }
+}
+
+// MARK: - Weak observer
+
+///
+/// Observers are held weakly: a subject outlives the objects listening to it,
+/// and must not keep them alive.
+///
 private struct WeakObserver {
-    weak var value: Observer?
+
+    weak var observer: Observer?
 }
