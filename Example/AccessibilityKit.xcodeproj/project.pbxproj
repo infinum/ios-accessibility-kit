@@ -105,7 +105,7 @@
 			);
 			mainGroup = 4F04304A27B5A901006DAC5E;
 			packageReferences = (
-				42075D0B2FB214D800027C6A /* XCLocalSwiftPackageReference "../../ios-accessibility-kit" */,
+				42075D0B2FB214D800027C6A /* XCLocalSwiftPackageReference ".." */,
 			);
 			productRefGroup = 4F04305427B5A901006DAC5E /* Products */;
 			projectDirPath = "";
@@ -336,9 +336,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		42075D0B2FB214D800027C6A /* XCLocalSwiftPackageReference "../../ios-accessibility-kit" */ = {
+		42075D0B2FB214D800027C6A /* XCLocalSwiftPackageReference ".." */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = "../../ios-accessibility-kit";
+			relativePath = "..";
 		};
 /* End XCLocalSwiftPackageReference section */
 
