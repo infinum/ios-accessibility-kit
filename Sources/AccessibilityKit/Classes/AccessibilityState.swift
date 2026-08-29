@@ -23,12 +23,26 @@ public struct AccessibilityState {
         type: AccessibilityType,
         name: String,
         value: AccessibilityValue,
-        customIdentifier: String? = nil
+        identifier: String
     ) {
         self.type = type
         self.name = name
         self.value = value
-        self.identifier = customIdentifier ?? type.rawValue
+        self.identifier = identifier
+    }
+
+    init(
+        type: AccessibilityType,
+        name: String,
+        value: AccessibilityValue,
+        customIdentifier: String? = nil
+    ) {
+        self.init(
+            type: type,
+            name: name,
+            value: value,
+            identifier: customIdentifier ?? type.rawValue
+        )
     }
 }
 
@@ -75,4 +89,24 @@ extension AccessibilityState: Comparable {
 extension AccessibilityState: Identifiable {
 
     public var id: String { identifier }
+}
+
+// MARK: - Value transformation
+
+public extension AccessibilityState {
+
+    ///
+    /// Returns a copy of the state carrying a different value.
+    ///
+    /// The `type`, `name` and `identifier` are preserved, so a corrected
+    /// state keeps identifying the same accessibility feature.
+    ///
+    func withValue(_ value: AccessibilityValue) -> AccessibilityState {
+        return AccessibilityState(
+            type: type,
+            name: name,
+            value: value,
+            identifier: identifier
+        )
+    }
 }
