@@ -87,7 +87,31 @@ struct AccessibilityMonitorTests {
 
         #expect(counter.count == 2)
     }
+
+    @Test("Keeps an existing observation when tracking is reconfigured")
+    func keepsObservationAcrossReconfiguration() async {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in counter.increment() }
+        await Self.wait(until: { counter.count == 1 })
+
+        monitor.configureAccessibilityTracking(
+            with: AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [AccessibilityTrackingObject(type: .boldText)]
+            )
+        )
+
+        center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
+        await Self.wait(until: { counter.count == 2 })
+
+        #expect(counter.count == 2)
+    }
 }
+
 
 // MARK: - Helpers
 
