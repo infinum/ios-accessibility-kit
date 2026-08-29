@@ -47,5 +47,6 @@ struct AccessibilityTrackingTests {
 
         #expect(snapshot.states.first?.value == .flag(true))
         #expect(snapshot.states.first?.identifier == "large_text_enabled")
+        withExtendedLifetime(kit) { }
     }
 }

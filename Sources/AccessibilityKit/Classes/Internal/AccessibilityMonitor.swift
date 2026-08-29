@@ -21,13 +21,11 @@ final class AccessibilityMonitor {
     )
     private var configuration: AccessibilityTrackingConfiguration? {
         didSet {
-            clearSnapshots()
             guard let configuration = configuration else { return }
             configureSubjects(for: configuration)
         }
     }
     private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
-    private var snapshots = [AccessibilitySnapshot]()
     private var subjects = [Subject]()
     private let notificationCenter: NotificationCenter
 
@@ -69,10 +67,11 @@ private extension AccessibilityMonitor {
     func configureSubjects(for configuration: AccessibilityTrackingConfiguration) {
         concurrentQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
-            subjects.forEach { $0.removeObservers() }
-            subjects = Set(configuration.objects.map(\.type))
+
+            self.subjects.forEach { $0.removeObservers() }
+            self.subjects = Set(configuration.objects.map(\.type))
                 .map { AccessibilitySubject(type: $0, notificationCenter: self.notificationCenter) }
-            subjects.forEach { $0.addObserver(self) }
+            self.subjects.forEach { $0.addObserver(self) }
         }
     }
 
@@ -85,17 +84,12 @@ private extension AccessibilityMonitor {
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
+        // Hops the barrier queue so a snapshot can never be delivered
+        // ahead of the subject configuration it belongs to.
         concurrentQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            snapshots.append(snapshot)
-            DispatchQueue.main.async { [weak self] in
+            DispatchQueue.main.async {
                 self?.snapshotChangeHandler?(snapshot)
             }
         }
-    }
-
-    func clearSnapshots() {
-        snapshots = []
-        snapshotChangeHandler = nil
     }
 }

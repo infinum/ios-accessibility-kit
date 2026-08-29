@@ -8,6 +8,13 @@ import Testing
 import UIKit
 @testable import AccessibilityKit
 
+///
+/// Subjects hold their observers weakly, so a monitor is kept alive only by
+/// whoever owns it — `AccessibilityKit.shared` in production. Each test must
+/// therefore extend its monitor's lifetime past the last assertion, or ARC
+/// releases it after its final use and the notification reaches nobody.
+/// The release test is the exception: letting go of it is what it checks.
+///
 @Suite("AccessibilityMonitor")
 struct AccessibilityMonitorTests {
 
@@ -22,6 +29,7 @@ struct AccessibilityMonitorTests {
 
         #expect(counter.count == 1)
         #expect(counter.lastDeliveryWasOnMainThread == true)
+        withExtendedLifetime(monitor) { }
     }
 
     @Test("Does not emit again for a change when fetching once")
@@ -38,6 +46,7 @@ struct AccessibilityMonitorTests {
         await Self.settle()
 
         #expect(counter.count == 1)
+        withExtendedLifetime(monitor) { }
     }
 
     @Test("Emits again for every change when observing continuously")
@@ -59,6 +68,7 @@ struct AccessibilityMonitorTests {
         await Self.wait(until: { counter.count == 3 })
 
         #expect(counter.count == 3)
+        withExtendedLifetime(monitor) { }
     }
 
     @Test("Observes the features supplied by the newest configuration")
@@ -90,6 +100,7 @@ struct AccessibilityMonitorTests {
         await Self.settle()
 
         #expect(counter.count == 2)
+        withExtendedLifetime(monitor) { }
     }
 
     ///
@@ -130,11 +141,13 @@ struct AccessibilityMonitorTests {
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
+        await Self.settle()
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
         await Self.wait(until: { counter.count == 2 })
 
         #expect(counter.count == 2)
+        withExtendedLifetime(monitor) { }
     }
 }
 
