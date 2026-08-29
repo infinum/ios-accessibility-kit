@@ -15,9 +15,9 @@ import Foundation
 /// Snapshots come from ``AccessibilityKit/currentAccessibilitySnapshot(for:)``
 /// or from ``AccessibilityKit/observeAccessibilityTracking(completion:)``.
 ///
-/// A snapshot is `Encodable`, and ``Swift/Encodable/toDictionary()`` converts
-/// it for sending onward. The encoded form is a `values` array of
-/// `identifier` / `value` pairs:
+/// A snapshot is `Encodable`, and ``toDictionary()`` converts it for sending
+/// onward. The encoded form is a `values` array of `identifier` / `value`
+/// pairs:
 ///
 /// ```json
 /// {
