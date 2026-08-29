@@ -11,7 +11,8 @@ import SwiftUI
 struct AccessibilityKitView: View {
 
     @State var presentingModal = false
-    // Declared so the labels below are re-evaluated when the text size changes.
+    /// Read so the view is invalidated when the user changes their text size,
+    /// which re-reads the snapshots below.
     @Environment(\.sizeCategory) private var sizeCategory
 
     var body: some View {
