@@ -95,11 +95,15 @@ private extension AccessibilityMonitor {
         )
         // Delivered asynchronously so a completion never runs inside the
         // caller's own call to `observeAccessibilityTracking(completion:)`.
+        // The completion is captured here, at scheduling time, so a snapshot
+        // lands in the completion that was registered when it was created —
+        // never in a replacement registered while the delivery was in flight.
         // A snapshot taken under a configuration that has since been
         // replaced is dropped rather than delivered.
+        let handler = snapshotChangeHandler
         DispatchQueue.main.async { [weak self] in
-            guard let self, self.configurationGeneration == generation else { return }
-            self.snapshotChangeHandler?(snapshot)
+            guard self?.configurationGeneration == generation else { return }
+            handler?(snapshot)
         }
     }
 }
