@@ -70,7 +70,7 @@ private extension AccessibilityObjectFactoryTests {
         case .crossFadeTransitions: return "Cross Fade Transitions"
         case .darkerSystemColors: return "Darker System Colors"
         case .differentiateWithoutColor: return "Differentiate Without Color"
-        case .fontScale: return "Font scale"
+        case .fontScale: return "Font Scale"
         case .grayscale: return "Grayscale"
         case .guidedAccess: return "Guided Access"
         case .invertColors: return "Invert Colors"
