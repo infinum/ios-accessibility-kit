@@ -19,7 +19,7 @@ import SwiftUI
 /// setup is needed:
 ///
 /// ```swift
-/// let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+/// let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
 ///     for: [AccessibilityTrackingObject(type: .voiceOver)]
 /// )
 /// ```
@@ -28,12 +28,12 @@ import SwiftUI
 /// `application(_:didFinishLaunchingWithOptions:)`, say — and then observe:
 ///
 /// ```swift
-/// AccessibilityKit.shared.configureAccessibilityTracking(
-///     with: AccessibilityTrackingConfiguration(
-///         fetchType: .continuous,
-///         objects: [AccessibilityTrackingObject(type: .voiceOver)]
-///     )
+/// let configuration = try AccessibilityTrackingConfiguration(
+///     fetchType: .continuous,
+///     objects: [AccessibilityTrackingObject(type: .voiceOver)]
 /// )
+///
+/// AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 ///
 /// AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 ///     // handle the snapshot

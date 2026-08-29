@@ -28,7 +28,7 @@ import Foundation
 /// without naming them individually:
 ///
 /// ```swift
-/// let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+/// let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
 ///     for: AccessibilityType.allCases.map { AccessibilityTrackingObject(type: $0) }
 /// )
 /// ```

@@ -41,10 +41,11 @@ public enum AccessibilityTrackingError: Error, Equatable {
 /// )
 /// ```
 ///
-/// Track each ``AccessibilityType`` at most once. Nothing prevents tracking
-/// one twice, but each tracking object produces its own entry in the
-/// snapshot, and two entries reported under the same identifier collide in
-/// the accessibility monitor's list.
+/// Track each ``AccessibilityType`` at most once. A feature has a single
+/// identifier, so supplying the same type twice is rejected:
+/// ``AccessibilityTrackingConfiguration/init(fetchType:objects:)`` and
+/// ``AccessibilityKit/currentAccessibilitySnapshot(for:)`` throw
+/// ``AccessibilityTrackingError/duplicateType(_:)``.
 ///
 public struct AccessibilityTrackingObject: Sendable {
 
@@ -102,15 +103,15 @@ public enum AccessibilityFetchType: Sendable {
 /// with ``AccessibilityKit/observeAccessibilityTracking(completion:)``:
 ///
 /// ```swift
-/// AccessibilityKit.shared.configureAccessibilityTracking(
-///     with: AccessibilityTrackingConfiguration(
-///         fetchType: .continuous,
-///         objects: [
-///             AccessibilityTrackingObject(type: .boldText),
-///             AccessibilityTrackingObject(type: .voiceOver)
-///         ]
-///     )
+/// let configuration = try AccessibilityTrackingConfiguration(
+///     fetchType: .continuous,
+///     objects: [
+///         AccessibilityTrackingObject(type: .boldText),
+///         AccessibilityTrackingObject(type: .voiceOver)
+///     ]
 /// )
+///
+/// AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 /// ```
 ///
 public struct AccessibilityTrackingConfiguration: Sendable {
