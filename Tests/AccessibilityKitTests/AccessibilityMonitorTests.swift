@@ -123,6 +123,40 @@ struct AccessibilityMonitorTests {
         #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
     }
+
+    @Test("Delivers nothing when tracking has not been configured")
+    func deliversNothingWithoutConfiguration() async {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in counter.increment() }
+        await Self.settle()
+
+        #expect(counter.count == 0)
+        withExtendedLifetime(monitor) { }
+    }
+
+    @Test("Replaces the previous observation")
+    func replacesThePreviousObservation() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let first = EmissionCounter()
+        let second = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in first.increment() }
+        await Self.wait(until: { first.count == 1 })
+
+        monitor.observeAccessibilityTracking { _ in second.increment() }
+        await Self.wait(until: { second.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await Self.wait(until: { second.count == 2 })
+
+        #expect(first.count == 1)
+        #expect(second.count == 2)
+        withExtendedLifetime(monitor) { }
+    }
 }
 
 // MARK: - Helpers
