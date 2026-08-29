@@ -60,8 +60,11 @@ struct AccessibilitySnapshotTests {
             ]
         )
 
+        // The second state's concrete value depends on the host's VoiceOver
+        // setting, so assert only that the first object's transform did not
+        // reach it.
         #expect(snapshot.states.first?.value == .number(99))
-        #expect(snapshot.states.last?.value == .flag(false))
+        #expect(snapshot.states.last?.value.numberValue == nil)
     }
 
     @Test("Transformed values reach the encoded output without changing its shape")

@@ -44,7 +44,7 @@ private extension AccessibilityKitView {
                 )
             ]
         )
-        return Self.description(of: snapshot)
+        return Self.label(for: snapshot)
     }
 
     ///
@@ -59,14 +59,14 @@ private extension AccessibilityKitView {
         let corrected = AccessibilitySnapshot(
             states: snapshot.states.map { $0.withValue(.flag(Self.isLargeText($0.value))) }
         )
-        return Self.description(of: corrected)
+        return Self.label(for: corrected)
     }
 
     static func isLargeText(_ value: AccessibilityValue) -> Bool {
         return (value.scaleValue ?? 1) >= 1.2
     }
 
-    static func description(of snapshot: AccessibilitySnapshot) -> String {
+    static func label(for snapshot: AccessibilitySnapshot) -> String {
         return snapshot.states.first?.value.flagValue == true ? "on" : "off"
     }
 }
