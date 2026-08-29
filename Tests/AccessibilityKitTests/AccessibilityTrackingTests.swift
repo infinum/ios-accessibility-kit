@@ -22,25 +22,24 @@ struct AccessibilityTrackingTests {
     ///
     @Test("Applies transforms to observed snapshots")
     @MainActor
-    func appliesTransformToObservedSnapshot() async {
+    func appliesTransformToObservedSnapshot() async throws {
         let kit = AccessibilityKit(
             monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())
         )
 
-        let snapshot: AccessibilitySnapshot = await withCheckedContinuation { continuation in
-            kit.configureAccessibilityTracking(
-                with: AccessibilityTrackingConfiguration(
-                    fetchType: .initial,
-                    objects: [
-                        AccessibilityTrackingObject(
-                            type: .fontScale,
-                            customIdentifier: "large_text_enabled",
-                            transform: { _ in .flag(true) }
-                        )
-                    ]
+        let configuration = try AccessibilityTrackingConfiguration(
+            fetchType: .initial,
+            objects: [
+                AccessibilityTrackingObject(
+                    type: .fontScale,
+                    customIdentifier: "large_text_enabled",
+                    transform: { _ in .flag(true) }
                 )
-            )
+            ]
+        )
+        kit.configureAccessibilityTracking(with: configuration)
 
+        let snapshot: AccessibilitySnapshot = await withCheckedContinuation { continuation in
             kit.observeAccessibilityTracking { snapshot in
                 continuation.resume(returning: snapshot)
             }
