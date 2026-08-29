@@ -7,6 +7,14 @@
 
 import Foundation
 
+///
+/// Holds the tracking configuration, owns a subject per tracked feature, and
+/// delivers snapshots to the registered observation.
+///
+/// Subject mutation is serialised with a barrier on `concurrentQueue`, and
+/// snapshot delivery hops that same queue so a snapshot can never overtake
+/// the subject configuration it belongs to. Completions run on the main queue.
+///
 final class AccessibilityMonitor {
 
     // MARK: - Public methods

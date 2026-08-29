@@ -41,7 +41,9 @@ This library provides an easy way to get the current state of the accessibility 
 
 The method `currentAccessibilitySnapshot(for:)`  returns a snapshot of a type `AccessibilitySnapshot` containing all the necessary information about the state of accessibility features on a current device. 
 
-To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. This class needs one parameter and accepts two more; the `type` defines the accessibility feature you want to track - defined as `AccessibilityType` enum, the optional `customIdentifier` of a type `String?` defines a custom identifier that will be used for that accessibility feature, and the optional `transform` corrects the reported value - described in [Correcting a value](#correcting-a-value).
+To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. It takes the `type` of accessibility feature to track, defined by the `AccessibilityType` enum, and optionally a `customIdentifier` to report that feature under and a `transform` to correct its value.
+
+Track each `AccessibilityType` at most once — a type has a single identifier, and tracking the same one twice reports it twice.
 
 A default identifier is used for every tracked accessibility feature when a custom identifier is not used. Default identifiers are defined as:
 
@@ -107,7 +109,7 @@ To track accessibility states in real-time, `AccessibilityKit` should be configu
 
 This method should get a configuration object as a parameter with all accessibility features that should be tracked. The class used for that is `AccessibilityTrackingConfiguration`.
 
-`AccessibilityTrackingConfiguration` class in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only one (`initial`), or it will continuously observe changes (`continuous`). The important note is that the first snapshot of the accessibility states will be returned immediately after tracking is configured.
+`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered.
 
 Another parameter needed for this configuration is an object of the type `AccessibilityTrackingObject`.
 
@@ -117,23 +119,23 @@ After the `AccessibilityKit` is configured, you can observe changes via` observe
 
 This method will return one or multiple snapshots based on the `fetchType` configured in the `AccessibilityTrackingConfiguration` init method.
 
-An object returned in the completion is of a type `AccessibilitySnapshot` which returns an array of the states for every of the tracked accessibility features.
+An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type. Snapshots are delivered on the main queue.
 
 The object type in the array is `AccessibilityState` which provides `type`, `name`, `value`, and `identifier`. All those properties can be used to identify every accessibility feature based on the type, name, value, or identifier.
 
-The `AccessibilitySnapshot` class has a method `toDictionary` that returns a dictionary of all tracked accessibility objects. Values (based on the example configuration) will be returned as:
+`AccessibilitySnapshot` is `Encodable`, and `toDictionary()` converts it for sending onward. The encoded form is a `values` array of `identifier` / `value` pairs:
 
 ```json
 {
     "values": [
         { "identifier": "bold_text", "value": true },
-        { "identifier": "button_shapes_enabled", "value": false },
-        { "identifier": "font_scaling", "value": 1.25 },
-        { "identifier": "reduce_motion", "value": false },
+        { "identifier": "font_scale", "value": 1.25 },
         { "identifier": "voice_over", "value": true }
     ]
 }
 ```
+
+The identifiers are the default ones from the table above. Any feature given a `customIdentifier` appears under that identifier instead.
 
 #### Accessibility monitor
 
@@ -141,8 +143,7 @@ The `AccessibilitySnapshot` class has a method `toDictionary` that returns a dic
 
 ### Getting started
 
-To add **AccessibilityKit** to your project, install the library via CocoaPods as 
-instructed above. 
+To add **AccessibilityKit** to your project, install it with Swift Package Manager as described in [Getting started](#getting-started).
 
 #### Getting current state
 
