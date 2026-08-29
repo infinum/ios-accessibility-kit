@@ -12,10 +12,10 @@ The list follows changes only when tracking is configured with
 ``AccessibilityFetchType/continuous``. Under ``AccessibilityFetchType/initial`` it shows the values
 from when it was presented.
 
-It observes through
-``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``, so tracking must be
-configured first. See <doc:ConfiguringContinuousTracking>. Only one observation is active at a
-time, so showing the monitor replaces your app's own; register again once it is dismissed.
+It observes the configured tracking on its own — presenting it does not replace an observation
+the app registered with
+``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``. Tracking must be
+configured first. See <doc:ConfiguringContinuousTracking>.
 
 ### From UIKit
 

@@ -12,10 +12,11 @@ final class AccessibilityMonitorViewModel: ObservableObject {
 
     @Published var states: [AccessibilityState] = []
 
-    init() {
-        AccessibilityKit.shared.observeAccessibilityTracking { [weak self] snapshot in
-            self?.states = snapshot.states
-        }
+    private let monitor: AccessibilityMonitor
+
+    init(monitor: AccessibilityMonitor = .shared) {
+        self.monitor = monitor
+        monitor.addSnapshotObserver(self)
     }
 
     private lazy var formatter = {
@@ -50,5 +51,14 @@ final class AccessibilityMonitorViewModel: ObservableObject {
         case .flag(let value):
             return value ? "Enabled" : "Disabled"
         }
+    }
+}
+
+// MARK: - AccessibilitySnapshotObserver
+
+extension AccessibilityMonitorViewModel: AccessibilitySnapshotObserver {
+
+    func accessibilitySnapshotDidChange(_ snapshot: AccessibilitySnapshot) {
+        states = snapshot.states
     }
 }
