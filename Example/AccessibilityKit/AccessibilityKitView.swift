@@ -12,6 +12,10 @@ struct AccessibilityKitView: View {
 
     @State var presentingModal = false
 
+    /// Read so the view is invalidated when the user changes their text size,
+    /// which re-reads the snapshots below.
+    @Environment(\.sizeCategory) private var sizeCategory
+
     var body: some View {
         VStack(spacing: 20) {
             Button("Accessibility tracking") {
