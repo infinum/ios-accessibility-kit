@@ -67,7 +67,7 @@ private extension AccessibilityMonitor {
         concurrentQueue.async(flags: .barrier) { [unowned self] in
             subjects.forEach { $0.removeObservers() }
             subjects = Set(configuration.objects.map(\.type))
-                .map(AccessibilitySubject.init(type: ))
+                .map { AccessibilitySubject(type: $0) }
             subjects.forEach { $0.addObserver(self) }
         }
     }
