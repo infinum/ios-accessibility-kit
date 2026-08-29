@@ -36,8 +36,9 @@ public struct AccessibilityState {
     /// The identifier the feature is reported under.
     ///
     /// This is the custom identifier supplied on the tracking object, or the
-    /// ``type``'s raw value when none was given. It is the key written to the
-    /// encoded output.
+    /// ``type``'s raw value when none was given. Each entry in the encoded
+    /// output carries it alongside the value, so it is how a feature is found
+    /// in the payload.
     ///
     public let identifier: String
 
