@@ -155,6 +155,27 @@ struct AccessibilityMonitorTests {
         #expect(second.count == 2)
         withExtendedLifetime(monitor) { }
     }
+
+    ///
+    /// Registering twice in one turn leaves both initial deliveries in flight.
+    /// Each must land in the completion that was registered when it was
+    /// created, not whichever happens to be registered when the hop completes.
+    ///
+    @Test("Delivers an in-flight snapshot to the completion that observed it")
+    func deliversInFlightSnapshotToItsOwnCompletion() async throws {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+
+        let first = EmissionCounter()
+        let second = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in first.increment() }
+        monitor.observeAccessibilityTracking { _ in second.increment() }
+        await poll(until: { first.count == 1 && second.count == 1 })
+
+        #expect(first.count == 1)
+        #expect(second.count == 1)
+        withExtendedLifetime(monitor) { }
+    }
 }
 
 // MARK: - Helpers
