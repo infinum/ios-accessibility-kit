@@ -9,6 +9,16 @@ import UIKit
 
 struct ReduceMotionAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isReduceMotionEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isReduceMotionEnabled: @escaping () -> Bool = { UIAccessibility.isReduceMotionEnabled }) {
+        self.isReduceMotionEnabled = isReduceMotionEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct ReduceMotionAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isReduceMotionEnabled),
+            value: .flag(isReduceMotionEnabled()),
             customIdentifier: customIdentifier
         )
     }

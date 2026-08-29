@@ -9,6 +9,16 @@ import UIKit
 
 struct DifferentiateWithoutColorAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let shouldDifferentiateWithoutColor: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(shouldDifferentiateWithoutColor: @escaping () -> Bool = { UIAccessibility.shouldDifferentiateWithoutColor }) {
+        self.shouldDifferentiateWithoutColor = shouldDifferentiateWithoutColor
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct DifferentiateWithoutColorAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.shouldDifferentiateWithoutColor),
+            value: .flag(shouldDifferentiateWithoutColor()),
             customIdentifier: customIdentifier
         )
     }

@@ -9,6 +9,16 @@ import UIKit
 
 struct DarkerSystemColorsAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isDarkerSystemColorsEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isDarkerSystemColorsEnabled: @escaping () -> Bool = { UIAccessibility.isDarkerSystemColorsEnabled }) {
+        self.isDarkerSystemColorsEnabled = isDarkerSystemColorsEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct DarkerSystemColorsAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isDarkerSystemColorsEnabled),
+            value: .flag(isDarkerSystemColorsEnabled()),
             customIdentifier: customIdentifier
         )
     }

@@ -9,6 +9,16 @@ import UIKit
 
 struct ButtonShapesAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let buttonShapesEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(buttonShapesEnabled: @escaping () -> Bool = { UIAccessibility.buttonShapesEnabled }) {
+        self.buttonShapesEnabled = buttonShapesEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct ButtonShapesAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.buttonShapesEnabled),
+            value: .flag(buttonShapesEnabled()),
             customIdentifier: customIdentifier
         )
     }
