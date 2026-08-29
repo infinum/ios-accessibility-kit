@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum AccessibilityType: String, Encodable {
+public enum AccessibilityType: String, CaseIterable, Encodable {
     case assistiveTouch = "assistive_touch"
     case boldText = "bold_text"
     case buttonShapes = "button_shapes"
