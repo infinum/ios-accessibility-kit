@@ -38,6 +38,11 @@ public struct AccessibilityMonitorView: View {
         self.onDismiss = onDismiss
     }
 
+    ///
+    /// The monitor's content: one row per tracked accessibility feature,
+    /// showing its name, the identifier it is reported under, and its current
+    /// value.
+    ///
     public var body: some View {
         NavigationView {
             ZStack {
