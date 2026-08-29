@@ -33,7 +33,7 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.settle()
+        await Self.wait(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await Self.settle()
@@ -49,10 +49,10 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.settle()
+        await Self.wait(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.settle()
+        await Self.wait(until: { counter.count == 2 })
 
         #expect(counter.count == 2)
     }
@@ -71,9 +71,13 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.settle()
+        await Self.wait(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
+        await Self.wait(until: { counter.count == 2 })
+
+        // The replaced configuration's feature must no longer be observed.
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await Self.settle()
 
         #expect(counter.count == 2)
@@ -91,9 +95,24 @@ private extension AccessibilityMonitorTests {
         )
     }
 
-    /// Lets the monitor's queue hop and its main-queue delivery complete.
+    ///
+    /// Polls until the expectation holds, so a positive assertion never
+    /// depends on a fixed delay being long enough.
+    ///
+    static func wait(until condition: () -> Bool, timeout: TimeInterval = 2) async {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 5_000_000)
+        }
+    }
+
+    ///
+    /// A fixed wait, used only where the assertion is that nothing *further*
+    /// happens — absence cannot be established by polling.
+    ///
     static func settle() async {
-        try? await Task.sleep(nanoseconds: 100_000_000)
+        try? await Task.sleep(nanoseconds: 200_000_000)
     }
 }
 
