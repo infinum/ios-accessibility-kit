@@ -8,8 +8,9 @@ The monitor is a screen listing every tracked accessibility feature with the ide
 reported under and its current value. It is a development aid: it shows exactly what your app
 reports, including any `transform` applied, so the screen and your payload can never disagree.
 
-It observes through
-``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``, so tracking must be
+It observes the configured tracking on its own — presenting it does not replace an observation
+the app registered with
+``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``. Tracking must be
 configured first. See <doc:ConfiguringContinuousTracking>.
 
 ### From UIKit

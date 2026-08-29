@@ -176,6 +176,64 @@ struct AccessibilityMonitorTests {
         #expect(second.count == 1)
         withExtendedLifetime(monitor) { }
     }
+
+    @Test("Delivers the current snapshot to a newly added snapshot observer")
+    func deliversCurrentSnapshotToANewSnapshotObserver() async throws {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { !observer.snapshots.isEmpty })
+
+        #expect(observer.snapshots.count == 1)
+        #expect(observer.snapshots.first?.states.first?.type == .voiceOver)
+        withExtendedLifetime(monitor) { }
+    }
+
+    @Test("Notifies snapshot observers on every change")
+    func notifiesSnapshotObserversOnEveryChange() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { observer.snapshots.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await poll(until: { observer.snapshots.count == 2 })
+
+        #expect(observer.snapshots.count == 2)
+        withExtendedLifetime(monitor) { }
+    }
+
+    @Test("Delivers nothing to a snapshot observer when tracking is unconfigured")
+    func deliversNothingToASnapshotObserverWithoutConfiguration() async {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await settle()
+
+        #expect(observer.snapshots.isEmpty)
+        withExtendedLifetime(monitor) { }
+    }
+
+    @Test("Does not retain its snapshot observers")
+    func doesNotRetainSnapshotObservers() {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        weak var released: SpySnapshotObserver?
+
+        do {
+            let observer = SpySnapshotObserver()
+            released = observer
+            monitor.addSnapshotObserver(observer)
+        }
+
+        #expect(released == nil)
+        withExtendedLifetime(monitor) { }
+    }
 }
 
 // MARK: - Helpers
@@ -201,5 +259,20 @@ private final class MainThreadRecorder {
 
     func record(_ value: Bool) {
         wasMainThread = value
+    }
+}
+
+// MARK: - Spy
+
+///
+/// Records every snapshot delivered to it, on the main queue.
+///
+@MainActor
+private final class SpySnapshotObserver: AccessibilitySnapshotObserver {
+
+    private(set) var snapshots = [AccessibilitySnapshot]()
+
+    func accessibilitySnapshotDidChange(_ snapshot: AccessibilitySnapshot) {
+        snapshots.append(snapshot)
     }
 }

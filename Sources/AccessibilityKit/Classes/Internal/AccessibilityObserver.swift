@@ -14,3 +14,13 @@ protocol Observer: AnyObject {}
 protocol AccessibilityObserver: Observer {
     func accessibilityStateDidChange(_ state: AccessibilityState)
 }
+
+///
+/// A weakly held listener that receives whole snapshots — the accessibility
+/// monitor UI — without touching the completion the app registered through
+/// ``AccessibilityKit/observeAccessibilityTracking(completion:)``.
+///
+@MainActor
+protocol AccessibilitySnapshotObserver: AnyObject {
+    func accessibilitySnapshotDidChange(_ snapshot: AccessibilitySnapshot)
+}

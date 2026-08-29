@@ -9,7 +9,9 @@ import Foundation
 
 ///
 /// Holds the tracking configuration, owns a subject per tracked feature, and
-/// delivers snapshots to the registered observation.
+/// delivers snapshots to the registered observation and to any snapshot
+/// observers — the accessibility monitor UI — which are held weakly and never
+/// disturb the observation.
 ///
 /// Everything it does is main-actor work — reading accessibility state means
 /// touching `@MainActor` UIKit statics — so the main actor serialises subject
@@ -32,6 +34,7 @@ final class AccessibilityMonitor {
         }
     }
     private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
+    private var snapshotObservers = [WeakSnapshotObserver]()
     private var subjects = [Subject]()
     private let notificationCenter: NotificationCenter
 
@@ -53,7 +56,31 @@ final class AccessibilityMonitor {
 
     func observeAccessibilityTracking(completion: @escaping (AccessibilitySnapshot) -> Void) {
         snapshotChangeHandler = completion
-        createSnapshot(isInitial: true)
+
+        guard let snapshot = configuredSnapshot() else { return }
+        // Delivered asynchronously so the completion never runs inside the
+        // caller's own registration call, and captured here so the snapshot
+        // lands in this completion even if it is replaced while in flight.
+        DispatchQueue.main.async {
+            completion(snapshot)
+        }
+    }
+
+    ///
+    /// Registers an additional, weakly held snapshot listener. It receives
+    /// the current snapshot on registration and every change thereafter,
+    /// without touching the completion registered through
+    /// ``observeAccessibilityTracking(completion:)``.
+    ///
+    func addSnapshotObserver(_ observer: AccessibilitySnapshotObserver) {
+        pruneSnapshotObservers()
+        guard !snapshotObservers.contains(where: { $0.observer === observer }) else { return }
+        snapshotObservers.append(WeakSnapshotObserver(observer: observer))
+
+        guard let snapshot = configuredSnapshot() else { return }
+        DispatchQueue.main.async { [weak observer] in
+            observer?.accessibilitySnapshotDidChange(snapshot)
+        }
     }
 }
 
@@ -62,7 +89,21 @@ final class AccessibilityMonitor {
 extension AccessibilityMonitor: AccessibilityObserver {
 
     func accessibilityStateDidChange(_ state: AccessibilityState) {
-        createSnapshot()
+        guard
+            configuration?.fetchType == .continuous,
+            let snapshot = configuredSnapshot()
+        else { return }
+
+        pruneSnapshotObservers()
+        // The completion and observers are captured here, at scheduling time,
+        // so a snapshot lands with whoever was registered when the change
+        // occurred — never with a replacement registered while in flight.
+        let handler = snapshotChangeHandler
+        let observers = snapshotObservers
+        DispatchQueue.main.async {
+            handler?(snapshot)
+            observers.forEach { $0.observer?.accessibilitySnapshotDidChange(snapshot) }
+        }
     }
 }
 
@@ -79,23 +120,24 @@ private extension AccessibilityMonitor {
         subjects.forEach { $0.addObserver(self) }
     }
 
-    func createSnapshot(isInitial: Bool = false) {
-        guard
-            let configuration = configuration,
-            (configuration.fetchType == .continuous || isInitial)
-        else { return }
+    func configuredSnapshot() -> AccessibilitySnapshot? {
+        guard let configuration = configuration else { return nil }
 
-        let snapshot = AccessibilitySnapshot(
-            trackingObjects: configuration.objects
-        )
-        // Delivered asynchronously so a completion never runs inside the
-        // caller's own call to `observeAccessibilityTracking(completion:)`.
-        // The completion is captured here, at scheduling time, so a snapshot
-        // lands in the completion that was registered when it was created —
-        // never in a replacement registered while the delivery was in flight.
-        let handler = snapshotChangeHandler
-        DispatchQueue.main.async {
-            handler?(snapshot)
-        }
+        return AccessibilitySnapshot(trackingObjects: configuration.objects)
     }
+
+    func pruneSnapshotObservers() {
+        snapshotObservers.removeAll(where: { $0.observer == nil })
+    }
+}
+
+// MARK: - Weak snapshot observer
+
+///
+/// Snapshot observers are held weakly: the monitor outlives the views
+/// listening to it, and must not keep them alive.
+///
+private struct WeakSnapshotObserver {
+
+    weak var observer: AccessibilitySnapshotObserver?
 }
