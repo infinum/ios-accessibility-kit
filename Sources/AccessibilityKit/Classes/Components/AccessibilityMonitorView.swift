@@ -30,7 +30,10 @@ import SwiftUI
 ///
 public struct AccessibilityMonitorView: View {
 
-    @ObservedObject private var viewModel = AccessibilityMonitorViewModel()
+    // `@StateObject`, not `@ObservedObject`: an observed object built inline
+    // is re-created on every re-render, and the monitor holds its snapshot
+    // observers weakly — the view must own one stable view model.
+    @StateObject private var viewModel = AccessibilityMonitorViewModel()
     let onDismiss: () -> Void
 
     ///
