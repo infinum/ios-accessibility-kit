@@ -10,12 +10,12 @@ import UIKit
 @Suite("AccessibilityObjectFactory")
 struct AccessibilityObjectFactoryTests {
 
-    static let allTypes: [AccessibilityType] = [
-        .assistiveTouch, .boldText, .buttonShapes, .closedCaptioning, .crossFadeTransitions,
-        .darkerSystemColors, .differentiateWithoutColor, .fontScale, .grayscale, .guidedAccess,
-        .invertColors, .monoAudio, .onOffSwitchLabels, .reduceMotion, .reduceTransparency,
-        .shakeToUndo, .speakScreen, .speakSelection, .switchControl, .videoAutoplay, .voiceOver
-    ]
+    static let allTypes = AccessibilityType.allCases
+
+    @Test("Covers every accessibility type")
+    func coversEveryType() {
+        #expect(Self.allTypes.count == 21)
+    }
 
     @Test("Produces an object carrying the requested type", arguments: allTypes)
     func producesMatchingType(type: AccessibilityType) {
@@ -58,8 +58,8 @@ private extension AccessibilityObjectFactoryTests {
 
     ///
     /// Exhaustive switches: adding a case to `AccessibilityType` fails to
-    /// compile here until both expectations are filled in, which puts the
-    /// author next to `allTypes` above.
+    /// compile here until both expectations are filled in. `allCases` then
+    /// carries the new case into every test above automatically.
     ///
     static func expectedName(for type: AccessibilityType) -> String {
         switch type {
