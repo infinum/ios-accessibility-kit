@@ -23,13 +23,11 @@ struct AccessibilityMonitorTests {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
         monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
-        let isMain: Bool = await withCheckedContinuation { continuation in
-            monitor.observeAccessibilityTracking { _ in
-                continuation.resume(returning: Thread.isMainThread)
-            }
-        }
+        let recorder = MainThreadRecorder()
+        monitor.observeAccessibilityTracking { _ in recorder.record(Thread.isMainThread) }
+        await poll(until: { recorder.wasMainThread != nil })
 
-        #expect(isMain)
+        #expect(recorder.wasMainThread == true)
         withExtendedLifetime(monitor) { }
     }
 
@@ -41,10 +39,10 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.settle()
+        await settle()
 
         #expect(counter.count == 1)
         withExtendedLifetime(monitor) { }
@@ -58,10 +56,10 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { counter.count == 2 })
+        await poll(until: { counter.count == 2 })
 
         #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
@@ -81,10 +79,10 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { counter.count == 2 })
+        await poll(until: { counter.count == 2 })
 
         // Asserted before the next post: polling returns at its timeout
         // without failing, so a boldText change that never arrived would
@@ -93,7 +91,7 @@ struct AccessibilityMonitorTests {
 
         // The replaced configuration's feature must no longer be observed.
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.settle()
+        await settle()
 
         #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
@@ -107,7 +105,7 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         monitor.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
@@ -115,10 +113,10 @@ struct AccessibilityMonitorTests {
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
-        await Self.settle()
+        await settle()
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { counter.count == 2 })
+        await poll(until: { counter.count == 2 })
 
         #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
@@ -130,7 +128,7 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.settle()
+        await settle()
 
         #expect(counter.count == 0)
         withExtendedLifetime(monitor) { }
@@ -145,13 +143,13 @@ struct AccessibilityMonitorTests {
         let first = EmissionCounter()
         let second = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in first.increment() }
-        await Self.wait(until: { first.count == 1 })
+        await poll(until: { first.count == 1 })
 
         monitor.observeAccessibilityTracking { _ in second.increment() }
-        await Self.wait(until: { second.count == 1 })
+        await poll(until: { second.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { second.count == 2 })
+        await poll(until: { second.count == 2 })
 
         #expect(first.count == 1)
         #expect(second.count == 2)
@@ -170,40 +168,17 @@ private extension AccessibilityMonitorTests {
         )
     }
 
-    ///
-    /// Polls until the expectation holds, so a positive assertion never
-    /// depends on a fixed delay being long enough. The timeout is generous
-    /// because a cold simulator has been seen to delay a main-queue
-    /// delivery past two seconds.
-    ///
-    static func wait(until condition: () -> Bool, timeout: TimeInterval = 5) async {
-        let deadline = Date().addingTimeInterval(timeout)
-
-        while !condition() && Date() < deadline {
-            try? await Task.sleep(nanoseconds: 5_000_000)
-        }
-    }
-
-    ///
-    /// A fixed wait, used only where the assertion is that nothing *further*
-    /// happens — absence cannot be established by polling.
-    ///
-    static func settle() async {
-        try? await Task.sleep(nanoseconds: 200_000_000)
-    }
 }
 
 ///
-/// Main-actor isolated, like everything else here: the monitor delivers on
-/// the main actor and the tests poll from it, so the count needs no lock of
-/// its own - the isolation is the guarantee, and the compiler checks it.
+/// Records whether the delivery arrived on the main thread.
 ///
 @MainActor
-private final class EmissionCounter {
+private final class MainThreadRecorder {
 
-    private(set) var count = 0
+    private(set) var wasMainThread: Bool?
 
-    func increment() {
-        count += 1
+    func record(_ value: Bool) {
+        wasMainThread = value
     }
 }
