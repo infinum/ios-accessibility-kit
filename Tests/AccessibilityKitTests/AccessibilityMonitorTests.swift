@@ -24,12 +24,11 @@ struct AccessibilityMonitorTests {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
         monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
-        let counter = EmissionCounter()
-        monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        let recorder = MainThreadRecorder()
+        monitor.observeAccessibilityTracking { _ in recorder.record(Thread.isMainThread) }
+        await poll(until: { recorder.wasMainThread != nil })
 
-        #expect(counter.count == 1)
-        #expect(counter.lastDeliveryWasOnMainThread == true)
+        #expect(recorder.wasMainThread == true)
         withExtendedLifetime(monitor) { }
     }
 
@@ -41,10 +40,10 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.settle()
+        await settle()
 
         #expect(counter.count == 1)
         withExtendedLifetime(monitor) { }
@@ -58,15 +57,15 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { counter.count == 2 })
+        await poll(until: { counter.count == 2 })
 
         #expect(counter.count == 2)
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { counter.count == 3 })
+        await poll(until: { counter.count == 3 })
 
         #expect(counter.count == 3)
         withExtendedLifetime(monitor) { }
@@ -86,10 +85,10 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { counter.count == 2 })
+        await poll(until: { counter.count == 2 })
 
         // Asserted before the next post: polling returns at its timeout
         // without failing, so a boldText change that never arrived would
@@ -98,7 +97,7 @@ struct AccessibilityMonitorTests {
 
         // The replaced configuration's feature must no longer be observed.
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.settle()
+        await settle()
 
         #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
@@ -119,7 +118,7 @@ struct AccessibilityMonitorTests {
             monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
             monitor.observeAccessibilityTracking { _ in counter.increment() }
             released = monitor
-            await Self.wait(until: { counter.count == 1 })
+            await poll(until: { counter.count == 1 })
         }
 
         #expect(counter.count == 1)
@@ -134,7 +133,7 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         monitor.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
@@ -142,16 +141,16 @@ struct AccessibilityMonitorTests {
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
-        await Self.settle()
+        await settle()
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { counter.count == 2 })
+        await poll(until: { counter.count == 2 })
 
         #expect(counter.count == 2)
 
         // The replaced configuration's feature must no longer be observed.
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.settle()
+        await settle()
 
         #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
@@ -182,11 +181,11 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { counter.record($0) }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         center.post(name: UIContentSizeCategory.didChangeNotification, object: nil)
-        await Self.wait(until: { counter.count >= 2 })
-        await Self.settle()
+        await poll(until: { counter.count >= 2 })
+        await settle()
 
         #expect(counter.count == 2)
         #expect(Set(counter.lastIdentifiers) == ["font_scale", "large_text_enabled"])
@@ -211,7 +210,7 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { counter.record($0) }
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         monitor.configureAccessibilityTracking(
@@ -221,7 +220,7 @@ struct AccessibilityMonitorTests {
             )
         )
         monitor.observeAccessibilityTracking { counter.record($0) }
-        await Self.wait(until: { counter.emittedTypes.contains([.boldText]) })
+        await poll(until: { counter.emittedTypes.contains([.boldText]) })
 
         #expect(counter.emittedTypes == [[.voiceOver], [.boldText]])
         withExtendedLifetime(monitor) { }
@@ -241,7 +240,7 @@ struct AccessibilityMonitorTests {
 
         #expect(counter.count == 0)
 
-        await Self.wait(until: { counter.count == 1 })
+        await poll(until: { counter.count == 1 })
 
         #expect(counter.count == 1)
         withExtendedLifetime(monitor) { }
@@ -269,7 +268,7 @@ struct AccessibilityMonitorTests {
             )
         )
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { counter.emittedTypes.contains([.boldText]) })
+        await poll(until: { counter.emittedTypes.contains([.boldText]) })
 
         #expect(counter.emittedTypes == [[.boldText]])
         withExtendedLifetime(monitor) { }
@@ -281,7 +280,7 @@ struct AccessibilityMonitorTests {
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
-        await Self.settle()
+        await settle()
 
         #expect(counter.count == 0)
         withExtendedLifetime(monitor) { }
@@ -296,13 +295,13 @@ struct AccessibilityMonitorTests {
         let first = EmissionCounter()
         let second = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in first.increment() }
-        await Self.wait(until: { first.count == 1 })
+        await poll(until: { first.count == 1 })
 
         monitor.observeAccessibilityTracking { _ in second.increment() }
-        await Self.wait(until: { second.count == 1 })
+        await poll(until: { second.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await Self.wait(until: { second.count == 2 })
+        await poll(until: { second.count == 2 })
 
         #expect(first.count == 1)
         #expect(second.count == 2)
@@ -321,52 +320,17 @@ private extension AccessibilityMonitorTests {
         )
     }
 
-    ///
-    /// Polls until the expectation holds, so a positive assertion never
-    /// depends on a fixed delay being long enough. The timeout is generous
-    /// because a cold simulator has been seen to delay a main-queue
-    /// delivery past two seconds.
-    ///
-    static func wait(until condition: () -> Bool, timeout: TimeInterval = 5) async {
-        let deadline = Date().addingTimeInterval(timeout)
-
-        while !condition() && Date() < deadline {
-            try? await Task.sleep(nanoseconds: 5_000_000)
-        }
-    }
-
-    ///
-    /// A fixed wait, used only where the assertion is that nothing *further*
-    /// happens — absence cannot be established by polling.
-    ///
-    static func settle() async {
-        try? await Task.sleep(nanoseconds: 200_000_000)
-    }
 }
 
 ///
-/// Main-actor isolated, like everything else here: the monitor delivers on
-/// the main actor and the tests poll from it, so the count needs no lock of
-/// its own - the isolation is the guarantee, and the compiler checks it.
+/// Records whether the delivery arrived on the main thread.
 ///
 @MainActor
-private final class EmissionCounter {
+private final class MainThreadRecorder {
 
-    private(set) var count = 0
-    /// The features each emitted snapshot reported, in delivery order.
-    private(set) var emittedTypes = [[AccessibilityType]]()
-    private(set) var lastDeliveryWasOnMainThread: Bool?
-    /// The identifiers the most recently recorded snapshot reported.
-    private(set) var lastIdentifiers = [String]()
+    private(set) var wasMainThread: Bool?
 
-    func increment() {
-        count += 1
-        lastDeliveryWasOnMainThread = Thread.isMainThread
-    }
-
-    func record(_ snapshot: AccessibilitySnapshot) {
-        emittedTypes.append(snapshot.states.map(\.type))
-        lastIdentifiers = snapshot.states.map(\.identifier)
-        increment()
+    func record(_ value: Bool) {
+        wasMainThread = value
     }
 }
