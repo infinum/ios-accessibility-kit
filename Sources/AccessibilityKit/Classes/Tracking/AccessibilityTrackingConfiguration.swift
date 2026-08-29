@@ -13,12 +13,18 @@ public struct AccessibilityTrackingObject {
 
     let customIdentifier: String?
     let type: AccessibilityType
+    let transform: (@Sendable (AccessibilityValue) -> AccessibilityValue)?
 
     // MARK: - Lifecycle
 
-    public init (type: AccessibilityType, customIdentifier: String? = nil) {
+    public init (
+        type: AccessibilityType,
+        customIdentifier: String? = nil,
+        transform: (@Sendable (AccessibilityValue) -> AccessibilityValue)? = nil
+    ) {
         self.type = type
         self.customIdentifier = customIdentifier
+        self.transform = transform
     }
 }
 
