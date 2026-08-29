@@ -41,11 +41,11 @@ public enum AccessibilityTrackingError: Error, Equatable {
 /// )
 /// ```
 ///
-/// Every tracking object needs an identifier of its own: identifiers key
-/// both the encoded output and the rows of the accessibility monitor. Give
-/// an object a `customIdentifier` when its transform changes the kind of
-/// value, and when the same ``AccessibilityType`` is tracked more than once —
-/// raw and corrected, say.
+/// Track each ``AccessibilityType`` at most once. A feature has a single
+/// identifier, so supplying the same type twice is rejected:
+/// ``AccessibilityTrackingConfiguration/init(fetchType:objects:)`` and
+/// ``AccessibilityKit/currentAccessibilitySnapshot(for:)`` throw
+/// ``AccessibilityTrackingError/duplicateType(_:)``.
 ///
 public struct AccessibilityTrackingObject: Sendable {
 
@@ -107,15 +107,15 @@ public enum AccessibilityFetchType: Sendable {
 /// with ``AccessibilityKit/observeAccessibilityTracking(completion:)``:
 ///
 /// ```swift
-/// AccessibilityKit.shared.configureAccessibilityTracking(
-///     with: AccessibilityTrackingConfiguration(
-///         fetchType: .continuous,
-///         objects: [
-///             AccessibilityTrackingObject(type: .boldText),
-///             AccessibilityTrackingObject(type: .voiceOver)
-///         ]
-///     )
+/// let configuration = try AccessibilityTrackingConfiguration(
+///     fetchType: .continuous,
+///     objects: [
+///         AccessibilityTrackingObject(type: .boldText),
+///         AccessibilityTrackingObject(type: .voiceOver)
+///     ]
 /// )
+///
+/// AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 /// ```
 ///
 public struct AccessibilityTrackingConfiguration: Sendable {
