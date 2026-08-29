@@ -13,6 +13,15 @@ protocol Subject: AnyObject {
     func removeObservers()
 }
 
+///
+/// Watches one accessibility feature and fans its changes out to observers.
+///
+/// One subject exists per tracked ``AccessibilityType``. It listens for that
+/// feature's system notification and, on each one, reads a fresh state and
+/// hands it to every registered observer.
+///
+/// Observers are held weakly, so a subject never keeps its listeners alive.
+///
 class AccessibilitySubject {
 
     // MARK: - Internal properties
