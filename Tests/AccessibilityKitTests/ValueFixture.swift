@@ -11,7 +11,7 @@
 /// conformance; adding one belongs to the Swift 6 migration, not here.
 /// This payload-free enum stands in for it in parameterised tests.
 ///
-enum ValueFixture: CaseIterable, Sendable {
+enum ValueFixture: CaseIterable, Equatable, Sendable {
     case flag
     case number
     case scale
