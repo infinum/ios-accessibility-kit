@@ -9,6 +9,16 @@ import UIKit
 
 struct VideoAutoplayAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isVideoAutoplayEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isVideoAutoplayEnabled: @escaping () -> Bool = { UIAccessibility.isVideoAutoplayEnabled }) {
+        self.isVideoAutoplayEnabled = isVideoAutoplayEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct VideoAutoplayAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isVideoAutoplayEnabled),
+            value: .flag(isVideoAutoplayEnabled()),
             customIdentifier: customIdentifier
         )
     }

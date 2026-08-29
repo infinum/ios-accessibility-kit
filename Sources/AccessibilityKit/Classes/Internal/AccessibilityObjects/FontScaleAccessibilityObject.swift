@@ -9,6 +9,19 @@ import UIKit
 
 struct FontScaleAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let contentSizeCategory: () -> UIContentSizeCategory
+
+    // MARK: - Lifecycle
+
+    init(
+        contentSizeCategory: @escaping () -> UIContentSizeCategory
+            = { UIApplication.shared.preferredContentSizeCategory }
+    ) {
+        self.contentSizeCategory = contentSizeCategory
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -69,9 +82,7 @@ private extension FontScaleAccessibilityObject {
     /// The `large` category is set as a default (normal) scale.
     ///
     var fontScale: Double {
-        let preferredFontSize = preferredFontSize(
-            for: UIApplication.shared.preferredContentSizeCategory
-        )
+        let preferredFontSize = preferredFontSize(for: contentSizeCategory())
         return preferredFontSize.rawValue / FontSize.l.rawValue
     }
 

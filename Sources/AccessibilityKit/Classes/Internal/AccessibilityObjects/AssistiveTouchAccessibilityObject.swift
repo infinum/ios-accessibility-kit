@@ -9,6 +9,16 @@ import UIKit
 
 struct AssistiveTouchAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isAssistiveTouchRunning: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isAssistiveTouchRunning: @escaping () -> Bool = { UIAccessibility.isAssistiveTouchRunning }) {
+        self.isAssistiveTouchRunning = isAssistiveTouchRunning
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct AssistiveTouchAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isAssistiveTouchRunning),
+            value: .flag(isAssistiveTouchRunning()),
             customIdentifier: customIdentifier
         )
     }

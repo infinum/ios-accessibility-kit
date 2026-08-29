@@ -9,6 +9,16 @@ import UIKit
 
 struct OnOffSwitchLabelsAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isOnOffSwitchLabelsEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isOnOffSwitchLabelsEnabled: @escaping () -> Bool = { UIAccessibility.isOnOffSwitchLabelsEnabled }) {
+        self.isOnOffSwitchLabelsEnabled = isOnOffSwitchLabelsEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct OnOffSwitchLabelsAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isOnOffSwitchLabelsEnabled),
+            value: .flag(isOnOffSwitchLabelsEnabled()),
             customIdentifier: customIdentifier
         )
     }

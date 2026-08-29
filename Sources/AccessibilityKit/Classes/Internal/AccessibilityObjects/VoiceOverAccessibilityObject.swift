@@ -9,6 +9,16 @@ import UIKit
 
 struct VoiceOverAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isVoiceOverRunning: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isVoiceOverRunning: @escaping () -> Bool = { UIAccessibility.isVoiceOverRunning }) {
+        self.isVoiceOverRunning = isVoiceOverRunning
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct VoiceOverAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isVoiceOverRunning),
+            value: .flag(isVoiceOverRunning()),
             customIdentifier: customIdentifier
         )
     }

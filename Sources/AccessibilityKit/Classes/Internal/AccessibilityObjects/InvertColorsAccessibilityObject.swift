@@ -9,6 +9,16 @@ import UIKit
 
 struct InvertColorsAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isInvertColorsEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isInvertColorsEnabled: @escaping () -> Bool = { UIAccessibility.isInvertColorsEnabled }) {
+        self.isInvertColorsEnabled = isInvertColorsEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct InvertColorsAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isInvertColorsEnabled),
+            value: .flag(isInvertColorsEnabled()),
             customIdentifier: customIdentifier
         )
     }

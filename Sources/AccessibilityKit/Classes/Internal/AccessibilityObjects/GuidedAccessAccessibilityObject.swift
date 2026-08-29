@@ -9,6 +9,16 @@ import UIKit
 
 struct GuidedAccessAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isGuidedAccessEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isGuidedAccessEnabled: @escaping () -> Bool = { UIAccessibility.isGuidedAccessEnabled }) {
+        self.isGuidedAccessEnabled = isGuidedAccessEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct GuidedAccessAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isGuidedAccessEnabled),
+            value: .flag(isGuidedAccessEnabled()),
             customIdentifier: customIdentifier
         )
     }

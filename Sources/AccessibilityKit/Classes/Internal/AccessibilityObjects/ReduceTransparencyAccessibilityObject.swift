@@ -9,6 +9,16 @@ import UIKit
 
 struct ReduceTransparencyAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isReduceTransparencyEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isReduceTransparencyEnabled: @escaping () -> Bool = { UIAccessibility.isReduceTransparencyEnabled }) {
+        self.isReduceTransparencyEnabled = isReduceTransparencyEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct ReduceTransparencyAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isReduceTransparencyEnabled),
+            value: .flag(isReduceTransparencyEnabled()),
             customIdentifier: customIdentifier
         )
     }
