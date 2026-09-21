@@ -97,9 +97,11 @@ private extension AccessibilityMonitorTests {
 
     ///
     /// Polls until the expectation holds, so a positive assertion never
-    /// depends on a fixed delay being long enough.
+    /// depends on a fixed delay being long enough. The timeout is generous
+    /// because a cold simulator has been seen to delay a main-queue
+    /// delivery past two seconds.
     ///
-    static func wait(until condition: () -> Bool, timeout: TimeInterval = 2) async {
+    static func wait(until condition: () -> Bool, timeout: TimeInterval = 5) async {
         let deadline = Date().addingTimeInterval(timeout)
 
         while !condition() && Date() < deadline {
@@ -116,12 +118,24 @@ private extension AccessibilityMonitorTests {
     }
 }
 
-/// Only ever touched on the main queue, where the monitor delivers.
+///
+/// Written on the main queue, where the monitor delivers, and read from the
+/// test task that polls it, so the count is guarded.
+///
 private final class EmissionCounter {
 
-    private(set) var count = 0
+    private let lock = NSLock()
+    private var value = 0
+
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
 
     func increment() {
-        count += 1
+        lock.lock()
+        defer { lock.unlock() }
+        value += 1
     }
 }
