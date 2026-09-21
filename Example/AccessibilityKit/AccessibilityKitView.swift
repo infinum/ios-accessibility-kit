@@ -57,7 +57,10 @@ private extension AccessibilityKitView {
         )
 
         let corrected = AccessibilitySnapshot(
-            states: snapshot.states.map { $0.withValue(.flag(Self.isLargeText($0.value))) }
+            states: snapshot.states.map { state in
+                guard state.type == .fontScale else { return state }
+                return state.withValue(.flag(Self.isLargeText(state.value)))
+            }
         )
         return Self.label(for: corrected)
     }
