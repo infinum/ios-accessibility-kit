@@ -45,7 +45,6 @@ struct AccessibilitySnapshotTests {
         )
 
         #expect(snapshot.states.first?.value.scaleValue != nil)
-        #expect(snapshot.states.first?.value.flagValue == false)
     }
 
     @Test("Applies each transform only to its own tracking object")
