@@ -23,26 +23,12 @@ public struct AccessibilityState {
         type: AccessibilityType,
         name: String,
         value: AccessibilityValue,
-        identifier: String
+        customIdentifier: String? = nil
     ) {
         self.type = type
         self.name = name
         self.value = value
-        self.identifier = identifier
-    }
-
-    init(
-        type: AccessibilityType,
-        name: String,
-        value: AccessibilityValue,
-        customIdentifier: String? = nil
-    ) {
-        self.init(
-            type: type,
-            name: name,
-            value: value,
-            identifier: customIdentifier ?? type.rawValue
-        )
+        self.identifier = customIdentifier ?? type.rawValue
     }
 }
 
@@ -106,7 +92,7 @@ public extension AccessibilityState {
             type: type,
             name: name,
             value: value,
-            identifier: identifier
+            customIdentifier: identifier
         )
     }
 }
