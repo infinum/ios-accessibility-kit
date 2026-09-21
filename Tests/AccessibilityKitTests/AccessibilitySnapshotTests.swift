@@ -29,7 +29,7 @@ struct AccessibilitySnapshotTests {
                 AccessibilityTrackingObject(
                     type: .fontScale,
                     customIdentifier: "large_text_enabled",
-                    transform: { _ in .flag(true) }
+                    transform: { value in .flag(value.scaleValue != nil) }
                 )
             ]
         )

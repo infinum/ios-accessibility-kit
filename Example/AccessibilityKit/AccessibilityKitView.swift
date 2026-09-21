@@ -53,7 +53,10 @@ private extension AccessibilityKitView {
     ///
     var correctedAfterTheFact: String {
         let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
-            for: [AccessibilityTrackingObject(type: .fontScale)]
+            for: [
+                AccessibilityTrackingObject(type: .fontScale),
+                AccessibilityTrackingObject(type: .voiceOver)
+            ]
         )
 
         let corrected = AccessibilitySnapshot(
