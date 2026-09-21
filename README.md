@@ -120,7 +120,7 @@ The `AccessibilitySnapshot` class has a method `toDictionary` that returns a dic
     "values": [
         { "identifier": "bold_text", "value": true },
         { "identifier": "button_shapes_enabled", "value": false },
-        { "identifier": "font_scalling", "value": 1.25 },
+        { "identifier": "font_scaling", "value": 1.25 },
         { "identifier": "reduce_motion", "value": false },
         { "identifier": "voice_over", "value": true }
     ]
@@ -146,7 +146,7 @@ let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
         AccessibilityTrackingObject(type: .boldText),
         AccessibilityTrackingObject(
             type: .fontScale, 
-            customIdentifier: "font_scalling"
+            customIdentifier: "font_scaling"
         )
     ]
 )
@@ -170,7 +170,7 @@ AccessibilityKit.shared.configureAccessibilityTracking(
             ),
             AccessibilityTrackingObject(
                 type: .fontScale, 
-                customIdentifier: "font_scalling"
+                customIdentifier: "font_scaling"
             ),
             AccessibilityTrackingObject(type: .reduceMotion),
             AccessibilityTrackingObject(type: .voiceOver),

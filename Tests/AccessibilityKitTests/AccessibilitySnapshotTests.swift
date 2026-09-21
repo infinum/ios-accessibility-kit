@@ -115,7 +115,7 @@ struct AccessibilitySnapshotTests {
                 AccessibilityState(type: .boldText, name: "Bold Text", value: .flag(true)),
                 AccessibilityState(
                     type: .fontScale, name: "Font scale", value: .scale(1.25),
-                    customIdentifier: "font_scalling"
+                    customIdentifier: "font_scaling"
                 )
             ]
         )
@@ -125,7 +125,7 @@ struct AccessibilitySnapshotTests {
         #expect(values.count == 2)
         #expect(values.first?["identifier"] as? String == "bold_text")
         #expect(values.first?["value"] as? Bool == true)
-        #expect(values.last?["identifier"] as? String == "font_scalling")
+        #expect(values.last?["identifier"] as? String == "font_scaling")
         #expect(values.last?["value"] as? Double == 1.25)
     }
 }
