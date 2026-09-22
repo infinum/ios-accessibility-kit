@@ -246,8 +246,9 @@ private extension AccessibilityMonitorTests {
             objects: [AccessibilityTrackingObject(type: .voiceOver)]
         )
     }
-
 }
+
+// MARK: - Recorder
 
 ///
 /// Records whether the delivery arrived on the main thread.

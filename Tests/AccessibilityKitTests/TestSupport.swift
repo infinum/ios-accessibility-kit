@@ -28,6 +28,7 @@ func poll(until condition: () -> Bool, timeout: TimeInterval = 5) async {
 /// A fixed wait, used only where the assertion is that nothing *further*
 /// happens — absence cannot be established by polling.
 ///
+@MainActor
 func settle() async {
     try? await Task.sleep(nanoseconds: 200_000_000)
 }
