@@ -105,8 +105,7 @@ struct AccessibilitySnapshotTests {
 
     ///
     /// `values` is an **array** of `{ identifier, value }` objects, not a
-    /// dictionary keyed by identifier. Pinning it here because the README
-    /// currently documents the wrong shape.
+    /// dictionary keyed by identifier.
     ///
     @Test("Converts to a dictionary holding an array of identified values")
     func convertsToDictionary() throws {

@@ -24,6 +24,37 @@ struct AccessibilitySubjectTests {
         #expect(observer.states.first?.type == .voiceOver)
     }
 
+    @Test("Notifies every registered observer")
+    func notifiesEveryRegisteredObserver() {
+        let center = NotificationCenter()
+        let subject = AccessibilitySubject(type: .voiceOver, notificationCenter: center)
+        let first = SpyObserver()
+        let second = SpyObserver()
+        subject.addObserver(first)
+        subject.addObserver(second)
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(first.states.count == 1)
+        #expect(second.states.count == 1)
+    }
+
+    @Test("Keeps notifying the observers that were not removed")
+    func keepsNotifyingRemainingObservers() {
+        let center = NotificationCenter()
+        let subject = AccessibilitySubject(type: .voiceOver, notificationCenter: center)
+        let removed = SpyObserver()
+        let kept = SpyObserver()
+        subject.addObserver(removed)
+        subject.addObserver(kept)
+        subject.removeObserver(removed)
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(removed.states.isEmpty)
+        #expect(kept.states.count == 1)
+    }
+
     @Test("Stops notifying a removed observer")
     func stopsNotifyingRemovedObserver() {
         let center = NotificationCenter()
