@@ -8,13 +8,14 @@ import UIKit
 @testable import AccessibilityKit
 
 @Suite("FontScaleAccessibilityObject")
+@MainActor
 struct FontScaleAccessibilityObjectTests {
 
     ///
     /// Scales are the category's `body` size divided by the `large`
     /// (default) body size of 17pt, per the Human Interface Guidelines.
     ///
-    static let mapping: [(category: UIContentSizeCategory, size: Double)] = [
+    nonisolated static let mapping: [(category: UIContentSizeCategory, size: Double)] = [
         (.extraSmall, 14.0),
         (.small, 15.0),
         (.medium, 16.0),

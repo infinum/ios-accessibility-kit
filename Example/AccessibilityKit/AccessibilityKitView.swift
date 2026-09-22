@@ -12,6 +12,10 @@ struct AccessibilityKitView: View {
 
     @State var presentingModal = false
 
+    /// Read so the view is invalidated when the user changes their text size,
+    /// which re-reads the snapshots below.
+    @Environment(\.sizeCategory) private var sizeCategory
+
     var body: some View {
         VStack(spacing: 20) {
             Button("Accessibility tracking") {
@@ -35,16 +39,24 @@ private extension AccessibilityKitView {
     /// library reports this feature, the accessibility monitor included.
     ///
     var correctedAtSource: String {
-        let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
-            for: [
-                AccessibilityTrackingObject(
-                    type: .fontScale,
-                    customIdentifier: "large_text_enabled",
-                    transform: { value in .flag(Self.isLargeText(value)) }
-                )
-            ]
-        )
-        return Self.label(for: snapshot)
+        do {
+            let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
+                for: [
+                    AccessibilityTrackingObject(
+                        type: .fontScale,
+                        customIdentifier: "large_text_enabled",
+                        transform: { value in .flag(Self.isLargeText(value)) }
+                    )
+                ]
+            )
+            return Self.label(for: snapshot)
+        } catch {
+            // The list above is unique, so this is a mistake in that list
+            // rather than a runtime condition - the same stance the app's
+            // own configuration takes.
+            assertionFailure("Invalid accessibility tracking objects: \(error)")
+            return "unavailable"
+        }
     }
 
     ///
@@ -52,20 +64,28 @@ private extension AccessibilityKitView {
     /// for cases where the tracking configuration cannot be changed.
     ///
     var correctedAfterTheFact: String {
-        let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
-            for: [
-                AccessibilityTrackingObject(type: .fontScale),
-                AccessibilityTrackingObject(type: .voiceOver)
-            ]
-        )
+        do {
+            let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
+                for: [
+                    AccessibilityTrackingObject(type: .fontScale),
+                    AccessibilityTrackingObject(type: .voiceOver)
+                ]
+            )
 
-        let corrected = AccessibilitySnapshot(
-            states: snapshot.states.map { state in
-                guard state.type == .fontScale else { return state }
-                return state.withValue(.flag(Self.isLargeText(state.value)))
-            }
-        )
-        return Self.label(for: corrected)
+            let corrected = AccessibilitySnapshot(
+                states: snapshot.states.map { state in
+                    guard state.type == .fontScale else { return state }
+                    return state.withValue(.flag(Self.isLargeText(state.value)))
+                }
+            )
+            return Self.label(for: corrected)
+        } catch {
+            // The list above is unique, so this is a mistake in that list
+            // rather than a runtime condition - the same stance the app's
+            // own configuration takes.
+            assertionFailure("Invalid accessibility tracking objects: \(error)")
+            return "unavailable"
+        }
     }
 
     static func isLargeText(_ value: AccessibilityValue) -> Bool {

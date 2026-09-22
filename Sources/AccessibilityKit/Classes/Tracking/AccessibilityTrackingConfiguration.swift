@@ -8,6 +8,29 @@
 import Foundation
 
 ///
+/// An error raised while setting up accessibility tracking.
+///
+public enum AccessibilityTrackingError: Error, Equatable {
+
+    ///
+    /// The same accessibility feature was supplied more than once.
+    ///
+    /// A feature has a single identifier, so tracking it twice would report it
+    /// twice — once under each identifier — rather than reporting it once.
+    ///
+    case duplicateType(AccessibilityType)
+
+    ///
+    /// Two features were supplied under the same identifier.
+    ///
+    /// The identifier is what a snapshot entry is reported and displayed
+    /// under, so two features sharing one cannot be told apart in the encoded
+    /// payload, and collide as a single row in the accessibility monitor.
+    ///
+    case duplicateIdentifier(String)
+}
+
+///
 /// One accessibility feature to track, and how to report it.
 ///
 /// ## Overview
@@ -27,18 +50,19 @@ import Foundation
 /// )
 /// ```
 ///
-/// Track each ``AccessibilityType`` at most once. Nothing prevents tracking
-/// one twice, but each tracking object produces its own entry in the
-/// snapshot, and two entries reported under the same identifier collide in
-/// the accessibility monitor's list.
+/// Track each ``AccessibilityType`` at most once. A feature has a single
+/// identifier, so supplying the same type twice is rejected:
+/// ``AccessibilityTrackingConfiguration/init(fetchType:objects:)`` and
+/// ``AccessibilityKit/currentAccessibilitySnapshot(for:)`` throw
+/// ``AccessibilityTrackingError/duplicateType(_:)``.
 ///
-public struct AccessibilityTrackingObject {
+public struct AccessibilityTrackingObject: Sendable {
 
     // MARK: - Internal properties
 
     let customIdentifier: String?
     let type: AccessibilityType
-    let transform: (@Sendable (AccessibilityValue) -> AccessibilityValue)?
+    let transform: (@MainActor @Sendable (AccessibilityValue) -> AccessibilityValue)?
 
     // MARK: - Lifecycle
 
@@ -52,12 +76,13 @@ public struct AccessibilityTrackingObject {
     ///   - transform: A correction applied to the value wherever this feature
     ///     is produced — direct snapshots, observed changes, the encoded
     ///     output and the accessibility monitor. Defaults to `nil`, which
-    ///     reports the value the system gives.
+    ///     reports the value the system gives. Runs on the main actor, where
+    ///     accessibility state is read, so it may touch main-actor state.
     ///
     public init (
         type: AccessibilityType,
         customIdentifier: String? = nil,
-        transform: (@Sendable (AccessibilityValue) -> AccessibilityValue)? = nil
+        transform: (@MainActor @Sendable (AccessibilityValue) -> AccessibilityValue)? = nil
     ) {
         self.type = type
         self.customIdentifier = customIdentifier
@@ -68,7 +93,7 @@ public struct AccessibilityTrackingObject {
 ///
 /// How often tracking should report.
 ///
-public enum AccessibilityFetchType {
+public enum AccessibilityFetchType: Sendable {
 
     /// Report once, when observation begins.
     case initial
@@ -87,18 +112,18 @@ public enum AccessibilityFetchType {
 /// with ``AccessibilityKit/observeAccessibilityTracking(completion:)``:
 ///
 /// ```swift
-/// AccessibilityKit.shared.configureAccessibilityTracking(
-///     with: AccessibilityTrackingConfiguration(
-///         fetchType: .continuous,
-///         objects: [
-///             AccessibilityTrackingObject(type: .boldText),
-///             AccessibilityTrackingObject(type: .voiceOver)
-///         ]
-///     )
+/// let configuration = try AccessibilityTrackingConfiguration(
+///     fetchType: .continuous,
+///     objects: [
+///         AccessibilityTrackingObject(type: .boldText),
+///         AccessibilityTrackingObject(type: .voiceOver)
+///     ]
 /// )
+///
+/// AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 /// ```
 ///
-public struct AccessibilityTrackingConfiguration {
+public struct AccessibilityTrackingConfiguration: Sendable {
 
     // MARK: - Internal properties
 
@@ -110,11 +135,44 @@ public struct AccessibilityTrackingConfiguration {
     ///
     /// - Parameters:
     ///   - fetchType: Whether to report once or on every change.
-    ///   - objects: The features to track. Each ``AccessibilityType`` should
+    ///   - objects: The features to track. Each ``AccessibilityType`` must
     ///     appear at most once.
+    /// - Throws: ``AccessibilityTrackingError/duplicateType(_:)`` if a feature
+    ///   is supplied more than once, or
+    ///   ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if two
+    ///   features are supplied under the same identifier.
     ///
-    public init(fetchType: AccessibilityFetchType, objects: [AccessibilityTrackingObject]) {
+    public init(fetchType: AccessibilityFetchType, objects: [AccessibilityTrackingObject]) throws {
+        try objects.validateUniqueTracking()
+
         self.fetchType = fetchType
         self.objects = objects
+    }
+}
+
+// MARK: - Validation
+
+extension Array where Element == AccessibilityTrackingObject {
+
+    ///
+    /// Checks that no accessibility feature, and no identifier, is used more
+    /// than once: both produce two snapshot entries a consumer cannot tell
+    /// apart, and two rows sharing an identity in the accessibility monitor.
+    ///
+    func validateUniqueTracking() throws {
+        var seenTypes = Set<AccessibilityType>()
+        var seenIdentifiers = Set<String>()
+
+        for object in self {
+            guard seenTypes.insert(object.type).inserted else {
+                throw AccessibilityTrackingError.duplicateType(object.type)
+            }
+
+            let identifier = object.customIdentifier ?? object.type.rawValue
+
+            guard seenIdentifiers.insert(identifier).inserted else {
+                throw AccessibilityTrackingError.duplicateIdentifier(identifier)
+            }
+        }
     }
 }

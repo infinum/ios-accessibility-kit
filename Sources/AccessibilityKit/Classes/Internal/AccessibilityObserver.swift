@@ -7,8 +7,10 @@
 
 import Foundation
 
+@MainActor
 protocol Observer: AnyObject {}
 
+@MainActor
 protocol AccessibilityObserver: Observer {
     func accessibilityStateDidChange(_ state: AccessibilityState)
 }

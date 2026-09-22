@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct DifferentiateWithoutColorAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let shouldDifferentiateWithoutColor: () -> Bool
+    private let shouldDifferentiateWithoutColor: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(shouldDifferentiateWithoutColor: @escaping () -> Bool = { UIAccessibility.shouldDifferentiateWithoutColor }) {
+    init(shouldDifferentiateWithoutColor: @escaping @MainActor () -> Bool = { UIAccessibility.shouldDifferentiateWithoutColor }) {
         self.shouldDifferentiateWithoutColor = shouldDifferentiateWithoutColor
     }
 

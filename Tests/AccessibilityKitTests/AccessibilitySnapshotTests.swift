@@ -8,6 +8,7 @@ import Testing
 @testable import AccessibilityKit
 
 @Suite("AccessibilitySnapshot")
+@MainActor
 struct AccessibilitySnapshotTests {
 
     @Test("Sorts states produced from tracking objects")
@@ -119,7 +120,7 @@ struct AccessibilitySnapshotTests {
             ]
         )
 
-        let values = try #require(snapshot.toDictionary()?["values"] as? [[String: Any]])
+        let values = try #require(try snapshot.toDictionary()["values"] as? [[String: Any]])
 
         #expect(values.count == 2)
         #expect(values.first?["identifier"] as? String == "bold_text")

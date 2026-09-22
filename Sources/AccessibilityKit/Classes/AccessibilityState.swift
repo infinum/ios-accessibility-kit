@@ -19,7 +19,7 @@ import UIKit
 /// Two states are equal when their ``type`` and ``value`` match; ``name`` and
 /// ``identifier`` are ignored. Sorting orders them by the type's raw value.
 ///
-public struct AccessibilityState {
+public struct AccessibilityState: Sendable {
 
     // MARK: - Public properties
 

@@ -11,12 +11,12 @@ import Foundation
 /// Holds the tracking configuration, owns a subject per tracked feature, and
 /// delivers snapshots to the registered observation.
 ///
-/// Subject mutation is serialised with a barrier on `concurrentQueue`, and
-/// snapshot delivery hops that same queue, so delivery is ordered behind a
-/// reconfiguration that is still in flight. Completions run on the main
-/// queue. `configuration` and the registered completion are read and written
-/// outside that queue, which therefore does not order them.
+/// Everything it does is main-actor work — reading accessibility state means
+/// touching `@MainActor` UIKit statics — so the main actor serialises subject
+/// configuration against snapshot creation, and no queue of its own is needed.
+/// Completions are delivered asynchronously on the main queue.
 ///
+@MainActor
 final class AccessibilityMonitor {
 
     // MARK: - Internal properties
@@ -25,10 +25,6 @@ final class AccessibilityMonitor {
 
     // MARK: - Private properties
 
-    private let concurrentQueue = DispatchQueue(
-        label: "com.infinum.accessibilityKit.accessibilityMonitor.queue",
-        attributes: .concurrent
-    )
     private var configuration: AccessibilityTrackingConfiguration? {
         didSet {
             guard let configuration = configuration else { return }
@@ -75,16 +71,12 @@ extension AccessibilityMonitor: AccessibilityObserver {
 private extension AccessibilityMonitor {
 
     func configureSubjects(for configuration: AccessibilityTrackingConfiguration) {
-        concurrentQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-
-            // The old subjects are released by the assignment below, and a
-            // released subject takes its observer list and its notification
-            // registration with it.
-            self.subjects = Set(configuration.objects.map(\.type))
-                .map { AccessibilitySubject(type: $0, notificationCenter: self.notificationCenter) }
-            self.subjects.forEach { $0.addObserver(self) }
-        }
+        // The old subjects are released by the assignment below, and a
+        // released subject takes its observer list and its notification
+        // registration with it.
+        subjects = Set(configuration.objects.map(\.type))
+            .map { AccessibilitySubject(type: $0, notificationCenter: notificationCenter) }
+        subjects.forEach { $0.addObserver(self) }
     }
 
     func createSnapshot(isInitial: Bool = false) {
@@ -96,13 +88,10 @@ private extension AccessibilityMonitor {
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
-        // Hops the barrier queue so delivery is ordered behind a
-        // reconfiguration that is still in flight. The snapshot itself is
-        // taken above, before the hop.
-        concurrentQueue.async(flags: .barrier) { [weak self] in
-            DispatchQueue.main.async {
-                self?.snapshotChangeHandler?(snapshot)
-            }
+        // Delivered asynchronously so a completion never runs inside the
+        // caller's own call to `observeAccessibilityTracking(completion:)`.
+        DispatchQueue.main.async { [weak self] in
+            self?.snapshotChangeHandler?(snapshot)
         }
     }
 }

@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct AssistiveTouchAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isAssistiveTouchRunning: () -> Bool
+    private let isAssistiveTouchRunning: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isAssistiveTouchRunning: @escaping () -> Bool = { UIAccessibility.isAssistiveTouchRunning }) {
+    init(isAssistiveTouchRunning: @escaping @MainActor () -> Bool = { UIAccessibility.isAssistiveTouchRunning }) {
         self.isAssistiveTouchRunning = isAssistiveTouchRunning
     }
 

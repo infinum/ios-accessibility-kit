@@ -19,7 +19,7 @@ import SwiftUI
 /// setup is needed:
 ///
 /// ```swift
-/// let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+/// let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
 ///     for: [AccessibilityTrackingObject(type: .voiceOver)]
 /// )
 /// ```
@@ -28,18 +28,19 @@ import SwiftUI
 /// `application(_:didFinishLaunchingWithOptions:)`, say — and then observe:
 ///
 /// ```swift
-/// AccessibilityKit.shared.configureAccessibilityTracking(
-///     with: AccessibilityTrackingConfiguration(
-///         fetchType: .continuous,
-///         objects: [AccessibilityTrackingObject(type: .voiceOver)]
-///     )
+/// let configuration = try AccessibilityTrackingConfiguration(
+///     fetchType: .continuous,
+///     objects: [AccessibilityTrackingObject(type: .voiceOver)]
 /// )
+///
+/// AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 ///
 /// AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 ///     // handle the snapshot
 /// }
 /// ```
 ///
+@MainActor
 public final class AccessibilityKit {
 
     // MARK: - Public properties
@@ -64,10 +65,17 @@ public final class AccessibilityKit {
     ///
     /// Tracking does not need to be configured to call this.
     ///
-    /// - Parameter objects: The features to read.
+    /// - Parameter objects: The features to read. Each ``AccessibilityType``
+    ///   must appear at most once.
     /// - Returns: A snapshot of those features, as they are right now.
+    /// - Throws: ``AccessibilityTrackingError/duplicateType(_:)`` if a feature
+    ///   is supplied more than once, or
+    ///   ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if two
+    ///   features are supplied under the same identifier.
     ///
-    public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) -> AccessibilitySnapshot {
+    public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) throws -> AccessibilitySnapshot {
+        try objects.validateUniqueTracking()
+
         return monitor.currentAccessibilitySnapshot(for: objects)
     }
 

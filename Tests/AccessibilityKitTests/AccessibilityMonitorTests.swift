@@ -15,12 +15,13 @@ import UIKit
 /// releases it after its final use and the notification reaches nobody.
 ///
 @Suite("AccessibilityMonitor")
+@MainActor
 struct AccessibilityMonitorTests {
 
     @Test("Emits the initial snapshot on the main queue")
-    func emitsInitialSnapshotOnMainQueue() async {
+    func emitsInitialSnapshotOnMainQueue() async throws {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .initial))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let isMain: Bool = await withCheckedContinuation { continuation in
             monitor.observeAccessibilityTracking { _ in
@@ -33,10 +34,10 @@ struct AccessibilityMonitorTests {
     }
 
     @Test("Does not emit again for a change when fetching once")
-    func doesNotEmitAgainForInitialFetch() async {
+    func doesNotEmitAgainForInitialFetch() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .initial))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
@@ -50,10 +51,10 @@ struct AccessibilityMonitorTests {
     }
 
     @Test("Emits again for every change when observing continuously")
-    func emitsForEveryChangeWhenContinuous() async {
+    func emitsForEveryChangeWhenContinuous() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
@@ -67,12 +68,12 @@ struct AccessibilityMonitorTests {
     }
 
     @Test("Observes the features supplied by the newest configuration")
-    func observesTheNewestConfiguration() async {
+    func observesTheNewestConfiguration() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
         monitor.configureAccessibilityTracking(
-            with: AccessibilityTrackingConfiguration(
+            with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
@@ -99,17 +100,17 @@ struct AccessibilityMonitorTests {
     }
 
     @Test("Keeps an existing observation when tracking is reconfigured")
-    func keepsObservationAcrossReconfiguration() async {
+    func keepsObservationAcrossReconfiguration() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in counter.increment() }
         await Self.wait(until: { counter.count == 1 })
 
         monitor.configureAccessibilityTracking(
-            with: AccessibilityTrackingConfiguration(
+            with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
@@ -122,14 +123,48 @@ struct AccessibilityMonitorTests {
         #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
     }
+
+    @Test("Delivers nothing when tracking has not been configured")
+    func deliversNothingWithoutConfiguration() async {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in counter.increment() }
+        await Self.settle()
+
+        #expect(counter.count == 0)
+        withExtendedLifetime(monitor) { }
+    }
+
+    @Test("Replaces the previous observation")
+    func replacesThePreviousObservation() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let first = EmissionCounter()
+        let second = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in first.increment() }
+        await Self.wait(until: { first.count == 1 })
+
+        monitor.observeAccessibilityTracking { _ in second.increment() }
+        await Self.wait(until: { second.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await Self.wait(until: { second.count == 2 })
+
+        #expect(first.count == 1)
+        #expect(second.count == 2)
+        withExtendedLifetime(monitor) { }
+    }
 }
 
 // MARK: - Helpers
 
 private extension AccessibilityMonitorTests {
 
-    static func configuration(fetchType: AccessibilityFetchType) -> AccessibilityTrackingConfiguration {
-        return AccessibilityTrackingConfiguration(
+    static func configuration(fetchType: AccessibilityFetchType) throws -> AccessibilityTrackingConfiguration {
+        return try AccessibilityTrackingConfiguration(
             fetchType: fetchType,
             objects: [AccessibilityTrackingObject(type: .voiceOver)]
         )
@@ -159,23 +194,16 @@ private extension AccessibilityMonitorTests {
 }
 
 ///
-/// Written on the main queue, where the monitor delivers, and read from the
-/// test task that polls it, so the count is guarded.
+/// Main-actor isolated, like everything else here: the monitor delivers on
+/// the main actor and the tests poll from it, so the count needs no lock of
+/// its own - the isolation is the guarantee, and the compiler checks it.
 ///
+@MainActor
 private final class EmissionCounter {
 
-    private let lock = NSLock()
-    private var value = 0
-
-    var count: Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return value
-    }
+    private(set) var count = 0
 
     func increment() {
-        lock.lock()
-        defer { lock.unlock() }
-        value += 1
+        count += 1
     }
 }

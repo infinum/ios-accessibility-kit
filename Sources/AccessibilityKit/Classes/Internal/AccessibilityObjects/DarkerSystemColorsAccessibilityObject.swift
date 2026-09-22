@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct DarkerSystemColorsAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isDarkerSystemColorsEnabled: () -> Bool
+    private let isDarkerSystemColorsEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isDarkerSystemColorsEnabled: @escaping () -> Bool = { UIAccessibility.isDarkerSystemColorsEnabled }) {
+    init(isDarkerSystemColorsEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isDarkerSystemColorsEnabled }) {
         self.isDarkerSystemColorsEnabled = isDarkerSystemColorsEnabled
     }
 

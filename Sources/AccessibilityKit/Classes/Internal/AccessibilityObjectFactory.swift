@@ -9,6 +9,7 @@ import Foundation
 
 enum AccessibilityObjectFactory {
 
+    @MainActor
     static func object(for type: AccessibilityType) -> AccessibilityObject {
         switch type {
         case .assistiveTouch:

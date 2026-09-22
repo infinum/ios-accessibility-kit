@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 protocol Subject: AnyObject {
     func addObserver(_ observer: Observer)
     func removeObserver(_ observer: Observer)
@@ -22,6 +23,7 @@ protocol Subject: AnyObject {
 ///
 /// Observers are held weakly, so a subject never keeps its listeners alive.
 ///
+@MainActor
 class AccessibilitySubject {
 
     // MARK: - Internal properties
@@ -50,8 +52,30 @@ class AccessibilitySubject {
 
     // MARK: - Internal methods
 
+    ///
+    /// `NotificationCenter` dispatches this selector on whichever thread
+    /// posted, so it cannot be main-actor isolated by declaration. UIKit
+    /// posts its accessibility status notifications on the main thread, which
+    /// is the path that matters and is handled without a hop, so an observer
+    /// sees the change in the same turn.
+    ///
+    /// A post from any other thread is carried to the main actor instead of
+    /// trapping there. The registration is on a notification centre the
+    /// library does not own, so anything in the process can post these names
+    /// from anywhere, and `MainActor.assumeIsolated` would make that somebody
+    /// else's background post a crash in a shipped app.
+    ///
     @objc
-    func accessibilityStateDidChange(_ notification: Notification) {
+    nonisolated func accessibilityStateDidChange(_ notification: Notification) {
+        guard Thread.isMainThread else {
+            Task { @MainActor [weak self] in self?.readStateAndNotify() }
+            return
+        }
+
+        MainActor.assumeIsolated { readStateAndNotify() }
+    }
+
+    private func readStateAndNotify() {
         notifyObservers(with: object.state(customIdentifier: nil))
     }
 }
@@ -74,15 +98,14 @@ extension AccessibilitySubject: Subject {
     }
 }
 
-// MARK: - Extensions
+// MARK: - Private methods
 
-extension AccessibilitySubject {
+private extension AccessibilitySubject {
 
     ///
-    /// Delivery runs on whichever thread posted the notification, while
-    /// registration runs on the monitor's queue, so this only reads the
-    /// observer list - a released observer is skipped here rather than
-    /// swept, which would be a second writer.
+    /// A released observer is skipped rather than swept out of the list:
+    /// pruning belongs to registration, and the monitor registers exactly
+    /// once per subject.
     ///
     func notifyObservers(with state: AccessibilityState) {
         observers

@@ -15,9 +15,9 @@ import Foundation
 /// Snapshots come from ``AccessibilityKit/currentAccessibilitySnapshot(for:)``
 /// or from ``AccessibilityKit/observeAccessibilityTracking(completion:)``.
 ///
-/// A snapshot is `Encodable`, and ``Swift/Encodable/toDictionary()`` converts
-/// it for sending onward. The encoded form is a `values` array of
-/// `identifier` / `value` pairs:
+/// A snapshot is `Encodable`, and ``toDictionary()`` converts it for sending
+/// onward. The encoded form is a `values` array of `identifier` / `value`
+/// pairs:
 ///
 /// ```json
 /// {
@@ -28,7 +28,7 @@ import Foundation
 /// }
 /// ```
 ///
-public struct AccessibilitySnapshot {
+public struct AccessibilitySnapshot: Sendable {
 
     ///
     /// The states of the tracked features, sorted by accessibility type.
@@ -42,6 +42,12 @@ public struct AccessibilitySnapshot {
     /// ``AccessibilityState/withValue(_:)`` so they can be encoded and sent on
     /// like any other snapshot.
     ///
+    /// Unlike the tracking paths, this does not check the states it is given:
+    /// a snapshot built from two others can carry one feature, or one
+    /// identifier, twice. Keep them unique — an identifier is what a consumer
+    /// tells entries apart by, and what the accessibility monitor keys its
+    /// rows on.
+    ///
     /// - Parameter states: The states to carry. They come out ordered by
     ///   accessibility type whatever order they are supplied in.
     ///
@@ -49,6 +55,7 @@ public struct AccessibilitySnapshot {
         self.states = states.sorted()
     }
 
+    @MainActor
     init(trackingObjects: [AccessibilityTrackingObject]) {
         self.init(
             states: trackingObjects.map { trackingObject in

@@ -11,6 +11,7 @@ This library currently supports the **Swift** programming language.
 ## Table of contents
 
 * [Requirements](#requirements)
+* [Concurrency](#concurrency)
 * [Getting started](#getting-started)
 * [Usage](#usage)
 * [Contributing](#contributing)
@@ -20,7 +21,13 @@ This library currently supports the **Swift** programming language.
 ## Requirements
 
 * iOS 14 and above
-* Xcode 12 and above
+* Xcode 16 and above (Swift 6 toolchain)
+
+## Concurrency
+
+The library is built in the Swift 6 language mode. Reading accessibility state means touching main-actor `UIKit` state, so `AccessibilityKit` is `@MainActor`. Call it from the main actor, or `await` it from elsewhere.
+
+The value types — `AccessibilitySnapshot`, `AccessibilityState`, `AccessibilityValue`, `AccessibilityType`, `AccessibilityTrackingObject`, `AccessibilityTrackingConfiguration` and `AccessibilityFetchType` — are `Sendable`, so a snapshot can be handed to any context.
 
 ## Getting started
 
@@ -43,7 +50,7 @@ The method `currentAccessibilitySnapshot(for:)`  returns a snapshot of a type `A
 
 To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. It takes the `type` of accessibility feature to track, defined by the `AccessibilityType` enum, and optionally a `customIdentifier` to report that feature under and a `transform` to correct its value.
 
-Track each `AccessibilityType` at most once. Nothing prevents tracking one twice, but each tracking object produces its own entry in the snapshot, and two entries reported under the same identifier collide in the accessibility monitor's list.
+Track each `AccessibilityType` at most once, and give each one its own identifier. The configuration's initializer and `currentAccessibilitySnapshot(for:)` reject anything else: `AccessibilityTrackingError.duplicateType(_:)` for a repeated feature, `AccessibilityTrackingError.duplicateIdentifier(_:)` when two features would be reported under the same identifier.
 
 A default identifier is used for every tracked accessibility feature when a custom identifier is not used. Default identifiers are defined as:
 
@@ -74,7 +81,7 @@ A default identifier is used for every tracked accessibility feature when a cust
 `AccessibilityType` conforms to `CaseIterable`, so every supported feature can be tracked without listing them by hand:
 
 ```swift
-let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
     for: AccessibilityType.allCases.map { AccessibilityTrackingObject(type: $0) }
 )
 ```
@@ -123,7 +130,7 @@ An object returned in the completion is of a type `AccessibilitySnapshot`, which
 
 The object type in the array is `AccessibilityState` which provides `type`, `name`, `value`, and `identifier`. All those properties can be used to identify every accessibility feature based on the type, name, value, or identifier.
 
-`AccessibilitySnapshot` is `Encodable`, and `toDictionary()` converts it for sending onward. The encoded form is a `values` array of `identifier` / `value` pairs:
+`AccessibilitySnapshot` is `Encodable`, and `toDictionary()` converts it for sending onward. It throws rather than reporting failure as `nil`. The encoded form is a `values` array of `identifier` / `value` pairs:
 
 ```json
 {
@@ -152,7 +159,7 @@ To add **AccessibilityKit** to your project, install it with Swift Package Manag
 To get the latest state of accessibility features, there is no need to define **AccessibilityKit**. You can use a method for this anytime.
 
 ```swift
-let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
     for: [
         AccessibilityTrackingObject(type: .boldText),
         AccessibilityTrackingObject(
@@ -170,25 +177,27 @@ If there is a need to observe accessibility feature changes, the method above is
 To do that, use  `AccessibilityKit.shared.configureAccessibilityTracking(with:)` in the `AppDelegate`'s method `application(_:didFinishLaunchingWithOptions:)` to configure tracking for the app lifecycle.
 
 ```swift
-AccessibilityKit.shared.configureAccessibilityTracking(
-    with: AccessibilityTrackingConfiguration(
-        fetchType: .continuous,
-        objects: [
-            AccessibilityTrackingObject(type: .boldText),
-            AccessibilityTrackingObject(
-                type: .buttonShapes, 
-                customIdentifier: "button_shapes_enabled"
-            ),
-            AccessibilityTrackingObject(
-                type: .fontScale, 
-                customIdentifier: "font_scaling"
-            ),
-            AccessibilityTrackingObject(type: .reduceMotion),
-            AccessibilityTrackingObject(type: .voiceOver),
-        ]
-    )
+let configuration = try AccessibilityTrackingConfiguration(
+    fetchType: .continuous,
+    objects: [
+        AccessibilityTrackingObject(type: .boldText),
+        AccessibilityTrackingObject(
+            type: .buttonShapes,
+            customIdentifier: "button_shapes_enabled"
+        ),
+        AccessibilityTrackingObject(
+            type: .fontScale,
+            customIdentifier: "font_scaling"
+        ),
+        AccessibilityTrackingObject(type: .reduceMotion),
+        AccessibilityTrackingObject(type: .voiceOver)
+    ]
 )
+
+AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 ```
+
+Each `AccessibilityType` may appear at most once, and no two may share an identifier; the initializer throws `AccessibilityTrackingError.duplicateType(_:)` or `AccessibilityTrackingError.duplicateIdentifier(_:)` instead of reporting entries a consumer cannot tell apart.
 
 After that, the observing method can be used afterward to get the latest accessibility feature states.
 
