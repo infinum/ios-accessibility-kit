@@ -177,6 +177,57 @@ struct AccessibilityMonitorTests {
         withExtendedLifetime(monitor) { }
     }
 
+    ///
+    /// The change path captures the completion at scheduling time, so a
+    /// change already in flight lands with whoever was observing when it
+    /// happened rather than with a replacement registered in between.
+    ///
+    @Test("Delivers a change in flight to the completion that was observing")
+    func deliversInFlightChangeToTheObservingCompletion() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let first = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in first.increment() }
+        await poll(until: { first.count == 1 })
+
+        // Posted and replaced in the same turn, so the change's delivery is
+        // still scheduled when the second completion takes over.
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        let second = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in second.increment() }
+        await poll(until: { first.count == 2 && second.count == 1 })
+
+        #expect(first.count == 2)
+        #expect(second.count == 1)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// Two registrations of one observer is what re-presenting the monitor
+    /// looks like.
+    ///
+    @Test("Tells an observer added twice only once")
+    func tellsAnObserverAddedTwiceOnlyOnce() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        monitor.addSnapshotObserver(observer)
+        await settle()
+
+        #expect(observer.snapshots.count == 1)
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await poll(until: { observer.snapshots.count == 2 })
+
+        #expect(observer.snapshots.count == 2)
+        withExtendedLifetime(monitor) { }
+    }
+
     @Test("Delivers the current snapshot to a newly added snapshot observer")
     func deliversCurrentSnapshotToANewSnapshotObserver() async throws {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
