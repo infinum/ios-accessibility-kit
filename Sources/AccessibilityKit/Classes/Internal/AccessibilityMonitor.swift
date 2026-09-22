@@ -21,13 +21,11 @@ final class AccessibilityMonitor {
     )
     private var configuration: AccessibilityTrackingConfiguration? {
         didSet {
-            clearSnapshots()
             guard let configuration = configuration else { return }
             configureSubjects(for: configuration)
         }
     }
     private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
-    private var snapshots = [AccessibilitySnapshot]()
     private var subjects = [Subject]()
     private let notificationCenter: NotificationCenter
 
@@ -67,11 +65,15 @@ extension AccessibilityMonitor: AccessibilityObserver {
 private extension AccessibilityMonitor {
 
     func configureSubjects(for configuration: AccessibilityTrackingConfiguration) {
-        concurrentQueue.async(flags: .barrier) { [unowned self] in
-            subjects.forEach { $0.removeObservers() }
-            subjects = Set(configuration.objects.map(\.type))
-                .map { AccessibilitySubject(type: $0, notificationCenter: notificationCenter) }
-            subjects.forEach { $0.addObserver(self) }
+        concurrentQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+
+            // The old subjects are released by the assignment below, and a
+            // released subject takes its observer list and its notification
+            // registration with it.
+            self.subjects = Set(configuration.objects.map(\.type))
+                .map { AccessibilitySubject(type: $0, notificationCenter: self.notificationCenter) }
+            self.subjects.forEach { $0.addObserver(self) }
         }
     }
 
@@ -84,16 +86,13 @@ private extension AccessibilityMonitor {
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
-        concurrentQueue.async(flags: .barrier) { [unowned self] in
-            snapshots.append(snapshot)
+        // Hops the barrier queue so delivery is ordered behind a
+        // reconfiguration that is still in flight. The snapshot itself is
+        // taken above, before the hop.
+        concurrentQueue.async(flags: .barrier) { [weak self] in
             DispatchQueue.main.async {
-                snapshotChangeHandler?(snapshot)
+                self?.snapshotChangeHandler?(snapshot)
             }
         }
-    }
-
-    func clearSnapshots() {
-        snapshots = []
-        snapshotChangeHandler = nil
     }
 }

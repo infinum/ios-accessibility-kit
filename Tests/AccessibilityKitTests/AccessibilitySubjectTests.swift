@@ -136,6 +136,55 @@ struct AccessibilitySubjectTests {
 
         #expect(observer.states.isEmpty)
     }
+
+    @Test("Notifies an observer once even when it is added twice")
+    func notifiesDuplicateObserverOnce() {
+        let center = NotificationCenter()
+        let subject = AccessibilitySubject(type: .voiceOver, notificationCenter: center)
+        let observer = SpyObserver()
+        subject.addObserver(observer)
+        subject.addObserver(observer)
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(observer.states.count == 1)
+    }
+
+    @Test("Does not retain its observers")
+    func doesNotRetainObservers() {
+        let center = NotificationCenter()
+        let subject = AccessibilitySubject(type: .voiceOver, notificationCenter: center)
+        weak var released: SpyObserver?
+
+        do {
+            let observer = SpyObserver()
+            released = observer
+            subject.addObserver(observer)
+        }
+
+        #expect(released == nil)
+    }
+
+    ///
+    /// The released observer is registered last, so nothing prunes its box
+    /// before the notification: this exercises the skip on the delivery
+    /// path rather than the pruning on the registration path.
+    ///
+    @Test("Skips observers that have been released")
+    func skipsReleasedObservers() {
+        let center = NotificationCenter()
+        let subject = AccessibilitySubject(type: .voiceOver, notificationCenter: center)
+        let retained = SpyObserver()
+        subject.addObserver(retained)
+
+        do {
+            subject.addObserver(SpyObserver())
+        }
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(retained.states.count == 1)
+    }
 }
 
 // MARK: - Spies

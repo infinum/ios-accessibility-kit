@@ -14,7 +14,7 @@ struct AccessibilityStateTests {
     func withValueReplacesValue(fixture: ValueFixture) {
         let state = AccessibilityState(
             type: .fontScale,
-            name: "Font scale",
+            name: "Font Scale",
             value: .scale(1.0)
         )
 
@@ -25,14 +25,14 @@ struct AccessibilityStateTests {
     func withValuePreservesIdentity() {
         let state = AccessibilityState(
             type: .fontScale,
-            name: "Font scale",
+            name: "Font Scale",
             value: .scale(1.29)
         )
 
         let corrected = state.withValue(.flag(true))
 
         #expect(corrected.type == .fontScale)
-        #expect(corrected.name == "Font scale")
+        #expect(corrected.name == "Font Scale")
         #expect(corrected.identifier == "font_scale")
     }
 
@@ -40,7 +40,7 @@ struct AccessibilityStateTests {
     func withValuePreservesCustomIdentifier() {
         let state = AccessibilityState(
             type: .fontScale,
-            name: "Font scale",
+            name: "Font Scale",
             value: .scale(1.29),
             customIdentifier: "large_text_enabled"
         )

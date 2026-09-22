@@ -52,7 +52,7 @@ A default identifier is used for every tracked accessibility feature when a cust
 | Button shapes                 | button_shapes                 | Bool          |
 | Closed captioning             | closed_captioning             | Bool          |
 | Cross fade transitions        | cross_fade_transitions        | Bool          |
-| Darked system colors          | darker_system_colors          | Bool          |
+| Darker system colors          | darker_system_colors          | Bool          |
 | Differentiate without color   | differentiate_without_color   | Bool          |
 | Font scale                    | font_scale                    | Double        |
 | Grayscale                     | grayscale                     | Bool          |

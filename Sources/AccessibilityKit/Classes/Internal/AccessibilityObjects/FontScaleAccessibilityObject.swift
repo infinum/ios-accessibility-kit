@@ -29,7 +29,7 @@ struct FontScaleAccessibilityObject: AccessibilityObject {
     }
 
     var name: String {
-        return "Font scale"
+        return "Font Scale"
     }
 
     var notificationName: Notification.Name {
