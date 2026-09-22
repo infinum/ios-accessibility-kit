@@ -94,7 +94,6 @@ extension AccessibilityMonitor: AccessibilityObserver {
             let snapshot = configuredSnapshot()
         else { return }
 
-        pruneSnapshotObservers()
         // The completion and observers are captured here, at scheduling time,
         // so a snapshot lands with whoever was registered when the change
         // occurred — never with a replacement registered while in flight.

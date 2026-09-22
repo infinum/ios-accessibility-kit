@@ -105,7 +105,10 @@ public final class AccessibilityKit {
     /// ``AccessibilityFetchType/continuous`` reports again on every change.
     ///
     /// Only one observation is active at a time — calling this again replaces
-    /// the previous completion. Snapshots are delivered on the main queue.
+    /// the previous completion. A snapshot already in flight still reaches
+    /// the completion that was registered when it was taken, so a replacement
+    /// never receives someone else's first snapshot. Snapshots are delivered
+    /// on the main queue.
     ///
     /// - Parameter completion: Called with each snapshot. Nothing is
     ///   delivered if tracking has not been configured.
