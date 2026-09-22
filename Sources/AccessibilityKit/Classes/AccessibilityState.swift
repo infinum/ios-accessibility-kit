@@ -21,7 +21,7 @@ import UIKit
 ///
 public struct AccessibilityState {
 
-    // MARK: - Public methods
+    // MARK: - Public properties
 
     /// The accessibility feature this state describes.
     public let type: AccessibilityType
@@ -110,7 +110,8 @@ extension AccessibilityState: Comparable {
 
     ///
     /// Orders states by the raw value of their ``type``, so a snapshot's
-    /// states always appear in a stable, predictable order.
+    /// states always appear in a predictable order. Two states of the same
+    /// type compare equal here, so their relative order is unspecified.
     ///
     public static func < (lhs: AccessibilityState, rhs: AccessibilityState) -> Bool {
         return lhs.type.rawValue < rhs.type.rawValue
@@ -141,8 +142,6 @@ public extension AccessibilityState {
     /// ```swift
     /// let corrected = state.withValue(.flag((state.value.scaleValue ?? 1) >= 1.2))
     /// ```
-    ///
-    /// ## Overview
     ///
     /// The ``type``, ``name`` and ``identifier`` are preserved, so a corrected
     /// state keeps identifying the same accessibility feature. Only the value
