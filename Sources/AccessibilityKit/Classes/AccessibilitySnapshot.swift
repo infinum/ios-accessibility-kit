@@ -16,11 +16,13 @@ public struct AccessibilitySnapshot {
     }
 
     init(trackingObjects: [AccessibilityTrackingObject]) {
-        self.states = trackingObjects.map {
-            AccessibilityObjectFactory
-                .object(for: $0.type)
-                .state(customIdentifier: $0.customIdentifier)
-        }
+        self.init(
+            states: trackingObjects.map {
+                AccessibilityObjectFactory
+                    .object(for: $0.type)
+                    .state(customIdentifier: $0.customIdentifier)
+            }
+        )
     }
 }
 

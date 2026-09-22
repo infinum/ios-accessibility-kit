@@ -24,13 +24,9 @@ This library currently supports the **Swift** programming language.
 
 ## Getting started
 
-AccessibilityKit is available through [CocoaPods](https://cocoapods.org) and [Swift Package Manager](https://www.swift.org/package-manager/).
+AccessibilityKit is available through [Swift Package Manager (SPM)](https://www.swift.org/package-manager/).
 
-To install it via Cocoapods, add the following line to your Podfile:
-
-```ruby
-pod 'AccessibilityKit'
-```
+To install it via SPM, open your project in Xcode, go to `File` -> `Swift Packages` -> `Add Package Dependency...`, and enter the URL of the repository.
 
 ## Usage
 
@@ -185,7 +181,7 @@ We appreciate your interest and look forward to your contributions.
 ## License
 
 ```text
-Copyright 2024 Infinum
+Copyright 2026 Infinum
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
