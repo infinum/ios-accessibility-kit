@@ -12,10 +12,11 @@ final class AccessibilityMonitorViewModel: ObservableObject {
 
     @Published var states: [AccessibilityState] = []
 
-    private let monitor: AccessibilityMonitor
-
+    ///
+    /// The monitor holds its snapshot observers weakly, so registering is
+    /// all this needs: the registration ends when the view model does.
+    ///
     init(monitor: AccessibilityMonitor = .shared) {
-        self.monitor = monitor
         monitor.addSnapshotObserver(self)
     }
 
