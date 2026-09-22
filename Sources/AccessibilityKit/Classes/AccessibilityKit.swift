@@ -11,7 +11,7 @@ import SwiftUI
 ///
 /// Reads and tracks the accessibility features the user has enabled.
 ///
-/// ## Discussion
+/// ## Overview
 ///
 /// Use ``shared``. There are two ways to read accessibility state.
 ///
@@ -75,9 +75,11 @@ public final class AccessibilityKit {
     /// Configures which accessibility features are tracked, and how often.
     ///
     /// Call this before ``observeAccessibilityTracking(completion:)``.
-    /// Calling it again replaces the previous configuration; an observation
-    /// already registered stays registered and begins reporting the newly
-    /// configured features.
+    /// Calling it again replaces the previous configuration. An observation
+    /// already registered stays registered, but reconfiguring does not emit
+    /// a snapshot of its own: the next one arrives at the next change, and
+    /// only if the new configuration is
+    /// ``AccessibilityFetchType/continuous``.
     ///
     /// - Parameter configuration: The features to track and the fetch type.
     ///
@@ -88,8 +90,9 @@ public final class AccessibilityKit {
     ///
     /// Observes the accessibility features that tracking was configured with.
     ///
-    /// The first snapshot is delivered as soon as observation begins. Whether
-    /// more follow depends on the configured ``AccessibilityFetchType``:
+    /// The first snapshot is delivered asynchronously, on the main queue, as
+    /// soon as observation begins. Whether more follow depends on the
+    /// configured ``AccessibilityFetchType``:
     /// ``AccessibilityFetchType/initial`` reports only that first snapshot,
     /// ``AccessibilityFetchType/continuous`` reports again on every change.
     ///
@@ -110,6 +113,11 @@ public final class AccessibilityKit {
     /// Requires tracking to have been configured — the monitor shows the
     /// features from that configuration, with any transforms applied, so it
     /// shows exactly what the app reports.
+    ///
+    /// - Important: The monitor observes through
+    ///   ``observeAccessibilityTracking(completion:)``, and only one
+    ///   observation is active at a time, so presenting it replaces the
+    ///   app's own. Register again after the monitor is dismissed.
     ///
     /// - Parameter viewController: The view controller to present from.
     ///

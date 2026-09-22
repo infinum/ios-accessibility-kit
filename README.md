@@ -43,7 +43,7 @@ The method `currentAccessibilitySnapshot(for:)`  returns a snapshot of a type `A
 
 To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. It takes the `type` of accessibility feature to track, defined by the `AccessibilityType` enum, and optionally a `customIdentifier` to report that feature under and a `transform` to correct its value.
 
-Track each `AccessibilityType` at most once — a type has a single identifier, and tracking the same one twice reports it twice.
+Track each `AccessibilityType` at most once. Nothing prevents tracking one twice, but each tracking object produces its own entry in the snapshot, and two entries reported under the same identifier collide in the accessibility monitor's list.
 
 A default identifier is used for every tracked accessibility feature when a custom identifier is not used. Default identifiers are defined as:
 
@@ -129,7 +129,7 @@ The object type in the array is `AccessibilityState` which provides `type`, `nam
 {
     "values": [
         { "identifier": "bold_text", "value": true },
-        { "identifier": "font_scale", "value": 1.25 },
+        { "identifier": "font_scale", "value": 1.2352941176470589 },
         { "identifier": "voice_over", "value": true }
     ]
 }

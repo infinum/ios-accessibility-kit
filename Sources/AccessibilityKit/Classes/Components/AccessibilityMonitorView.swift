@@ -23,6 +23,9 @@ import SwiftUI
 /// so tracking must be configured first, and values it shows carry any
 /// transform the tracking objects apply.
 ///
+/// - Important: Only one observation is active at a time, so showing the
+///   monitor replaces the app's own. Register again once it is dismissed.
+///
 public struct AccessibilityMonitorView: View {
 
     @ObservedObject private var viewModel = AccessibilityMonitorViewModel()

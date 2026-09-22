@@ -20,7 +20,7 @@ import Foundation
 /// when no custom identifier is supplied, and it is what appears in the
 /// encoded output.
 ///
-/// ## Discussion
+/// ## Overview
 ///
 /// Every feature reports a ``AccessibilityValue/flag(_:)`` — whether the
 /// setting is on — except ``fontScale``, which reports a

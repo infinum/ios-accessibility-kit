@@ -10,7 +10,7 @@ import Foundation
 ///
 /// The value an accessibility feature reports.
 ///
-/// ## Discussion
+/// ## Overview
 ///
 /// Which case a feature produces is fixed by its ``AccessibilityType``: every
 /// feature reports a ``flag(_:)`` except ``AccessibilityType/fontScale``,
