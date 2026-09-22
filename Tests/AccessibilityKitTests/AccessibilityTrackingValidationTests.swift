@@ -83,6 +83,22 @@ struct AccessibilityTrackingValidationTests {
         }
     }
 
+    @Test("Rejects a snapshot request sharing one identifier between features")
+    func rejectsDuplicateIdentifiersInSnapshotRequest() {
+        let kit = AccessibilityKit(
+            monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())
+        )
+
+        #expect(throws: AccessibilityTrackingError.duplicateIdentifier("enabled")) {
+            try kit.currentAccessibilitySnapshot(
+                for: [
+                    AccessibilityTrackingObject(type: .fontScale, customIdentifier: "enabled"),
+                    AccessibilityTrackingObject(type: .voiceOver, customIdentifier: "enabled")
+                ]
+            )
+        }
+    }
+
     @Test("Reads a snapshot when each type appears once")
     func readsSnapshotForUniqueTypes() throws {
         let kit = AccessibilityKit(

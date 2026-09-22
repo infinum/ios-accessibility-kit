@@ -30,7 +30,9 @@ AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 ``AccessibilityFetchType/initial`` reports only once, when observation begins.
 
 The initialiser throws ``AccessibilityTrackingError/duplicateType(_:)`` if a feature appears more
-than once — a feature has one identifier, and tracking it twice would report it twice.
+than once, and ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if two features would be
+reported under the same identifier — either way, the snapshot would carry entries a consumer
+cannot tell apart.
 
 ### Observing
 
