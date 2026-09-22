@@ -69,6 +69,14 @@ A default identifier is used for every tracked accessibility feature when a cust
 | Video autoplay                | video_autoplay                | Bool          |
 | VoiceOver                     | voice_over                    | Bool          |
 
+`AccessibilityType` conforms to `CaseIterable`, so every supported feature can be tracked without listing them by hand:
+
+```swift
+let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+    for: AccessibilityType.allCases.map { AccessibilityTrackingObject(type: $0) }
+)
+```
+
 #### Correcting a value
 
 Sometimes the value a feature reports is not the value an app wants to record — for example, a font scale of `1.29` may only be interesting as "large text is enabled". Pass a `transform` to `AccessibilityTrackingObject` to correct the value where it is produced, so the correction applies to snapshots, observed changes, the encoded output and the accessibility monitor alike.
