@@ -7,11 +7,16 @@ import Foundation
 
 ///
 /// Polls until the expectation holds, so a positive assertion never depends on
-/// a fixed delay being long enough, and a broken emission fails the test at
-/// the timeout instead of hanging the suite.
+/// a fixed delay being long enough. It returns when the condition holds or the
+/// timeout passes, whichever comes first, and asserts nothing itself - the
+/// caller states the expectation afterwards, so a missing emission fails there
+/// rather than hanging the suite.
+///
+/// The timeout is generous because a cold simulator has been seen to take
+/// longer than two seconds to deliver.
 ///
 @MainActor
-func poll(until condition: () -> Bool, timeout: TimeInterval = 2) async {
+func poll(until condition: () -> Bool, timeout: TimeInterval = 5) async {
     let deadline = Date().addingTimeInterval(timeout)
 
     while !condition() && Date() < deadline {

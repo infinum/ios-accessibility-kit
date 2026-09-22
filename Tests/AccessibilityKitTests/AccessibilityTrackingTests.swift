@@ -14,7 +14,8 @@ struct AccessibilityTrackingTests {
     ///
     /// Proves a transform reaches the observation path, not just the snapshot
     /// returned directly — the whole point of applying it where states are
-    /// produced. The accessibility monitor observes through the same path.
+    /// produced.
+    ///
     @Test("Applies transforms to observed snapshots")
     func appliesTransformToObservedSnapshot() async throws {
         let kit = AccessibilityKit(
