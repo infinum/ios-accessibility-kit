@@ -1,5 +1,5 @@
 //
-//  DarkSystemColorsAccessibilityObject.swift
+//  DarkerSystemColorsAccessibilityObject.swift
 //  AccessibilityKit
 //
 //  Created by Nikola Majcen on 10.02.2022..
