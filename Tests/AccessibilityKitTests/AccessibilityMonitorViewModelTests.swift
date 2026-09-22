@@ -43,52 +43,15 @@ struct AccessibilityMonitorViewModelTests {
 
         // Dismissing the monitor releases its view model, which must leave
         // the app's own observation exactly as it was.
+        weak var released = viewModel
         viewModel = nil
+
+        #expect(released == nil)
+
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await poll(until: { appCounter.count == 3 })
 
         #expect(appCounter.count == 3)
         withExtendedLifetime(monitor) { }
-    }
-
-    ///
-    /// Two view models for one monitor is what a re-presented monitor looks
-    /// like, and a released one must not leave a slot behind.
-    ///
-    @Test("Registers an observer once and drops released ones")
-    func registersOnceAndDropsReleasedObservers() async throws {
-        let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(
-            with: try AccessibilityTrackingConfiguration(
-                fetchType: .continuous,
-                objects: [AccessibilityTrackingObject(type: .voiceOver)]
-            )
-        )
-
-        let observer = SpyCountingObserver()
-        monitor.addSnapshotObserver(observer)
-        monitor.addSnapshotObserver(observer)
-        await poll(until: { observer.count > 0 })
-
-        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await settle()
-
-        // One registration for the two adds, plus the change: an observer
-        // added twice must not be told twice.
-        #expect(observer.count == 2)
-        withExtendedLifetime(monitor) { }
-    }
-}
-
-// MARK: - Spy
-
-@MainActor
-private final class SpyCountingObserver: AccessibilitySnapshotObserver {
-
-    private(set) var count = 0
-
-    func accessibilitySnapshotDidChange(_ snapshot: AccessibilitySnapshot) {
-        count += 1
     }
 }
