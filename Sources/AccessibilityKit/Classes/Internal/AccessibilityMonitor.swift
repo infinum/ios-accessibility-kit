@@ -68,7 +68,9 @@ private extension AccessibilityMonitor {
         concurrentQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
 
-            self.subjects.forEach { $0.removeObservers() }
+            // The old subjects are released by the assignment below, and a
+            // released subject takes its observer list and its notification
+            // registration with it.
             self.subjects = Set(configuration.objects.map(\.type))
                 .map { AccessibilitySubject(type: $0, notificationCenter: self.notificationCenter) }
             self.subjects.forEach { $0.addObserver(self) }
