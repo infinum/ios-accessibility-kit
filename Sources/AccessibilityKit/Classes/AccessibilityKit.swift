@@ -108,8 +108,11 @@ public final class AccessibilityKit {
     /// ``AccessibilityFetchType/continuous`` reports again on every change.
     ///
     /// Only one observation is active at a time — calling this again replaces
-    /// the previous completion. Until then the completion is kept, and
-    /// reconfiguring tracking does not clear it, so capture its owner weakly.
+    /// the previous completion. A snapshot already in flight still reaches
+    /// the completion that was registered when it was taken, so a replacement
+    /// never receives someone else's first snapshot. Until it is replaced the
+    /// completion is kept, and reconfiguring tracking does not clear it, so
+    /// capture its owner weakly.
     ///
     /// - Parameter completion: Called with each snapshot. If tracking has
     ///   not been configured yet, no first snapshot is delivered; the
