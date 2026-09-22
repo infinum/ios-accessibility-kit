@@ -47,8 +47,9 @@ Completions are delivered asynchronously on the main queue, so a completion neve
 own call to observe.
 
 Only one observation is active at a time — calling this again replaces the previous completion.
-Reconfiguring tracking keeps the observation you already registered, and it begins reporting the
-newly configured features.
+Reconfiguring tracking keeps the observation you already registered, but emits no snapshot of its
+own: the next one arrives at the next change, and only if the new configuration is
+``AccessibilityFetchType/continuous``.
 
 ### Isolation
 

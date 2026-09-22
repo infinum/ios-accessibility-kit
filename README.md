@@ -180,15 +180,15 @@ To do that, use  `AccessibilityKit.shared.configureAccessibilityTracking(with:)`
 let configuration = try AccessibilityTrackingConfiguration(
     fetchType: .continuous,
     objects: [
-            AccessibilityTrackingObject(type: .boldText),
-            AccessibilityTrackingObject(
-                type: .buttonShapes, 
-                customIdentifier: "button_shapes_enabled"
-            ),
-            AccessibilityTrackingObject(
-                type: .fontScale, 
-                customIdentifier: "font_scaling"
-            ),
+        AccessibilityTrackingObject(type: .boldText),
+        AccessibilityTrackingObject(
+            type: .buttonShapes,
+            customIdentifier: "button_shapes_enabled"
+        ),
+        AccessibilityTrackingObject(
+            type: .fontScale,
+            customIdentifier: "font_scaling"
+        ),
         AccessibilityTrackingObject(type: .reduceMotion),
         AccessibilityTrackingObject(type: .voiceOver)
     ]
