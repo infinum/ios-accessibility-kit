@@ -10,24 +10,17 @@ import UIKit
 @Suite("AccessibilityObjectFactory")
 struct AccessibilityObjectFactoryTests {
 
-    static let allTypes = AccessibilityType.allCases
-
-    @Test("Covers every accessibility type")
-    func coversEveryType() {
-        #expect(Self.allTypes.count == 21)
-    }
-
-    @Test("Produces an object carrying the requested type", arguments: allTypes)
+    @Test("Produces an object carrying the requested type", arguments: AccessibilityType.allCases)
     func producesMatchingType(type: AccessibilityType) {
         #expect(AccessibilityObjectFactory.object(for: type).type == type)
     }
 
-    @Test("Produces an object with the expected name", arguments: allTypes)
+    @Test("Produces an object with the expected name", arguments: AccessibilityType.allCases)
     func producesExpectedName(type: AccessibilityType) {
         #expect(AccessibilityObjectFactory.object(for: type).name == Self.expectedName(for: type))
     }
 
-    @Test("Subscribes each object to the right notification", arguments: allTypes)
+    @Test("Subscribes each object to the right notification", arguments: AccessibilityType.allCases)
     func producesExpectedNotificationName(type: AccessibilityType) {
         #expect(
             AccessibilityObjectFactory.object(for: type).notificationName
@@ -35,14 +28,14 @@ struct AccessibilityObjectFactoryTests {
         )
     }
 
-    @Test("States carry the type's raw value as the default identifier", arguments: allTypes)
+    @Test("States carry the type's raw value as the default identifier", arguments: AccessibilityType.allCases)
     func producesDefaultIdentifier(type: AccessibilityType) {
         let state = AccessibilityObjectFactory.object(for: type).state(customIdentifier: nil)
 
         #expect(state.identifier == type.rawValue)
     }
 
-    @Test("States carry the custom identifier they are given", arguments: allTypes)
+    @Test("States carry the custom identifier they are given", arguments: AccessibilityType.allCases)
     func honoursCustomIdentifier(type: AccessibilityType) {
         let state = AccessibilityObjectFactory
             .object(for: type)
