@@ -42,6 +42,12 @@ public struct AccessibilitySnapshot: Sendable {
     /// ``AccessibilityState/withValue(_:)`` so they can be encoded and sent on
     /// like any other snapshot.
     ///
+    /// Unlike the tracking paths, this does not check the states it is given:
+    /// a snapshot built from two others can carry one feature, or one
+    /// identifier, twice. Keep them unique — an identifier is what a consumer
+    /// tells entries apart by, and what the accessibility monitor keys its
+    /// rows on.
+    ///
     /// - Parameter states: The states to carry. They come out ordered by
     ///   accessibility type whatever order they are supplied in.
     ///

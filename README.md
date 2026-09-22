@@ -50,7 +50,7 @@ The method `currentAccessibilitySnapshot(for:)`  returns a snapshot of a type `A
 
 To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. It takes the `type` of accessibility feature to track, defined by the `AccessibilityType` enum, and optionally a `customIdentifier` to report that feature under and a `transform` to correct its value.
 
-Track each `AccessibilityType` at most once. A feature has a single identifier, so supplying the same type twice is rejected: the configuration's initializer and `currentAccessibilitySnapshot(for:)` throw `AccessibilityTrackingError.duplicateType(_:)`.
+Track each `AccessibilityType` at most once, and give each one its own identifier. The configuration's initializer and `currentAccessibilitySnapshot(for:)` reject anything else: `AccessibilityTrackingError.duplicateType(_:)` for a repeated feature, `AccessibilityTrackingError.duplicateIdentifier(_:)` when two features would be reported under the same identifier.
 
 A default identifier is used for every tracked accessibility feature when a custom identifier is not used. Default identifiers are defined as:
 
@@ -197,7 +197,7 @@ let configuration = try AccessibilityTrackingConfiguration(
 AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 ```
 
-Each `AccessibilityType` may appear at most once. A feature has a single identifier, so supplying one twice would report it twice; the initializer throws `AccessibilityTrackingError.duplicateType(_:)` instead.
+Each `AccessibilityType` may appear at most once, and no two may share an identifier; the initializer throws `AccessibilityTrackingError.duplicateType(_:)` or `AccessibilityTrackingError.duplicateIdentifier(_:)` instead of reporting entries a consumer cannot tell apart.
 
 After that, the observing method can be used afterward to get the latest accessibility feature states.
 

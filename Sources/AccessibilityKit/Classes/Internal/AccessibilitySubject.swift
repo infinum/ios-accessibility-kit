@@ -75,7 +75,7 @@ class AccessibilitySubject {
         MainActor.assumeIsolated { readStateAndNotify() }
     }
 
-    func readStateAndNotify() {
+    private func readStateAndNotify() {
         notifyObservers(with: object.state(customIdentifier: nil))
     }
 }
@@ -98,9 +98,9 @@ extension AccessibilitySubject: Subject {
     }
 }
 
-// MARK: - Extensions
+// MARK: - Private methods
 
-extension AccessibilitySubject {
+private extension AccessibilitySubject {
 
     ///
     /// A released observer is skipped rather than swept out of the list:
