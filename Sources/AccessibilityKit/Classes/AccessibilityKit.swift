@@ -105,7 +105,10 @@ public final class AccessibilityKit {
     /// ``AccessibilityFetchType/continuous`` reports again on every change.
     ///
     /// Only one observation is active at a time — calling this again replaces
-    /// the previous completion. Snapshots are delivered on the main queue.
+    /// the previous completion. A snapshot already in flight still reaches
+    /// the completion that was registered when it was taken, so a replacement
+    /// never receives someone else's first snapshot. Snapshots are delivered
+    /// on the main queue.
     ///
     /// - Parameter completion: Called with each snapshot. Nothing is
     ///   delivered if tracking has not been configured.
@@ -122,10 +125,9 @@ public final class AccessibilityKit {
     /// features from that configuration, with any transforms applied, so it
     /// shows exactly what the app reports.
     ///
-    /// - Important: The monitor observes through
-    ///   ``observeAccessibilityTracking(completion:)``, and only one
-    ///   observation is active at a time, so presenting it replaces the
-    ///   app's own. Register again after the monitor is dismissed.
+    /// The monitor observes on its own, so presenting it does not replace a
+    /// completion registered through
+    /// ``observeAccessibilityTracking(completion:)``.
     ///
     /// - Parameter viewController: The view controller to present from.
     ///

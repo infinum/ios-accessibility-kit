@@ -19,16 +19,18 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It observes through ``AccessibilityKit/observeAccessibilityTracking(completion:)``,
-/// so tracking must be configured first, and values it shows carry any
-/// transform the tracking objects apply.
-///
-/// - Important: Only one observation is active at a time, so showing the
-///   monitor replaces the app's own. Register again once it is dismissed.
+/// It observes the configured tracking on its own — presenting it does not
+/// replace a completion the app registered through
+/// ``AccessibilityKit/observeAccessibilityTracking(completion:)``. Tracking
+/// must be configured first, and values it shows carry any transform the
+/// tracking objects apply.
 ///
 public struct AccessibilityMonitorView: View {
 
-    @ObservedObject private var viewModel = AccessibilityMonitorViewModel()
+    // `@StateObject`, not `@ObservedObject`: an observed object built inline
+    // is re-created on every re-render, and the monitor holds its snapshot
+    // observers weakly — the view must own one stable view model.
+    @StateObject private var viewModel = AccessibilityMonitorViewModel()
     let onDismiss: () -> Void
 
     ///

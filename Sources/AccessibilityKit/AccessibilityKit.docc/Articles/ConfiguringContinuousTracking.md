@@ -48,7 +48,9 @@ AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 Completions are delivered asynchronously on the main queue, so a completion never runs inside your
 own call to observe.
 
-Only one observation is active at a time — calling this again replaces the previous completion.
+Only one observation is active at a time — calling this again replaces the previous completion. A
+snapshot already in flight still reaches the completion registered when it was taken, so a
+replacement never receives someone else's first snapshot.
 Reconfiguring tracking keeps the observation you already registered, but emits no snapshot of its
 own: the next one arrives at the next change, and only if the new configuration is
 ``AccessibilityFetchType/continuous``.

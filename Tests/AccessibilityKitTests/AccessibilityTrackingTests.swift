@@ -14,9 +14,7 @@ struct AccessibilityTrackingTests {
     ///
     /// Proves a transform reaches the observation path, not just the snapshot
     /// returned directly — the whole point of applying it where states are
-    /// produced. The accessibility monitor observes through the same path.
-    ///
-    /// `.initial` emits exactly once, which keeps the continuation safe.
+    /// produced.
     ///
     @Test("Applies transforms to observed snapshots")
     func appliesTransformToObservedSnapshot() async throws {
@@ -36,14 +34,23 @@ struct AccessibilityTrackingTests {
         )
         kit.configureAccessibilityTracking(with: configuration)
 
-        let snapshot: AccessibilitySnapshot = await withCheckedContinuation { continuation in
-            kit.observeAccessibilityTracking { snapshot in
-                continuation.resume(returning: snapshot)
-            }
-        }
+        let recorder = SnapshotRecorder()
+        kit.observeAccessibilityTracking { recorder.snapshot = $0 }
+        await poll(until: { recorder.snapshot != nil })
 
-        #expect(snapshot.states.first?.value == .flag(true))
-        #expect(snapshot.states.first?.identifier == "large_text_enabled")
+        #expect(recorder.snapshot?.states.first?.value == .flag(true))
+        #expect(recorder.snapshot?.states.first?.identifier == "large_text_enabled")
         withExtendedLifetime(kit) { }
     }
+}
+
+// MARK: - Recorder
+
+///
+/// Holds the last delivered snapshot so the test can poll for it.
+///
+@MainActor
+private final class SnapshotRecorder {
+
+    var snapshot: AccessibilitySnapshot?
 }

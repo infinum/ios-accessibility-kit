@@ -148,7 +148,7 @@ The identifiers are the default ones from the table above. Any feature given a `
 
 **AccessibilityKit** also provides a user interface for observing changes. To be able to instantiate the view controller, use the method; `AccessibilityKit.shared.presentAccessibilityMonitor(on:)`.
 
-The monitor observes through `observeAccessibilityTracking(completion:)`, and only one observation is active at a time, so presenting it replaces the app's own. Register again once the monitor is dismissed.
+The monitor observes the configured tracking on its own, so presenting it does not replace an observation the app registered with `observeAccessibilityTracking(completion:)` — both keep reporting.
 
 ### Getting started
 

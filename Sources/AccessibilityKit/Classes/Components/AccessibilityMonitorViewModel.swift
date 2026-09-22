@@ -12,10 +12,12 @@ final class AccessibilityMonitorViewModel: ObservableObject {
 
     @Published var states: [AccessibilityState] = []
 
-    init() {
-        AccessibilityKit.shared.observeAccessibilityTracking { [weak self] snapshot in
-            self?.states = snapshot.states
-        }
+    ///
+    /// The monitor holds its snapshot observers weakly, so registering is
+    /// all this needs: the registration ends when the view model does.
+    ///
+    init(monitor: AccessibilityMonitor = .shared) {
+        monitor.addSnapshotObserver(self)
     }
 
     private lazy var formatter = {
@@ -50,5 +52,14 @@ final class AccessibilityMonitorViewModel: ObservableObject {
         case .flag(let value):
             return value ? "Enabled" : "Disabled"
         }
+    }
+}
+
+// MARK: - AccessibilitySnapshotObserver
+
+extension AccessibilityMonitorViewModel: AccessibilitySnapshotObserver {
+
+    func accessibilitySnapshotDidChange(_ snapshot: AccessibilitySnapshot) {
+        states = snapshot.states
     }
 }
