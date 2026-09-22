@@ -7,6 +7,12 @@
 
 import Foundation
 
+///
+/// Keep the cases in alphabetical order, and keep every case available on
+/// every supported OS: `allCases` is public, so its order is the order
+/// consumers iterate, and marking a case `@available` stops `CaseIterable`
+/// synthesis - which would put a hand-written `allCases` into shipped code.
+///
 public enum AccessibilityType: String, CaseIterable, Encodable {
     case assistiveTouch = "assistive_touch"
     case boldText = "bold_text"
