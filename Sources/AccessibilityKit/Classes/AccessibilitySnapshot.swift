@@ -42,8 +42,8 @@ public struct AccessibilitySnapshot {
     /// ``AccessibilityState/withValue(_:)`` so they can be encoded and sent on
     /// like any other snapshot.
     ///
-    /// - Parameter states: The states to carry. They are sorted on the way in,
-    ///   so the order they are supplied in does not matter.
+    /// - Parameter states: The states to carry. They come out ordered by
+    ///   accessibility type whatever order they are supplied in.
     ///
     public init(states: [AccessibilityState]) {
         self.states = states.sorted()
