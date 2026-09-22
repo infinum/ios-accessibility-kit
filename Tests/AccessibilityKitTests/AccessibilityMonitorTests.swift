@@ -76,6 +76,11 @@ struct AccessibilityMonitorTests {
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
         await Self.wait(until: { counter.count == 2 })
 
+        // Asserted before the next post: polling returns at its timeout
+        // without failing, so a boldText change that never arrived would
+        // otherwise be covered by the voiceOver post below.
+        #expect(counter.count == 2)
+
         // The replaced configuration's feature must no longer be observed.
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await Self.settle()
