@@ -103,6 +103,29 @@ struct AccessibilitySubjectTests {
         #expect(observer.states.first?.type == .boldText)
     }
 
+    ///
+    /// The notification centre is not the library's, so anything in the
+    /// process can post these names from a background thread. That must reach
+    /// the observer rather than trap the process on the main-actor
+    /// assumption.
+    ///
+    @Test("Delivers a notification posted from a background thread")
+    func deliversNotificationPostedOffTheMainThread() async {
+        let center = NotificationCenter()
+        let subject = AccessibilitySubject(type: .voiceOver, notificationCenter: center)
+        let observer = SpyObserver()
+        subject.addObserver(observer)
+
+        DispatchQueue.global().async {
+            center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        }
+
+        await Self.wait(until: { observer.states.count == 1 })
+
+        #expect(observer.states.count == 1)
+        #expect(observer.states.first?.type == .voiceOver)
+    }
+
     @Test("Ignores notifications for other accessibility features")
     func ignoresOtherNotifications() {
         let center = NotificationCenter()
@@ -185,6 +208,23 @@ struct AccessibilitySubjectTests {
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
         #expect(retained.states.count == 1)
+    }
+}
+
+// MARK: - Helpers
+
+private extension AccessibilitySubjectTests {
+
+    ///
+    /// Polls until the expectation holds, so a positive assertion never
+    /// depends on a fixed delay being long enough.
+    ///
+    static func wait(until condition: () -> Bool, timeout: TimeInterval = 5) async {
+        let deadline = Date().addingTimeInterval(timeout)
+
+        while !condition() && Date() < deadline {
+            try? await Task.sleep(nanoseconds: 5_000_000)
+        }
     }
 }
 
