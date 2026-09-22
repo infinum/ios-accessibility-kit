@@ -84,6 +84,24 @@ struct AccessibilitySubjectTests {
         #expect(second.states.isEmpty)
     }
 
+    ///
+    /// Every other test here watches VoiceOver, which cannot tell a subject
+    /// subscribing to its own feature's notification from one hardcoded to
+    /// VoiceOver's. A second feature can.
+    ///
+    @Test("Subscribes to the notification of the feature it was created for")
+    func subscribesToItsOwnFeaturesNotification() {
+        let center = NotificationCenter()
+        let subject = AccessibilitySubject(type: .boldText, notificationCenter: center)
+        let observer = SpyObserver()
+        subject.addObserver(observer)
+
+        center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
+
+        #expect(observer.states.count == 1)
+        #expect(observer.states.first?.type == .boldText)
+    }
+
     @Test("Ignores notifications for other accessibility features")
     func ignoresOtherNotifications() {
         let center = NotificationCenter()
