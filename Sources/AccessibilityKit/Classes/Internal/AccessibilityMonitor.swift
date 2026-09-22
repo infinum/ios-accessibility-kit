@@ -14,8 +14,8 @@ import Foundation
 /// Subject mutation is serialised with a barrier on `concurrentQueue`, and
 /// snapshot delivery hops that same queue, so delivery is ordered behind a
 /// reconfiguration that is still in flight. Completions run on the main
-/// queue. `configuration` and the registered completion are written by the
-/// caller on whatever thread it uses, which the queue does not cover.
+/// queue. `configuration` and the registered completion are read and written
+/// outside that queue, which therefore does not order them.
 ///
 final class AccessibilityMonitor {
 

@@ -81,7 +81,7 @@ let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
 
 #### Correcting a value
 
-Sometimes the value a feature reports is not the value an app wants to record — for example, a font scale of `1.29` may only be interesting as "large text is enabled". Pass a `transform` to `AccessibilityTrackingObject` to correct the value where it is produced, so the encoded output and `toDictionary()` carry the corrected value too. A tracking object passed to `currentAccessibilitySnapshot(for:)` corrects only that snapshot; to correct observed changes and the accessibility monitor as well, include it in the configuration passed to `configureAccessibilityTracking(with:)`.
+Sometimes the value a feature reports is not the value an app wants to record — for example, a font scale of `1.2353` may only be interesting as "large text is enabled". Pass a `transform` to `AccessibilityTrackingObject` to correct the value where it is produced, so the encoded output and `toDictionary()` carry the corrected value too. A tracking object passed to `currentAccessibilitySnapshot(for:)` corrects only that snapshot; to correct observed changes and the accessibility monitor as well, include it in the configuration passed to `configureAccessibilityTracking(with:)`.
 
 ```swift
 AccessibilityTrackingObject(
@@ -142,6 +142,8 @@ The identifiers are the default ones from the table above. Any feature given a `
 #### Accessibility monitor
 
 **AccessibilityKit** also provides a user interface for observing changes. To be able to instantiate the view controller, use the method; `AccessibilityKit.shared.presentAccessibilityMonitor(on:)`.
+
+The monitor observes through `observeAccessibilityTracking(completion:)`, and only one observation is active at a time, so presenting it replaces the app's own. Register again once the monitor is dismissed.
 
 ### Getting started
 
