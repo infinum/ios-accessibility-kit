@@ -71,7 +71,6 @@ extension AccessibilitySubject: Subject {
 extension AccessibilitySubject {
 
     func notifyObservers(with state: AccessibilityState) {
-        removeReleasedObservers()
         observers
             .compactMap { $0.observer as? AccessibilityObserver }
             .forEach { $0.accessibilityStateDidChange(state) }
@@ -82,6 +81,13 @@ extension AccessibilitySubject {
 
 private extension AccessibilitySubject {
 
+    ///
+    /// Called only from registration, which the monitor performs on its
+    /// barrier queue. Notification delivery must not sweep: it runs on the
+    /// posting thread, and writing `observers` from there would race the
+    /// registration writes. Released observers are skipped when notifying,
+    /// so the sweep is only there to stop empty boxes accumulating.
+    ///
     func removeReleasedObservers() {
         observers.removeAll(where: { $0.observer == nil })
     }
