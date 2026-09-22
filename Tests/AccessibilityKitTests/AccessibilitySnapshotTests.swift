@@ -73,7 +73,7 @@ struct AccessibilitySnapshotTests {
                 AccessibilityTrackingObject(
                     type: .fontScale,
                     customIdentifier: "large_text_enabled",
-                    transform: { _ in .flag(true) }
+                    transform: { _ in .flag(false) }
                 )
             ]
         )
@@ -84,7 +84,11 @@ struct AccessibilitySnapshotTests {
 
         #expect(values.count == 1)
         #expect(values.first?["identifier"] as? String == "large_text_enabled")
-        #expect(values.first?["value"] as? Bool == true)
+        // False rather than true: an untransformed font scale encodes as a
+        // number, and JSONSerialization hands it back as an NSNumber that
+        // bridges to `true` for any scale of 1.0 - so expecting `true` here
+        // would hold whether the transform ran or not.
+        #expect(values.first?["value"] as? Bool == false)
     }
 
     @Test("Sorts states supplied directly")
