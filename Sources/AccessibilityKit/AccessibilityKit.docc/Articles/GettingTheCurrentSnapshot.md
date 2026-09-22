@@ -54,7 +54,15 @@ snapshot with ``AccessibilitySnapshot/init(states:)``.
 
 ### Sending it onward
 
-``AccessibilitySnapshot`` is `Encodable`, and ``AccessibilitySnapshot/toDictionary()`` converts it:
+``AccessibilitySnapshot`` is `Encodable`, and ``AccessibilitySnapshot/toDictionary()`` converts it.
+The conversion throws whatever `JSONEncoder` or `JSONSerialization` raises, so it reports a failure
+rather than handing back `nil`:
+
+```swift
+let payload = try snapshot.toDictionary()
+```
+
+The dictionary is the encoded form:
 
 ```json
 {

@@ -51,7 +51,11 @@ private extension AccessibilityKitView {
             )
             return Self.label(for: snapshot)
         } catch {
-            return "unavailable: \(error)"
+            // The list above is unique, so this is a mistake in that list
+            // rather than a runtime condition - the same stance the app's
+            // own configuration takes.
+            assertionFailure("Invalid accessibility tracking objects: \(error)")
+            return "unavailable"
         }
     }
 
@@ -76,7 +80,11 @@ private extension AccessibilityKitView {
             )
             return Self.label(for: corrected)
         } catch {
-            return "unavailable: \(error)"
+            // The list above is unique, so this is a mistake in that list
+            // rather than a runtime condition - the same stance the app's
+            // own configuration takes.
+            assertionFailure("Invalid accessibility tracking objects: \(error)")
+            return "unavailable"
         }
     }
 
