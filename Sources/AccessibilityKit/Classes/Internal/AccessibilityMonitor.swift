@@ -7,9 +7,19 @@
 
 import Foundation
 
+///
+/// Holds the tracking configuration, owns a subject per tracked feature, and
+/// delivers snapshots to the registered observation.
+///
+/// Subject mutation is serialised with a barrier on `concurrentQueue`, and
+/// snapshot delivery hops that same queue, so delivery is ordered behind a
+/// reconfiguration that is still in flight. Completions run on the main
+/// queue. `configuration` and the registered completion are read and written
+/// outside that queue, which therefore does not order them.
+///
 final class AccessibilityMonitor {
 
-    // MARK: - Public methods
+    // MARK: - Internal properties
 
     static let shared = AccessibilityMonitor()
 
