@@ -68,10 +68,26 @@ struct AccessibilityStateTests {
         #expect(on != off)
     }
 
+    @Test("Differs when the type differs")
+    func differsOnType() {
+        let voice = AccessibilityState(type: .voiceOver, name: "VoiceOver", value: .flag(true))
+        let bold = AccessibilityState(type: .boldText, name: "Bold Text", value: .flag(true))
+
+        #expect(voice != bold)
+    }
+
+    ///
+    /// The identifiers are chosen to sort the other way round, so ordering
+    /// by them instead of by the type would fail this.
+    ///
     @Test("Orders by the type's raw value")
     func ordersByTypeRawValue() {
-        let bold = AccessibilityState(type: .boldText, name: "Bold Text", value: .flag(false))
-        let voice = AccessibilityState(type: .voiceOver, name: "VoiceOver", value: .flag(false))
+        let bold = AccessibilityState(
+            type: .boldText, name: "Bold Text", value: .flag(false), customIdentifier: "z_bold"
+        )
+        let voice = AccessibilityState(
+            type: .voiceOver, name: "VoiceOver", value: .flag(false), customIdentifier: "a_voice"
+        )
 
         #expect(bold < voice)
     }

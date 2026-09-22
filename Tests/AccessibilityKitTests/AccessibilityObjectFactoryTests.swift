@@ -41,6 +41,15 @@ struct AccessibilityObjectFactoryTests {
 
         #expect(state.identifier == type.rawValue)
     }
+
+    @Test("States carry the custom identifier they are given", arguments: allTypes)
+    func honoursCustomIdentifier(type: AccessibilityType) {
+        let state = AccessibilityObjectFactory
+            .object(for: type)
+            .state(customIdentifier: "custom_\(type.rawValue)")
+
+        #expect(state.identifier == "custom_\(type.rawValue)")
+    }
 }
 
 // MARK: - Expectations
