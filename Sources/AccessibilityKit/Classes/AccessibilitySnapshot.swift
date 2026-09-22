@@ -10,7 +10,7 @@ import Foundation
 ///
 /// The state of every tracked accessibility feature, read at one moment.
 ///
-/// ## Discussion
+/// ## Overview
 ///
 /// Snapshots come from ``AccessibilityKit/currentAccessibilitySnapshot(for:)``
 /// or from ``AccessibilityKit/observeAccessibilityTracking(completion:)``.
@@ -23,7 +23,7 @@ import Foundation
 /// {
 ///     "values": [
 ///         { "identifier": "bold_text", "value": true },
-///         { "identifier": "font_scale", "value": 1.25 }
+///         { "identifier": "font_scale", "value": 1.2352941176470589 }
 ///     ]
 /// }
 /// ```

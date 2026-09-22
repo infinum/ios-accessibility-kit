@@ -11,7 +11,7 @@ import UIKit
 ///
 /// The state of a single accessibility feature at the moment it was read.
 ///
-/// ## Discussion
+/// ## Overview
 ///
 /// States are produced by the library, never constructed by a consumer. To
 /// adjust one, use ``withValue(_:)``, which preserves the feature's identity.
@@ -142,7 +142,7 @@ public extension AccessibilityState {
     /// let corrected = state.withValue(.flag((state.value.scaleValue ?? 1) >= 1.2))
     /// ```
     ///
-    /// ## Discussion
+    /// ## Overview
     ///
     /// The ``type``, ``name`` and ``identifier`` are preserved, so a corrected
     /// state keeps identifying the same accessibility feature. Only the value

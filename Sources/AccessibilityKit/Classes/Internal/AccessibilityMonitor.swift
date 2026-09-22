@@ -12,12 +12,14 @@ import Foundation
 /// delivers snapshots to the registered observation.
 ///
 /// Subject mutation is serialised with a barrier on `concurrentQueue`, and
-/// snapshot delivery hops that same queue so a snapshot can never overtake
-/// the subject configuration it belongs to. Completions run on the main queue.
+/// snapshot delivery hops that same queue, so delivery is ordered behind a
+/// reconfiguration that is still in flight. Completions run on the main
+/// queue. `configuration` and the registered completion are written by the
+/// caller on whatever thread it uses, which the queue does not cover.
 ///
 final class AccessibilityMonitor {
 
-    // MARK: - Public methods
+    // MARK: - Internal properties
 
     static let shared = AccessibilityMonitor()
 

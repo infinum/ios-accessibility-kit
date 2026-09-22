@@ -10,7 +10,7 @@ import Foundation
 ///
 /// One accessibility feature to track, and how to report it.
 ///
-/// ## Discussion
+/// ## Overview
 ///
 /// Track a feature under its default identifier, under one of your own, or
 /// with the reported value corrected at the point it is produced:
@@ -27,12 +27,14 @@ import Foundation
 /// )
 /// ```
 ///
-/// Track each ``AccessibilityType`` at most once. A type has a single
-/// identifier; tracking the same one twice reports it twice.
+/// Track each ``AccessibilityType`` at most once. Nothing prevents tracking
+/// one twice, but each tracking object produces its own entry in the
+/// snapshot, and two entries reported under the same identifier collide in
+/// the accessibility monitor's list.
 ///
 public struct AccessibilityTrackingObject {
 
-    //  MARK: - Public properties
+    // MARK: - Internal properties
 
     let customIdentifier: String?
     let type: AccessibilityType
@@ -78,7 +80,7 @@ public enum AccessibilityFetchType {
 ///
 /// What to track, and how often.
 ///
-/// ## Discussion
+/// ## Overview
 ///
 /// Pass a configuration to
 /// ``AccessibilityKit/configureAccessibilityTracking(with:)``, then observe
@@ -98,7 +100,7 @@ public enum AccessibilityFetchType {
 ///
 public struct AccessibilityTrackingConfiguration {
 
-    // MARK: - Public properties
+    // MARK: - Internal properties
 
     let fetchType: AccessibilityFetchType
     let objects: [AccessibilityTrackingObject]
