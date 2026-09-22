@@ -84,8 +84,9 @@ private extension AccessibilityMonitor {
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
-        // Hops the barrier queue so a snapshot can never be delivered
-        // ahead of the subject configuration it belongs to.
+        // Hops the barrier queue so delivery is ordered behind a
+        // reconfiguration that is still in flight. The snapshot itself is
+        // taken above, before the hop.
         concurrentQueue.async(flags: .barrier) { [weak self] in
             DispatchQueue.main.async {
                 self?.snapshotChangeHandler?(snapshot)

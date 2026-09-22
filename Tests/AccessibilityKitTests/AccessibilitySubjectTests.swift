@@ -184,7 +184,6 @@ struct AccessibilitySubjectTests {
     }
 }
 
-
 // MARK: - Spies
 
 private final class SpyNotificationCenter: NotificationCenter {

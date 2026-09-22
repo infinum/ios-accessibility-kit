@@ -54,7 +54,7 @@ A default identifier is used for every tracked accessibility feature when a cust
 | Cross fade transitions        | cross_fade_transitions        | Bool          |
 | Darked system colors          | darker_system_colors          | Bool          |
 | Differentiate without color   | differentiate_without_color   | Bool          |
-| Font scale                    | font_scale                    | Double        |
+| Font Scale                    | font_scale                    | Double        |
 | Grayscale                     | grayscale                     | Bool          |
 | Guided access                 | guided_access                 | Bool          |
 | Invert colors                 | invert_colors                 | Bool          |
