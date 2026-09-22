@@ -65,9 +65,15 @@ struct AccessibilitySubjectTests {
         #expect(observer.states.isEmpty)
     }
 
+    ///
+    /// The centre is spied on rather than only posted to: Foundation zeroes
+    /// its own reference to a deallocated observer, so a subject that never
+    /// unregistered would stop delivering anyway and the test would pass
+    /// while the contract was broken.
+    ///
     @Test("Unregisters from the notification centre when deallocated")
     func unregistersOnDeinit() {
-        let center = NotificationCenter()
+        let center = SpyNotificationCenter()
         let observer = SpyObserver()
 
         do {
@@ -75,13 +81,25 @@ struct AccessibilitySubjectTests {
             subject.addObserver(observer)
         }
 
+        #expect(center.removedObservers == 1)
+
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
         #expect(observer.states.isEmpty)
     }
 }
 
-// MARK: - Spy
+// MARK: - Spies
+
+private final class SpyNotificationCenter: NotificationCenter {
+
+    private(set) var removedObservers = 0
+
+    override func removeObserver(_ observer: Any) {
+        removedObservers += 1
+        super.removeObserver(observer)
+    }
+}
 
 private final class SpyObserver: AccessibilityObserver {
 
