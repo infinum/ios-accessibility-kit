@@ -124,7 +124,6 @@ struct AccessibilityMonitorTests {
     }
 }
 
-
 // MARK: - Helpers
 
 private extension AccessibilityMonitorTests {
