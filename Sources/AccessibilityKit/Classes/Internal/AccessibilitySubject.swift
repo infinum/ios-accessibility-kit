@@ -18,14 +18,16 @@ class AccessibilitySubject {
     // MARK: - Internal properties
 
     private let object: AccessibilityObject
+    private let notificationCenter: NotificationCenter
     private var observers = [Observer]()
 
     // MARK: - Lifecycle
 
-    init(type: AccessibilityType) {
-        object = AccessibilityObjectFactory.object(for: type)
+    init(type: AccessibilityType, notificationCenter: NotificationCenter = .default) {
+        self.object = AccessibilityObjectFactory.object(for: type)
+        self.notificationCenter = notificationCenter
 
-        NotificationCenter.default.addObserver(
+        notificationCenter.addObserver(
             self,
             selector: #selector(accessibilityStateDidChange(_:)),
             name: object.notificationName,
@@ -34,7 +36,7 @@ class AccessibilitySubject {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        notificationCenter.removeObserver(self)
     }
 
     // MARK: - Internal methods

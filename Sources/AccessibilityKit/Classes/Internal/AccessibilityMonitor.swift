@@ -29,10 +29,13 @@ final class AccessibilityMonitor {
     private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
     private var snapshots = [AccessibilitySnapshot]()
     private var subjects = [Subject]()
+    private let notificationCenter: NotificationCenter
 
     // MARK: - Lifecycle
 
-    private init() {}
+    init(notificationCenter: NotificationCenter = .default) {
+        self.notificationCenter = notificationCenter
+    }
 
     // MARK: - Public methods
 
@@ -67,7 +70,7 @@ private extension AccessibilityMonitor {
         concurrentQueue.async(flags: .barrier) { [unowned self] in
             subjects.forEach { $0.removeObservers() }
             subjects = Set(configuration.objects.map(\.type))
-                .map(AccessibilitySubject.init(type: ))
+                .map { AccessibilitySubject(type: $0, notificationCenter: notificationCenter) }
             subjects.forEach { $0.addObserver(self) }
         }
     }

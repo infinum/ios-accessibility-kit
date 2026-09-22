@@ -102,4 +102,29 @@ struct AccessibilitySnapshotTests {
 
         #expect(snapshot.states.map(\.type) == [.boldText, .voiceOver])
     }
+
+    ///
+    /// `values` is an **array** of `{ identifier, value }` objects, not a
+    /// dictionary keyed by identifier.
+    ///
+    @Test("Converts to a dictionary holding an array of identified values")
+    func convertsToDictionary() throws {
+        let snapshot = AccessibilitySnapshot(
+            states: [
+                AccessibilityState(type: .boldText, name: "Bold Text", value: .flag(true)),
+                AccessibilityState(
+                    type: .fontScale, name: "Font scale", value: .scale(1.25),
+                    customIdentifier: "font_scaling"
+                )
+            ]
+        )
+
+        let values = try #require(snapshot.toDictionary()?["values"] as? [[String: Any]])
+
+        #expect(values.count == 2)
+        #expect(values.first?["identifier"] as? String == "bold_text")
+        #expect(values.first?["value"] as? Bool == true)
+        #expect(values.last?["identifier"] as? String == "font_scaling")
+        #expect(values.last?["value"] as? Double == 1.25)
+    }
 }

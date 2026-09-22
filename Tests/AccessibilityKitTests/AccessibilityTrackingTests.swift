@@ -3,6 +3,7 @@
 //  AccessibilityKitTests
 //
 
+import Foundation
 import Testing
 @testable import AccessibilityKit
 
@@ -14,13 +15,16 @@ struct AccessibilityTrackingTests {
     /// returned directly — the whole point of applying it where states are
     /// produced. The accessibility monitor observes through the same path.
     ///
-    /// Uses the shared monitor, so it configures tracking it does not reset.
     /// `.initial` emits exactly once, which keeps the continuation safe.
     ///
     @Test("Applies transforms to observed snapshots")
     func appliesTransformToObservedSnapshot() async {
+        let kit = AccessibilityKit(
+            monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())
+        )
+
         let snapshot: AccessibilitySnapshot = await withCheckedContinuation { continuation in
-            AccessibilityKit.shared.configureAccessibilityTracking(
+            kit.configureAccessibilityTracking(
                 with: AccessibilityTrackingConfiguration(
                     fetchType: .initial,
                     objects: [
@@ -33,7 +37,7 @@ struct AccessibilityTrackingTests {
                 )
             )
 
-            AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
+            kit.observeAccessibilityTracking { snapshot in
                 continuation.resume(returning: snapshot)
             }
         }

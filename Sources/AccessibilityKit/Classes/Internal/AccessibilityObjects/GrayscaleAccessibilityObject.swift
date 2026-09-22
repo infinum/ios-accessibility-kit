@@ -9,6 +9,16 @@ import UIKit
 
 struct GrayscaleAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isGrayscaleEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isGrayscaleEnabled: @escaping () -> Bool = { UIAccessibility.isGrayscaleEnabled }) {
+        self.isGrayscaleEnabled = isGrayscaleEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct GrayscaleAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isGrayscaleEnabled),
+            value: .flag(isGrayscaleEnabled()),
             customIdentifier: customIdentifier
         )
     }

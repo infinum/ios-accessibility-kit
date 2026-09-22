@@ -9,6 +9,16 @@ import UIKit
 
 struct CrossFadeTransitionsAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let prefersCrossFadeTransitions: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(prefersCrossFadeTransitions: @escaping () -> Bool = { UIAccessibility.prefersCrossFadeTransitions }) {
+        self.prefersCrossFadeTransitions = prefersCrossFadeTransitions
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct CrossFadeTransitionsAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.prefersCrossFadeTransitions),
+            value: .flag(prefersCrossFadeTransitions()),
             customIdentifier: customIdentifier
         )
     }

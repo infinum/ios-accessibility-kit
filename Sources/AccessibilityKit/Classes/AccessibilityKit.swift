@@ -14,22 +14,28 @@ public final class AccessibilityKit {
 
     public static let shared = AccessibilityKit()
 
+    // MARK: - Private properties
+
+    private let monitor: AccessibilityMonitor
+
     // MARK: - Lifecycle
 
-    private init() { }
+    init(monitor: AccessibilityMonitor = .shared) {
+        self.monitor = monitor
+    }
 
     // MARK: - Public methods
 
     public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) -> AccessibilitySnapshot {
-        return AccessibilityMonitor.shared.currentAccessibilitySnapshot(for: objects)
+        return monitor.currentAccessibilitySnapshot(for: objects)
     }
 
     public func configureAccessibilityTracking(with configuration: AccessibilityTrackingConfiguration) {
-        AccessibilityMonitor.shared.configureAccessibilityTracking(with: configuration)
+        monitor.configureAccessibilityTracking(with: configuration)
     }
 
     public func observeAccessibilityTracking(completion: @escaping (AccessibilitySnapshot) -> Void) {
-        AccessibilityMonitor.shared.observeAccessibilityTracking(completion: completion)
+        monitor.observeAccessibilityTracking(completion: completion)
     }
 
     public func presentAccessibilityMonitor(on viewController: UIViewController) {

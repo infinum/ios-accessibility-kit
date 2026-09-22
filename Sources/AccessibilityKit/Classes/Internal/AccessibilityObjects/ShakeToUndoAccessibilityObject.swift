@@ -9,6 +9,16 @@ import UIKit
 
 struct ShakeToUndoAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isShakeToUndoEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isShakeToUndoEnabled: @escaping () -> Bool = { UIAccessibility.isShakeToUndoEnabled }) {
+        self.isShakeToUndoEnabled = isShakeToUndoEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct ShakeToUndoAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isShakeToUndoEnabled),
+            value: .flag(isShakeToUndoEnabled()),
             customIdentifier: customIdentifier
         )
     }
