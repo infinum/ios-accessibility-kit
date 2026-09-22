@@ -69,10 +69,12 @@ public final class AccessibilityKit {
     ///   must appear at most once.
     /// - Returns: A snapshot of those features, as they are right now.
     /// - Throws: ``AccessibilityTrackingError/duplicateType(_:)`` if a feature
-    ///   is supplied more than once.
+    ///   is supplied more than once, or
+    ///   ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if two
+    ///   features are supplied under the same identifier.
     ///
     public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) throws -> AccessibilitySnapshot {
-        try objects.validateUniqueTypes()
+        try objects.validateUniqueTracking()
 
         return monitor.currentAccessibilitySnapshot(for: objects)
     }

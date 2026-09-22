@@ -19,6 +19,15 @@ public enum AccessibilityTrackingError: Error, Equatable {
     /// twice — once under each identifier — rather than reporting it once.
     ///
     case duplicateType(AccessibilityType)
+
+    ///
+    /// Two features were supplied under the same identifier.
+    ///
+    /// The identifier is what a snapshot entry is reported and displayed
+    /// under, so two features sharing one cannot be told apart in the encoded
+    /// payload, and collide as a single row in the accessibility monitor.
+    ///
+    case duplicateIdentifier(String)
 }
 
 ///
@@ -129,10 +138,12 @@ public struct AccessibilityTrackingConfiguration: Sendable {
     ///   - objects: The features to track. Each ``AccessibilityType`` must
     ///     appear at most once.
     /// - Throws: ``AccessibilityTrackingError/duplicateType(_:)`` if a feature
-    ///   is supplied more than once.
+    ///   is supplied more than once, or
+    ///   ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if two
+    ///   features are supplied under the same identifier.
     ///
     public init(fetchType: AccessibilityFetchType, objects: [AccessibilityTrackingObject]) throws {
-        try objects.validateUniqueTypes()
+        try objects.validateUniqueTracking()
 
         self.fetchType = fetchType
         self.objects = objects
@@ -144,13 +155,24 @@ public struct AccessibilityTrackingConfiguration: Sendable {
 extension Array where Element == AccessibilityTrackingObject {
 
     ///
-    /// Checks that no accessibility feature is tracked more than once.
+    /// Checks that no accessibility feature, and no identifier, is used more
+    /// than once: both produce two snapshot entries a consumer cannot tell
+    /// apart, and two rows sharing an identity in the accessibility monitor.
     ///
-    func validateUniqueTypes() throws {
-        var seen = Set<AccessibilityType>()
+    func validateUniqueTracking() throws {
+        var seenTypes = Set<AccessibilityType>()
+        var seenIdentifiers = Set<String>()
 
-        for object in self where seen.insert(object.type).inserted == false {
-            throw AccessibilityTrackingError.duplicateType(object.type)
+        for object in self {
+            guard seenTypes.insert(object.type).inserted else {
+                throw AccessibilityTrackingError.duplicateType(object.type)
+            }
+
+            let identifier = object.customIdentifier ?? object.type.rawValue
+
+            guard seenIdentifiers.insert(identifier).inserted else {
+                throw AccessibilityTrackingError.duplicateIdentifier(identifier)
+            }
         }
     }
 }
