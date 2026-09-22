@@ -113,7 +113,7 @@ struct AccessibilitySnapshotTests {
             states: [
                 AccessibilityState(type: .boldText, name: "Bold Text", value: .flag(true)),
                 AccessibilityState(
-                    type: .fontScale, name: "Font scale", value: .scale(1.25),
+                    type: .fontScale, name: "Font Scale", value: .scale(1.25),
                     customIdentifier: "font_scaling"
                 )
             ]
