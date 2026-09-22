@@ -52,13 +52,12 @@ class AccessibilitySubject {
 extension AccessibilitySubject: Subject {
 
     func addObserver(_ observer: Observer) {
-        removeReleasedObservers()
         guard !observers.contains(where: { $0.observer === observer }) else { return }
         observers.append(WeakObserver(observer: observer))
     }
 
     func removeObserver(_ observer: Observer) {
-        observers.removeAll(where: { $0.observer === observer || $0.observer == nil })
+        observers.removeAll(where: { $0.observer === observer })
     }
 
     func removeObservers() {
@@ -70,26 +69,16 @@ extension AccessibilitySubject: Subject {
 
 extension AccessibilitySubject {
 
+    ///
+    /// Delivery runs on whichever thread posted the notification, while
+    /// registration runs on the monitor's queue, so this only reads the
+    /// observer list - a released observer is skipped here rather than
+    /// swept, which would be a second writer.
+    ///
     func notifyObservers(with state: AccessibilityState) {
         observers
             .compactMap { $0.observer as? AccessibilityObserver }
             .forEach { $0.accessibilityStateDidChange(state) }
-    }
-}
-
-// MARK: - Private methods
-
-private extension AccessibilitySubject {
-
-    ///
-    /// Called only from registration, which the monitor performs on its
-    /// barrier queue. Notification delivery must not sweep: it runs on the
-    /// posting thread, and writing `observers` from there would race the
-    /// registration writes. Released observers are skipped when notifying,
-    /// so the sweep is only there to stop empty boxes accumulating.
-    ///
-    func removeReleasedObservers() {
-        observers.removeAll(where: { $0.observer == nil })
     }
 }
 
