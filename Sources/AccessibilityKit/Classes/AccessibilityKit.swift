@@ -122,10 +122,9 @@ public final class AccessibilityKit {
     /// features from that configuration, with any transforms applied, so it
     /// shows exactly what the app reports.
     ///
-    /// - Important: The monitor observes through
-    ///   ``observeAccessibilityTracking(completion:)``, and only one
-    ///   observation is active at a time, so presenting it replaces the
-    ///   app's own. Register again after the monitor is dismissed.
+    /// The monitor observes on its own, so presenting it does not replace a
+    /// completion registered through
+    /// ``observeAccessibilityTracking(completion:)``.
     ///
     /// - Parameter viewController: The view controller to present from.
     ///
