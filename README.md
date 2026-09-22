@@ -107,7 +107,7 @@ let snapshot = AccessibilitySnapshot(states: [corrected])
 
 To track accessibility states in real-time, `AccessibilityKit` should be configured via the method `configureAccessibilityTracking(with:)`.
 
-This method should get a configuration object as a parameter with all accessibility features that should be tracked. The class used for that is `AccessibilityTrackingConfiguration`.
+This method should get a configuration object as a parameter with all accessibility features that should be tracked. The type used for that is `AccessibilityTrackingConfiguration`.
 
 `AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered.
 
