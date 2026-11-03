@@ -54,6 +54,11 @@ struct AccessibilityMonitorTests {
         await Self.wait(until: { counter.count == 2 })
 
         #expect(counter.count == 2)
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await Self.wait(until: { counter.count == 3 })
+
+        #expect(counter.count == 3)
     }
 
     @Test("Observes the features supplied by the newest configuration")
