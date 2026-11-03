@@ -21,10 +21,14 @@ final class AccessibilityMonitor {
     )
     private var configuration: AccessibilityTrackingConfiguration? {
         didSet {
+            configurationGeneration += 1
             guard let configuration = configuration else { return }
             configureSubjects(for: configuration)
         }
     }
+    /// Bumped on every reconfiguration, so a snapshot can tell whether the
+    /// configuration it was taken under is still the current one.
+    private var configurationGeneration = 0
     private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
     private var subjects = [Subject]()
     private let notificationCenter: NotificationCenter
@@ -86,12 +90,15 @@ private extension AccessibilityMonitor {
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
+        let generation = configurationGeneration
         // Hops the barrier queue so delivery is ordered behind a
         // reconfiguration that is still in flight. The snapshot itself is
-        // taken above, before the hop.
+        // taken above, before the hop, so one taken under a configuration
+        // that has since been replaced is dropped rather than delivered.
         concurrentQueue.async(flags: .barrier) { [weak self] in
             DispatchQueue.main.async {
-                self?.snapshotChangeHandler?(snapshot)
+                guard let self = self, self.configurationGeneration == generation else { return }
+                self.snapshotChangeHandler?(snapshot)
             }
         }
     }

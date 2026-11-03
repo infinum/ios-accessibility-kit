@@ -155,6 +155,35 @@ struct AccessibilityMonitorTests {
         #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
     }
+
+    ///
+    /// Runs on the main actor so the change and the reconfiguration both
+    /// happen before the main queue gets a chance to deliver the snapshot
+    /// the change queued.
+    ///
+    @MainActor
+    @Test("Drops a snapshot taken under a configuration that has since been replaced")
+    func dropsSnapshotFromReplacedConfiguration() async {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in counter.increment() }
+        await Self.wait(until: { counter.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        monitor.configureAccessibilityTracking(
+            with: AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [AccessibilityTrackingObject(type: .boldText)]
+            )
+        )
+        await Self.settle()
+
+        #expect(counter.count == 1)
+        withExtendedLifetime(monitor) { }
+    }
 }
 
 // MARK: - Helpers
