@@ -115,17 +115,22 @@ struct AccessibilityStateTests {
             type: .voiceOver, name: "VoiceOver", value: fixture.value, customIdentifier: "custom"
         )
 
-        let json = try JSONSerialization.jsonObject(
-            with: try JSONEncoder().encode(state)
-        ) as? [String: Any]
+        let data = try JSONEncoder().encode(state)
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
         #expect(json?["identifier"] as? String == "custom")
         #expect(json?.count == 2)
         switch fixture.value {
         case .flag(let value):
-            #expect(json?["value"] as? Bool == value)
+            // Decoded rather than cast: `as? Bool` also accepts a JSON 0 or 1,
+            // while JSONDecoder only accepts a JSON boolean.
+            #expect(try JSONDecoder().decode(FlagPayload.self, from: data).value == value)
         case .number(let value), .scale(let value), .percentage(let value):
             #expect(json?["value"] as? Double == value)
         }
     }
+}
+
+private struct FlagPayload: Decodable {
+    let value: Bool
 }
