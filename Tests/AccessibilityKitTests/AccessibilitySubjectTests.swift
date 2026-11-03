@@ -124,13 +124,15 @@ struct AccessibilitySubjectTests {
     func unregistersOnDeinit() {
         let center = SpyNotificationCenter()
         let observer = SpyObserver()
+        var subjectID: ObjectIdentifier?
 
         do {
             let subject = AccessibilitySubject(type: .voiceOver, notificationCenter: center)
             subject.addObserver(observer)
+            subjectID = ObjectIdentifier(subject)
         }
 
-        #expect(center.removedObservers == 1)
+        #expect(center.removedObservers == [subjectID])
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
@@ -142,10 +144,10 @@ struct AccessibilitySubjectTests {
 
 private final class SpyNotificationCenter: NotificationCenter {
 
-    private(set) var removedObservers = 0
+    private(set) var removedObservers = [ObjectIdentifier?]()
 
     override func removeObserver(_ observer: Any) {
-        removedObservers += 1
+        removedObservers.append(ObjectIdentifier(observer as AnyObject))
         super.removeObserver(observer)
     }
 }
