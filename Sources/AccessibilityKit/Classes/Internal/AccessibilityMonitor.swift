@@ -67,10 +67,11 @@ extension AccessibilityMonitor: AccessibilityObserver {
 private extension AccessibilityMonitor {
 
     func configureSubjects(for configuration: AccessibilityTrackingConfiguration) {
-        concurrentQueue.async(flags: .barrier) { [unowned self] in
+        concurrentQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
             subjects.forEach { $0.removeObservers() }
             subjects = Set(configuration.objects.map(\.type))
-                .map { AccessibilitySubject(type: $0, notificationCenter: notificationCenter) }
+                .map { AccessibilitySubject(type: $0, notificationCenter: self.notificationCenter) }
             subjects.forEach { $0.addObserver(self) }
         }
     }
@@ -84,10 +85,11 @@ private extension AccessibilityMonitor {
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
-        concurrentQueue.async(flags: .barrier) { [unowned self] in
+        concurrentQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
             snapshots.append(snapshot)
-            DispatchQueue.main.async {
-                snapshotChangeHandler?(snapshot)
+            DispatchQueue.main.async { [weak self] in
+                self?.snapshotChangeHandler?(snapshot)
             }
         }
     }

@@ -87,6 +87,28 @@ struct AccessibilityMonitorTests {
 
         #expect(counter.count == 2)
     }
+
+    ///
+    /// Waits for the initial snapshot first: it is delivered after the
+    /// subjects are configured, so by then a subject holding the monitor
+    /// strongly would already keep it alive.
+    ///
+    @Test("Releases a configured monitor once nothing else holds it")
+    func releasesConfiguredMonitor() async {
+        let counter = EmissionCounter()
+        weak var released: AccessibilityMonitor?
+
+        do {
+            let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+            monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
+            monitor.observeAccessibilityTracking { _ in counter.increment() }
+            released = monitor
+            await Self.wait(until: { counter.count == 1 })
+        }
+
+        #expect(counter.count == 1)
+        #expect(released == nil)
+    }
 }
 
 // MARK: - Helpers
