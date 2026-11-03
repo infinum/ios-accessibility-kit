@@ -16,8 +16,11 @@ struct AccessibilityTrackingTests {
     ///
     /// Uses the shared monitor, so it configures tracking it does not reset.
     /// `.initial` emits exactly once, which keeps the continuation safe.
+    /// Runs on the main actor, where the monitor delivers snapshots, so
+    /// configuring and observing cannot race with that delivery.
     ///
     @Test("Applies transforms to observed snapshots")
+    @MainActor
     func appliesTransformToObservedSnapshot() async {
         let snapshot: AccessibilitySnapshot = await withCheckedContinuation { continuation in
             AccessibilityKit.shared.configureAccessibilityTracking(
