@@ -14,6 +14,8 @@ public enum AccessibilityValue {
     case percentage(Double)
 }
 
+extension AccessibilityValue: Sendable {}
+
 extension AccessibilityValue: Equatable {
 
     public static func == (lhs: AccessibilityValue, rhs: AccessibilityValue) -> Bool {

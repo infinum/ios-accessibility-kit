@@ -9,15 +9,23 @@ import Testing
 @Suite("AccessibilityState")
 struct AccessibilityStateTests {
 
-    @Test("withValue replaces the value", arguments: ValueFixture.allCases)
-    func withValueReplacesValue(fixture: ValueFixture) {
+    @Test(
+        "withValue replaces the value",
+        arguments: [
+            AccessibilityValue.flag(true),
+            .number(42),
+            .scale(1.5),
+            .percentage(0.25)
+        ]
+    )
+    func withValueReplacesValue(value: AccessibilityValue) {
         let state = AccessibilityState(
             type: .fontScale,
             name: "Font scale",
             value: .scale(1.0)
         )
 
-        #expect(state.withValue(fixture.value).value == fixture.value)
+        #expect(state.withValue(value).value == value)
     }
 
     @Test("withValue preserves type, name and the default identifier")
