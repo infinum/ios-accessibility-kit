@@ -16,13 +16,12 @@ struct AccessibilityMonitorTests {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
         monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .initial))
 
-        let isMain: Bool = await withCheckedContinuation { continuation in
-            monitor.observeAccessibilityTracking { _ in
-                continuation.resume(returning: Thread.isMainThread)
-            }
-        }
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in counter.increment() }
+        await Self.wait(until: { counter.count == 1 })
 
-        #expect(isMain)
+        #expect(counter.count == 1)
+        #expect(counter.lastDeliveryWasOnMainThread == true)
     }
 
     @Test("Does not emit again for a change when fetching once")
@@ -147,12 +146,13 @@ private extension AccessibilityMonitorTests {
 
 ///
 /// Written on the main queue, where the monitor delivers, and read from the
-/// test task that polls it, so the count is guarded.
+/// test task that polls it, so the count and the delivery thread are guarded.
 ///
 private final class EmissionCounter {
 
     private let lock = NSLock()
     private var value = 0
+    private var lastWasOnMainThread: Bool?
 
     var count: Int {
         lock.lock()
@@ -160,9 +160,16 @@ private final class EmissionCounter {
         return value
     }
 
+    var lastDeliveryWasOnMainThread: Bool? {
+        lock.lock()
+        defer { lock.unlock() }
+        return lastWasOnMainThread
+    }
+
     func increment() {
         lock.lock()
         defer { lock.unlock() }
         value += 1
+        lastWasOnMainThread = Thread.isMainThread
     }
 }
