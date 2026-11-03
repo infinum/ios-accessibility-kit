@@ -41,7 +41,7 @@ This library provides an easy way to get the current state of the accessibility 
 
 The method `currentAccessibilitySnapshot(for:)`  returns a snapshot of a type `AccessibilitySnapshot` containing all the necessary information about the state of accessibility features on a current device. 
 
-To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. This class needs one parameter and accepts two more; the `type` defines the accessibility feature you want to track - defined as `AccessibilityType` enum, the optional `customIdentifier` of a type `String?` defines a custom identifier that will be used for that accessibility feature, and the optional `transform` corrects the reported value - described in [Correcting a value](#correcting-a-value).
+To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. This struct needs one parameter and accepts two more; the `type` defines the accessibility feature you want to track - defined as `AccessibilityType` enum, the optional `customIdentifier` of a type `String?` defines a custom identifier that will be used for that accessibility feature, and the optional `transform` corrects the reported value - described in [Correcting a value](#correcting-a-value).
 
 A default identifier is used for every tracked accessibility feature when a custom identifier is not used. Default identifiers are defined as:
 
@@ -71,7 +71,7 @@ A default identifier is used for every tracked accessibility feature when a cust
 
 #### Correcting a value
 
-Sometimes the value a feature reports is not the value an app wants to record — for example, a font scale of `1.29` may only be interesting as "large text is enabled". Pass a `transform` to `AccessibilityTrackingObject` to correct the value where it is produced, so the correction applies to snapshots, observed changes, the encoded output and the accessibility monitor alike.
+Sometimes the value a feature reports is not the value an app wants to record — for example, a font scale of `1.29` may only be interesting as "large text is enabled". Pass a `transform` to `AccessibilityTrackingObject` to correct the value where it is produced, so the encoded output and `toDictionary()` carry the corrected value too. A tracking object passed to `currentAccessibilitySnapshot(for:)` corrects only that snapshot; to correct observed changes and the accessibility monitor as well, include it in the configuration passed to `configureAccessibilityTracking(with:)`.
 
 ```swift
 AccessibilityTrackingObject(
@@ -80,6 +80,8 @@ AccessibilityTrackingObject(
     transform: { value in .flag((value.scaleValue ?? 1) >= 1.2) }
 )
 ```
+
+When a transform changes the kind of value, as the font scale's `Double` becoming a `Bool` above, give the tracking object a `customIdentifier`. Otherwise the value is reported under the default identifier with a different type than the table above lists. The same goes for tracking one feature more than once, for example raw and corrected: every tracked object needs its own identifier, since identifiers key both the encoded output and the rows of the accessibility monitor.
 
 A state can also be corrected after the fact with `withValue(_:)`, which preserves the feature's `type`, `name` and `identifier`:
 
