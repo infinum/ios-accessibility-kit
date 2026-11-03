@@ -11,6 +11,8 @@ import SwiftUI
 struct AccessibilityKitView: View {
 
     @State var presentingModal = false
+    // Declared so the labels below are re-evaluated when the text size changes.
+    @Environment(\.sizeCategory) private var sizeCategory
 
     var body: some View {
         VStack(spacing: 20) {
@@ -31,8 +33,9 @@ private extension AccessibilityKitView {
 
     ///
     /// Reports the font scale as a plain "large text enabled" flag by correcting
-    /// the value where it is produced. The correction applies everywhere the
-    /// library reports this feature, the accessibility monitor included.
+    /// the value where it is produced. Passed here, it corrects only this
+    /// snapshot; to correct observed snapshots and the accessibility monitor
+    /// too, pass the same tracking object to `configureAccessibilityTracking(with:)`.
     ///
     var correctedAtSource: String {
         let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
@@ -40,7 +43,7 @@ private extension AccessibilityKitView {
                 AccessibilityTrackingObject(
                     type: .fontScale,
                     customIdentifier: "large_text_enabled",
-                    transform: { value in .flag(Self.isLargeText(value)) }
+                    transform: { value in .flag(value.isLargeText) }
                 )
             ]
         )
@@ -62,17 +65,23 @@ private extension AccessibilityKitView {
         let corrected = AccessibilitySnapshot(
             states: snapshot.states.map { state in
                 guard state.type == .fontScale else { return state }
-                return state.withValue(.flag(Self.isLargeText(state.value)))
+                return state.withValue(.flag(state.value.isLargeText))
             }
         )
         return Self.label(for: corrected)
     }
 
-    static func isLargeText(_ value: AccessibilityValue) -> Bool {
-        return (value.scaleValue ?? 1) >= 1.2
-    }
-
     static func label(for snapshot: AccessibilitySnapshot) -> String {
-        return snapshot.states.first?.value.flagValue == true ? "on" : "off"
+        let fontScale = snapshot.states.first { $0.type == .fontScale }
+        return fontScale?.value.flagValue == true ? "on" : "off"
+    }
+}
+
+private extension AccessibilityValue {
+
+    // Kept off the view, which is main actor isolated, so the `@Sendable`
+    // transform above can call it.
+    var isLargeText: Bool {
+        return (scaleValue ?? 1) >= 1.2
     }
 }
