@@ -147,6 +147,12 @@ struct AccessibilityMonitorTests {
         await Self.wait(until: { counter.count == 2 })
 
         #expect(counter.count == 2)
+
+        // The replaced configuration's feature must no longer be observed.
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await Self.settle()
+
+        #expect(counter.count == 2)
         withExtendedLifetime(monitor) { }
     }
 }
