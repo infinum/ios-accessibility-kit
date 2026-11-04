@@ -227,6 +227,54 @@ struct AccessibilityMonitorTests {
         withExtendedLifetime(monitor) { }
     }
 
+    ///
+    /// The completion must never run inside the caller's own call to
+    /// observe, so nothing has been delivered by the time it returns.
+    ///
+    @Test("Delivers the first snapshot after observing returns, never inside it")
+    func deliversFirstSnapshotAfterObservingReturns() async throws {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { counter.record($0) }
+
+        #expect(counter.count == 0)
+
+        await Self.wait(until: { counter.count == 1 })
+
+        #expect(counter.count == 1)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// Observing and reconfiguring in one turn leaves the first snapshot in
+    /// flight under the replaced configuration. A change posted after the
+    /// reconfiguration is delivered behind it, so its arrival bounds the
+    /// wait: had the stale first snapshot been delivered, it would have
+    /// arrived first.
+    ///
+    @Test("Drops a first snapshot taken under a configuration that has since been replaced")
+    func dropsFirstSnapshotFromReplacedConfiguration() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { counter.record($0) }
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [AccessibilityTrackingObject(type: .boldText)]
+            )
+        )
+        center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
+        await Self.wait(until: { counter.emittedTypes.contains([.boldText]) })
+
+        #expect(counter.emittedTypes == [[.boldText]])
+        withExtendedLifetime(monitor) { }
+    }
+
     @Test("Delivers nothing when tracking has not been configured")
     func deliversNothingWithoutConfiguration() async {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
