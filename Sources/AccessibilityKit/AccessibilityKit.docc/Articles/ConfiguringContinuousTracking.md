@@ -58,8 +58,8 @@ replacement never receives someone else's first snapshot.
 Reconfiguring tracking keeps the observation you already registered, but emits no snapshot of its
 own: the next one arrives at the next change, and only if the new configuration is
 ``AccessibilityFetchType/continuous``. A snapshot taken under the replaced configuration and not
-yet delivered is dropped, so neither the completion nor the accessibility monitor sees features
-that are no longer tracked.
+yet delivered is dropped, for the completion and the accessibility monitor alike. What was already
+delivered stays as it was until the next change.
 
 ### Isolation
 

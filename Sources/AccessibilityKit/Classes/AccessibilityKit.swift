@@ -109,8 +109,9 @@ public final class AccessibilityKit {
     ///
     /// Only one observation is active at a time — calling this again replaces
     /// the previous completion. A snapshot already in flight still reaches
-    /// the completion that was registered when it was taken, so a replacement
-    /// never receives someone else's first snapshot. Until it is replaced the
+    /// the completion that was registered when it was taken, unless tracking
+    /// is reconfigured first, so a replacement never receives someone else's
+    /// first snapshot. Until it is replaced the
     /// completion is kept, and reconfiguring tracking does not clear it, so
     /// capture its owner weakly.
     ///
