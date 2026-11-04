@@ -411,6 +411,36 @@ struct AccessibilityMonitorTests {
         withExtendedLifetime(monitor) { }
     }
 
+    ///
+    /// The change, the reconfiguration and the second change all run in one
+    /// main-actor turn, so both snapshots are queued before either is
+    /// delivered. The second one's arrival bounds the wait: had the stale
+    /// snapshot been delivered, it would have arrived first.
+    ///
+    @Test("Drops a snapshot observer's snapshot from a replaced configuration")
+    func dropsSnapshotObserverSnapshotFromReplacedConfiguration() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { observer.snapshots.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [AccessibilityTrackingObject(type: .boldText)]
+            )
+        )
+        center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
+        await poll(until: { observer.snapshots.contains { $0.states.map(\.type) == [.boldText] } })
+
+        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
+        withExtendedLifetime(monitor) { }
+    }
+
     @Test("Delivers nothing to a snapshot observer when tracking is unconfigured")
     func deliversNothingToASnapshotObserverWithoutConfiguration() async {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())

@@ -43,7 +43,9 @@ struct AccessibilityMonitorViewModelTests {
 
         // Dismissing the monitor releases its view model, which must leave
         // the app's own observation exactly as it was.
-        weak var released = viewModel
+        // Declared, then assigned: `weak let` needs Swift 6.2.
+        weak var released: AccessibilityMonitorViewModel?
+        released = viewModel
         viewModel = nil
 
         #expect(released == nil)
