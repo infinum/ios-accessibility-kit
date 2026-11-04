@@ -43,8 +43,6 @@ The method `currentAccessibilitySnapshot(for:)`  returns a snapshot of a type `A
 
 To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. It takes the `type` of accessibility feature to track, defined by the `AccessibilityType` enum, and optionally a `customIdentifier` to report that feature under and a `transform` to correct its value.
 
-Track each `AccessibilityType` at most once. Nothing prevents tracking one twice, but each tracking object produces its own entry in the snapshot, and two entries reported under the same identifier collide in the accessibility monitor's list.
-
 A default identifier is used for every tracked accessibility feature when a custom identifier is not used. Default identifiers are defined as:
 
 | Accessibility feature         | Default identifier            | Return type   |
@@ -111,7 +109,7 @@ To track accessibility states in real-time, `AccessibilityKit` should be configu
 
 This method should get a configuration object as a parameter with all accessibility features that should be tracked. The type used for that is `AccessibilityTrackingConfiguration`.
 
-`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered.
+`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered, but emits no snapshot of its own, and a snapshot taken under the previous configuration that has not been delivered yet is dropped.
 
 Another parameter needed for this configuration is an object of the type `AccessibilityTrackingObject`.
 
@@ -121,7 +119,7 @@ After the `AccessibilityKit` is configured, you can observe changes via` observe
 
 This method will return one or multiple snapshots based on the `fetchType` configured in the `AccessibilityTrackingConfiguration` init method.
 
-An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type. Snapshots are delivered on the main queue.
+An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type. Snapshots are delivered on the main queue. The completion is kept until the next call replaces it, even across reconfiguring, so capture its owner weakly.
 
 The object type in the array is `AccessibilityState` which provides `type`, `name`, `value`, and `identifier`. All those properties can be used to identify every accessibility feature based on the type, name, value, or identifier.
 

@@ -148,11 +148,11 @@ public extension AccessibilityState {
     /// can be replaced, so the identifier can never drift away from the type
     /// it was derived from.
     ///
-    /// To correct a value everywhere it is reported — snapshots, observed
-    /// changes, the encoded output and the accessibility monitor alike — pass
-    /// a transform to
-    /// ``AccessibilityTrackingObject/init(type:customIdentifier:transform:)``
-    /// instead of applying this at each call site.
+    /// To correct a value everywhere it is reported — observed changes, the
+    /// encoded output and the accessibility monitor alike — pass a transform
+    /// to ``AccessibilityTrackingObject/init(type:customIdentifier:transform:)``
+    /// on the objects in the tracking configuration instead of applying this
+    /// at each call site.
     ///
     /// - Parameter value: The value the returned state should carry.
     /// - Returns: A copy of the state with `value` replaced.

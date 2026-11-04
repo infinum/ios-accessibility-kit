@@ -79,7 +79,9 @@ public final class AccessibilityKit {
     /// already registered stays registered, but reconfiguring does not emit
     /// a snapshot of its own: the next one arrives at the next change, and
     /// only if the new configuration is
-    /// ``AccessibilityFetchType/continuous``.
+    /// ``AccessibilityFetchType/continuous``. A snapshot taken under the
+    /// previous configuration and not yet delivered, the first one
+    /// included, is dropped.
     ///
     /// - Parameter configuration: The features to track and the fetch type.
     ///
@@ -90,14 +92,15 @@ public final class AccessibilityKit {
     ///
     /// Observes the accessibility features that tracking was configured with.
     ///
-    /// The first snapshot is delivered asynchronously, on the main queue, as
-    /// soon as observation begins. Whether more follow depends on the
-    /// configured ``AccessibilityFetchType``:
+    /// Snapshots are delivered asynchronously, on the main queue. The first
+    /// is delivered as soon as observation begins. Whether more follow
+    /// depends on the configured ``AccessibilityFetchType``:
     /// ``AccessibilityFetchType/initial`` reports only that first snapshot,
     /// ``AccessibilityFetchType/continuous`` reports again on every change.
     ///
     /// Only one observation is active at a time — calling this again replaces
-    /// the previous completion. Snapshots are delivered on the main queue.
+    /// the previous completion. Until then the completion is kept, and
+    /// reconfiguring tracking does not clear it, so capture its owner weakly.
     ///
     /// - Parameter completion: Called with each snapshot. Nothing is
     ///   delivered if tracking has not been configured.

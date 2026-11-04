@@ -27,10 +27,11 @@ import Foundation
 /// )
 /// ```
 ///
-/// Track each ``AccessibilityType`` at most once. Nothing prevents tracking
-/// one twice, but each tracking object produces its own entry in the
-/// snapshot, and two entries reported under the same identifier collide in
-/// the accessibility monitor's list.
+/// Every tracking object needs an identifier of its own: identifiers key
+/// both the encoded output and the rows of the accessibility monitor. Give
+/// an object a `customIdentifier` when its transform changes the kind of
+/// value, and when the same ``AccessibilityType`` is tracked more than once —
+/// raw and corrected, say.
 ///
 public struct AccessibilityTrackingObject {
 
@@ -49,10 +50,13 @@ public struct AccessibilityTrackingObject {
     ///   - type: The feature to track.
     ///   - customIdentifier: The identifier to report the feature under.
     ///     Defaults to the type's raw value.
-    ///   - transform: A correction applied to the value wherever this feature
-    ///     is produced — direct snapshots, observed changes, the encoded
-    ///     output and the accessibility monitor. Defaults to `nil`, which
-    ///     reports the value the system gives.
+    ///   - transform: A correction applied to the value in every snapshot
+    ///     this object produces, and so in their encoded output. Passed to
+    ///     ``AccessibilityKit/currentAccessibilitySnapshot(for:)``, it
+    ///     corrects only that snapshot; to correct observed changes and the
+    ///     accessibility monitor too, include the object in the configuration
+    ///     passed to ``AccessibilityKit/configureAccessibilityTracking(with:)``.
+    ///     Defaults to `nil`, which reports the value the system gives.
     ///
     public init (
         type: AccessibilityType,
@@ -110,8 +114,8 @@ public struct AccessibilityTrackingConfiguration {
     ///
     /// - Parameters:
     ///   - fetchType: Whether to report once or on every change.
-    ///   - objects: The features to track. Each ``AccessibilityType`` should
-    ///     appear at most once.
+    ///   - objects: The features to track, each under an identifier of its
+    ///     own.
     ///
     public init(fetchType: AccessibilityFetchType, objects: [AccessibilityTrackingObject]) {
         self.fetchType = fetchType
