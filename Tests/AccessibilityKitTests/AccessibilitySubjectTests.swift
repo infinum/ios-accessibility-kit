@@ -120,7 +120,7 @@ struct AccessibilitySubjectTests {
             center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         }
 
-        await Self.wait(until: { observer.states.count == 1 })
+        await poll(until: { observer.states.count == 1 })
 
         #expect(observer.states.count == 1)
         #expect(observer.states.first?.type == .voiceOver)
@@ -210,23 +210,6 @@ struct AccessibilitySubjectTests {
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
         #expect(retained.states.count == 1)
-    }
-}
-
-// MARK: - Helpers
-
-private extension AccessibilitySubjectTests {
-
-    ///
-    /// Polls until the expectation holds, so a positive assertion never
-    /// depends on a fixed delay being long enough.
-    ///
-    static func wait(until condition: () -> Bool, timeout: TimeInterval = 5) async {
-        let deadline = Date().addingTimeInterval(timeout)
-
-        while !condition() && Date() < deadline {
-            try? await Task.sleep(nanoseconds: 5_000_000)
-        }
     }
 }
 

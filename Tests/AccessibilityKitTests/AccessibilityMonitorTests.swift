@@ -143,6 +143,9 @@ struct AccessibilityMonitorTests {
         )
         await settle()
 
+        // Reconfiguring emits no snapshot of its own to the completion.
+        #expect(counter.count == 1)
+
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
         await poll(until: { counter.count == 2 })
 
@@ -369,6 +372,7 @@ struct AccessibilityMonitorTests {
         let observer = SpySnapshotObserver()
         monitor.addSnapshotObserver(observer)
         monitor.addSnapshotObserver(observer)
+        await poll(until: { !observer.snapshots.isEmpty })
         await settle()
 
         #expect(observer.snapshots.count == 1)
@@ -387,6 +391,10 @@ struct AccessibilityMonitorTests {
 
         let observer = SpySnapshotObserver()
         monitor.addSnapshotObserver(observer)
+
+        // Never inside the registration call, as for the app's completion.
+        #expect(observer.snapshots.isEmpty)
+
         await poll(until: { !observer.snapshots.isEmpty })
 
         #expect(observer.snapshots.count == 1)

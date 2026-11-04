@@ -20,7 +20,7 @@ import Foundation
 func poll(until condition: () -> Bool, timeout: TimeInterval = 5) async {
     let deadline = Date().addingTimeInterval(timeout)
 
-    while !condition() && Date() < deadline {
+    while !condition() && Date() < deadline && !Task.isCancelled {
         try? await Task.sleep(nanoseconds: 5_000_000)
     }
 }
