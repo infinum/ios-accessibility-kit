@@ -73,7 +73,8 @@ final class AccessibilityMonitor {
 
     ///
     /// Registers an additional, weakly held snapshot listener. It receives
-    /// the current snapshot on registration and every change thereafter,
+    /// the current snapshot on registration, every change under a
+    /// continuous configuration, and a refresh on each reconfiguration,
     /// without touching the completion registered through
     /// ``observeAccessibilityTracking(completion:)``.
     ///
@@ -131,10 +132,10 @@ private extension AccessibilityMonitor {
     }
 
     ///
-    /// Runs `delivery` on a later main-queue turn, so it never runs inside
-    /// the call that scheduled it, unless tracking is reconfigured in
-    /// between: a snapshot taken under a configuration that has since been
-    /// replaced is dropped rather than delivered.
+    /// Runs `delivery` on a later main-queue turn, never inside the call that
+    /// scheduled it, and drops it if tracking is reconfigured in between: a
+    /// snapshot taken under a configuration that has since been replaced is
+    /// never delivered.
     ///
     func deliverLater(_ delivery: @escaping () -> Void) {
         let generation = configurationGeneration

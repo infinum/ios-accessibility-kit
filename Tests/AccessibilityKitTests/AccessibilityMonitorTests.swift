@@ -509,6 +509,43 @@ struct AccessibilityMonitorTests {
     }
 
     ///
+    /// The refresh goes through the same delivery as everything else: never
+    /// inside the reconfiguring call, and dropped if tracking is reconfigured
+    /// again before it lands, so two reconfigurations in one turn leave the
+    /// observer with one refresh, for the second.
+    ///
+    @Test("Refreshes snapshot observers asynchronously, once for the last of several reconfigurations")
+    func refreshesSnapshotObserversOnceForTheLastReconfiguration() async throws {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { observer.snapshots.count == 1 })
+
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [AccessibilityTrackingObject(type: .boldText)]
+            )
+        )
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [AccessibilityTrackingObject(type: .reduceMotion)]
+            )
+        )
+
+        #expect(observer.snapshots.count == 1)
+
+        await poll(until: { observer.snapshots.count >= 2 })
+        await settle()
+
+        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.reduceMotion]])
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
     /// A change is handed to the observers registered when it was scheduled,
     /// so an observer added while it is in flight gets only its own first
     /// snapshot.

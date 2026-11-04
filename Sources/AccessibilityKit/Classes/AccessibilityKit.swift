@@ -86,8 +86,8 @@ public final class AccessibilityKit {
     /// Call this before ``observeAccessibilityTracking(completion:)``.
     /// Calling it again replaces the previous configuration. An observation
     /// already registered stays registered, but reconfiguring does not emit
-    /// a snapshot of its own: the next one arrives at the next change, and
-    /// only if the new configuration is
+    /// a snapshot of its own to it: the next one arrives at the next change,
+    /// and only if the new configuration is
     /// ``AccessibilityFetchType/continuous``. A snapshot taken under the
     /// previous configuration and not yet delivered, the first one
     /// included, is dropped.
