@@ -4,7 +4,8 @@
 //
 
 import Testing
-@testable import AccessibilityKit
+// Not `@testable`: everything this suite checks is what a consumer sees.
+import AccessibilityKit
 
 @Suite("AccessibilityType")
 struct AccessibilityTypeTests {
