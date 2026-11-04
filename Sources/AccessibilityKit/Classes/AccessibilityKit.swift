@@ -102,8 +102,10 @@ public final class AccessibilityKit {
     /// the previous completion. Until then the completion is kept, and
     /// reconfiguring tracking does not clear it, so capture its owner weakly.
     ///
-    /// - Parameter completion: Called with each snapshot. Nothing is
-    ///   delivered if tracking has not been configured.
+    /// - Parameter completion: Called with each snapshot. If tracking has
+    ///   not been configured yet, no first snapshot is delivered; the
+    ///   completion is still kept, and receives changes once a
+    ///   ``AccessibilityFetchType/continuous`` configuration is in place.
     ///
     public func observeAccessibilityTracking(completion: @escaping (AccessibilitySnapshot) -> Void) {
         monitor.observeAccessibilityTracking(completion: completion)
@@ -111,7 +113,12 @@ public final class AccessibilityKit {
 
     ///
     /// Presents the accessibility monitor, a screen listing the tracked
-    /// features and their current values.
+    /// features and their values.
+    ///
+    /// The list updates as settings change only when tracking is configured
+    /// with ``AccessibilityFetchType/continuous``; under
+    /// ``AccessibilityFetchType/initial`` it shows the values from when it
+    /// was presented.
     ///
     /// Requires tracking to have been configured — the monitor shows the
     /// features from that configuration, with any transforms applied, so it

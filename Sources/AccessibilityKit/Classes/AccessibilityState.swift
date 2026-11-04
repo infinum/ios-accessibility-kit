@@ -136,17 +136,17 @@ public extension AccessibilityState {
     /// Returns a copy of the state carrying a different value.
     ///
     /// Use this to correct a value that has already been produced — for
-    /// example, to record a font scale as a plain "large text is enabled"
-    /// flag:
+    /// example, to round a font scale to two decimal places:
     ///
     /// ```swift
-    /// let corrected = state.withValue(.flag((state.value.scaleValue ?? 1) >= 1.2))
+    /// let rounded = state.withValue(.scale(((state.value.scaleValue ?? 1) * 100).rounded() / 100))
     /// ```
     ///
     /// The ``type``, ``name`` and ``identifier`` are preserved, so a corrected
-    /// state keeps identifying the same accessibility feature. Only the value
-    /// can be replaced, so the identifier can never drift away from the type
-    /// it was derived from.
+    /// state keeps identifying the same accessibility feature. Because the
+    /// identifier is kept, keep the kind of value too: to report a different
+    /// kind — a font scale as a flag, say — use a transform with a
+    /// `customIdentifier` instead.
     ///
     /// To correct a value everywhere it is reported — observed changes, the
     /// encoded output and the accessibility monitor alike — pass a transform
