@@ -96,8 +96,6 @@ private extension AccessibilityKitView {
 
 private extension AccessibilityValue {
 
-    // Kept off the view, which is main actor isolated, so the `@Sendable`
-    // transform above can call it.
     var isLargeText: Bool {
         return (scaleValue ?? 1) >= 1.2
     }
