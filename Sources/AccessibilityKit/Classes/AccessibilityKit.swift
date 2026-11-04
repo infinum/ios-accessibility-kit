@@ -34,6 +34,8 @@ public final class AccessibilityKit {
         monitor.configureAccessibilityTracking(with: configuration)
     }
 
+    /// Keeps `completion` until a later call to this method replaces it.
+    /// Reconfiguring tracking does not clear it, so capture owners weakly.
     public func observeAccessibilityTracking(completion: @escaping (AccessibilitySnapshot) -> Void) {
         monitor.observeAccessibilityTracking(completion: completion)
     }
