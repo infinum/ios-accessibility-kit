@@ -108,6 +108,23 @@ struct AccessibilitySnapshotTests {
     /// `values` is an **array** of `{ identifier, value }` objects, not a
     /// dictionary keyed by identifier.
     ///
+    ///
+    /// Both orders are tried, so the result cannot be the supplied order
+    /// surviving a sort that happens to be stable.
+    ///
+    @Test("Orders states of one type by identifier", arguments: [false, true])
+    func ordersSameTypeStatesByIdentifier(reversed: Bool) {
+        let raw = AccessibilityState(type: .fontScale, name: "Font scale", value: .scale(1.2))
+        let corrected = AccessibilityState(
+            type: .fontScale, name: "Font scale", value: .flag(true), customIdentifier: "a_large_text"
+        )
+        let supplied = [raw, corrected]
+
+        let snapshot = AccessibilitySnapshot(states: reversed ? supplied.reversed() : supplied)
+
+        #expect(snapshot.states.map(\.identifier) == ["a_large_text", "font_scale"])
+    }
+
     @Test("Converts to a dictionary holding an array of identified values")
     func convertsToDictionary() throws {
         let snapshot = AccessibilitySnapshot(

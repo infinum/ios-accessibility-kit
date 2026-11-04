@@ -111,8 +111,8 @@ extension AccessibilityState: Comparable {
     ///
     /// Orders states by the raw value of their ``type``, so a snapshot's
     /// states always appear in a predictable order. Neither of two states of
-    /// the same type sorts before the other, so their relative order is
-    /// unspecified.
+    /// the same type sorts before the other here, since `==` ignores the
+    /// identifier; ``AccessibilitySnapshot`` orders those by identifier.
     ///
     public static func < (lhs: AccessibilityState, rhs: AccessibilityState) -> Bool {
         return lhs.type.rawValue < rhs.type.rawValue

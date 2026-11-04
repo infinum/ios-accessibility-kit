@@ -32,7 +32,8 @@ import Foundation
 public struct AccessibilitySnapshot: Sendable {
 
     ///
-    /// The states of the tracked features, sorted by accessibility type.
+    /// The states of the tracked features, sorted by accessibility type, and
+    /// by identifier among states of the same type.
     ///
     public let states: [AccessibilityState]
 
@@ -49,10 +50,15 @@ public struct AccessibilitySnapshot: Sendable {
     /// apart by, and what the accessibility monitor keys its rows on.
     ///
     /// - Parameter states: The states to carry. They come out ordered by
-    ///   accessibility type whatever order they are supplied in.
+    ///   accessibility type, and by identifier among states of the same
+    ///   type, whatever order they are supplied in.
     ///
     public init(states: [AccessibilityState]) {
-        self.states = states.sorted()
+        // The identifier breaks ties here rather than in `<`, which has to
+        // agree with `==`, and `==` ignores the identifier.
+        self.states = states.sorted { lhs, rhs in
+            lhs < rhs || (!(rhs < lhs) && lhs.identifier < rhs.identifier)
+        }
     }
 
     @MainActor
