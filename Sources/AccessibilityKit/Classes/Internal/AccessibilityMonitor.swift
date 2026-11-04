@@ -82,6 +82,11 @@ private extension AccessibilityMonitor {
     }
 
     func createSnapshot(isInitial: Bool = false) {
+        // Read before the configuration: the generation is bumped after the
+        // configuration is written, so a reconfiguration landing between the
+        // two reads leaves this snapshot with a stale generation, never with
+        // stale objects under a current one.
+        let generation = configurationGeneration
         guard
             let configuration = configuration,
             (configuration.fetchType == .continuous || isInitial)
@@ -90,7 +95,6 @@ private extension AccessibilityMonitor {
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
-        let generation = configurationGeneration
         // Hops the barrier queue so delivery is ordered behind a
         // reconfiguration that is still in flight. The snapshot itself is
         // taken above, before the hop, so one taken under a configuration
