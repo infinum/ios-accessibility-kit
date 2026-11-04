@@ -24,14 +24,35 @@ struct AccessibilityTrackingValidationTests {
         #expect(configuration.objects.count == 2)
     }
 
-    @Test("Rejects a configuration tracking the same type twice")
-    func rejectsDuplicateTypesInConfiguration() {
-        #expect(throws: AccessibilityTrackingError.duplicateType(.voiceOver)) {
+    @Test("Accepts one type tracked twice under two identifiers")
+    func acceptsOneTypeUnderTwoIdentifiers() throws {
+        let configuration = try AccessibilityTrackingConfiguration(
+            fetchType: .continuous,
+            objects: [
+                AccessibilityTrackingObject(type: .fontScale),
+                AccessibilityTrackingObject(
+                    type: .fontScale,
+                    customIdentifier: "large_text_enabled",
+                    transform: { .flag(($0.scaleValue ?? 1) >= 1.2) }
+                )
+            ]
+        )
+
+        #expect(configuration.objects.count == 2)
+    }
+
+    ///
+    /// Without a custom identifier both objects fall back to the type's
+    /// default one, which is the collision the validation exists to catch.
+    ///
+    @Test("Rejects one type tracked twice under its default identifier")
+    func rejectsOneTypeUnderItsDefaultIdentifierTwice() {
+        #expect(throws: AccessibilityTrackingError.duplicateIdentifier("voice_over")) {
             try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [
                     AccessibilityTrackingObject(type: .voiceOver),
-                    AccessibilityTrackingObject(type: .voiceOver, customIdentifier: "other")
+                    AccessibilityTrackingObject(type: .voiceOver)
                 ]
             )
         }
@@ -67,20 +88,27 @@ struct AccessibilityTrackingValidationTests {
         }
     }
 
-    @Test("Rejects a snapshot request tracking the same type twice")
-    func rejectsDuplicateTypesInSnapshotRequest() {
+    @Test("Reads one type raw and corrected under two identifiers")
+    func readsOneTypeRawAndCorrected() throws {
         let kit = AccessibilityKit(
             monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())
         )
 
-        #expect(throws: AccessibilityTrackingError.duplicateType(.fontScale)) {
-            try kit.currentAccessibilitySnapshot(
-                for: [
-                    AccessibilityTrackingObject(type: .fontScale),
-                    AccessibilityTrackingObject(type: .fontScale, customIdentifier: "scale")
-                ]
-            )
-        }
+        let snapshot = try kit.currentAccessibilitySnapshot(
+            for: [
+                AccessibilityTrackingObject(type: .fontScale),
+                AccessibilityTrackingObject(
+                    type: .fontScale,
+                    customIdentifier: "large_text_enabled",
+                    transform: { _ in .flag(true) }
+                )
+            ]
+        )
+
+        let values = Dictionary(uniqueKeysWithValues: snapshot.states.map { ($0.identifier, $0.value) })
+        #expect(values.count == 2)
+        #expect(values["font_scale"]?.scaleValue != nil)
+        #expect(values["large_text_enabled"] == .flag(true))
     }
 
     @Test("Rejects a snapshot request sharing one identifier between features")

@@ -13,14 +13,6 @@ import Foundation
 public enum AccessibilityTrackingError: Error, Equatable {
 
     ///
-    /// The same accessibility feature was supplied more than once.
-    ///
-    /// A feature has a single identifier, so tracking it twice would report it
-    /// twice — once under each identifier — rather than reporting it once.
-    ///
-    case duplicateType(AccessibilityType)
-
-    ///
     /// Two features were supplied under the same identifier.
     ///
     /// The identifier is what a snapshot entry is reported and displayed
@@ -50,11 +42,15 @@ public enum AccessibilityTrackingError: Error, Equatable {
 /// )
 /// ```
 ///
-/// Track each ``AccessibilityType`` at most once. A feature has a single
-/// identifier, so supplying the same type twice is rejected:
+/// Every tracking object needs an identifier of its own: identifiers key
+/// both the encoded output and the rows of the accessibility monitor. Give
+/// an object a `customIdentifier` when its transform changes the kind of
+/// value, and when the same ``AccessibilityType`` is tracked more than once —
+/// raw and corrected, say.
 /// ``AccessibilityTrackingConfiguration/init(fetchType:objects:)`` and
 /// ``AccessibilityKit/currentAccessibilitySnapshot(for:)`` throw
-/// ``AccessibilityTrackingError/duplicateType(_:)``.
+/// ``AccessibilityTrackingError/duplicateIdentifier(_:)`` when two objects
+/// would share one.
 ///
 public struct AccessibilityTrackingObject: Sendable {
 
@@ -139,15 +135,13 @@ public struct AccessibilityTrackingConfiguration: Sendable {
     ///
     /// - Parameters:
     ///   - fetchType: Whether to report once or on every change.
-    ///   - objects: The features to track. Each ``AccessibilityType`` must
-    ///     appear at most once.
-    /// - Throws: ``AccessibilityTrackingError/duplicateType(_:)`` if a feature
-    ///   is supplied more than once, or
-    ///   ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if two
-    ///   features are supplied under the same identifier.
+    ///   - objects: The features to track, each under an identifier of its
+    ///     own.
+    /// - Throws: ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if
+    ///   two objects are supplied under the same identifier.
     ///
     public init(fetchType: AccessibilityFetchType, objects: [AccessibilityTrackingObject]) throws {
-        try objects.validateUniqueTracking()
+        try objects.validateUniqueIdentifiers()
 
         self.fetchType = fetchType
         self.objects = objects
@@ -159,19 +153,15 @@ public struct AccessibilityTrackingConfiguration: Sendable {
 extension Array where Element == AccessibilityTrackingObject {
 
     ///
-    /// Checks that no accessibility feature, and no identifier, is used more
-    /// than once: both produce two snapshot entries a consumer cannot tell
-    /// apart, and two rows sharing an identity in the accessibility monitor.
+    /// Checks that no identifier is used more than once: two objects sharing
+    /// one produce snapshot entries a consumer cannot tell apart, and two
+    /// rows sharing an identity in the accessibility monitor. The same type
+    /// may appear more than once under different identifiers.
     ///
-    func validateUniqueTracking() throws {
-        var seenTypes = Set<AccessibilityType>()
+    func validateUniqueIdentifiers() throws {
         var seenIdentifiers = Set<String>()
 
         for object in self {
-            guard seenTypes.insert(object.type).inserted else {
-                throw AccessibilityTrackingError.duplicateType(object.type)
-            }
-
             let identifier = object.customIdentifier ?? object.type.rawValue
 
             guard seenIdentifiers.insert(identifier).inserted else {

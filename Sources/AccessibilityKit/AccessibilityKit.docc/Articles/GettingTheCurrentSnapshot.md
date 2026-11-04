@@ -23,11 +23,10 @@ for state in snapshot.states {
 }
 ```
 
-Each ``AccessibilityType`` may appear at most once, and so does each identifier: entries a
-consumer cannot tell apart are the thing being prevented. The call throws
-``AccessibilityTrackingError/duplicateType(_:)`` for a repeated feature and
-``AccessibilityTrackingError/duplicateIdentifier(_:)`` when two features would be reported under
-one identifier.
+Each identifier may appear only once: entries a consumer cannot tell apart are the thing being
+prevented. The call throws ``AccessibilityTrackingError/duplicateIdentifier(_:)`` when two
+tracking objects would be reported under one identifier. The same feature can appear twice under
+two custom identifiers.
 
 ### Reporting a feature under your own identifier
 
