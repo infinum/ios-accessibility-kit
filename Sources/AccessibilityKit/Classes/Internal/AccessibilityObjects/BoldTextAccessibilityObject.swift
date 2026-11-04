@@ -9,6 +9,16 @@ import UIKit
 
 struct BoldTextAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isBoldTextEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isBoldTextEnabled: @escaping () -> Bool = { UIAccessibility.isBoldTextEnabled }) {
+        self.isBoldTextEnabled = isBoldTextEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct BoldTextAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isBoldTextEnabled),
+            value: .flag(isBoldTextEnabled()),
             customIdentifier: customIdentifier
         )
     }

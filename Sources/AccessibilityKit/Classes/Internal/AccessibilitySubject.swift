@@ -13,19 +13,30 @@ protocol Subject: AnyObject {
     func removeObservers()
 }
 
+///
+/// Watches one accessibility feature and fans its changes out to observers.
+///
+/// One subject exists per tracked ``AccessibilityType``. It listens for that
+/// feature's system notification and, on each one, reads a fresh state and
+/// hands it to every registered observer.
+///
+/// Observers are held weakly, so a subject never keeps its listeners alive.
+///
 class AccessibilitySubject {
 
     // MARK: - Internal properties
 
     private let object: AccessibilityObject
-    private var observers = [Observer]()
+    private let notificationCenter: NotificationCenter
+    private var observers = [WeakObserver]()
 
     // MARK: - Lifecycle
 
-    init(type: AccessibilityType) {
-        object = AccessibilityObjectFactory.object(for: type)
+    init(type: AccessibilityType, notificationCenter: NotificationCenter = .default) {
+        self.object = AccessibilityObjectFactory.object(for: type)
+        self.notificationCenter = notificationCenter
 
-        NotificationCenter.default.addObserver(
+        notificationCenter.addObserver(
             self,
             selector: #selector(accessibilityStateDidChange(_:)),
             name: object.notificationName,
@@ -34,7 +45,7 @@ class AccessibilitySubject {
     }
 
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        notificationCenter.removeObserver(self)
     }
 
     // MARK: - Internal methods
@@ -50,11 +61,12 @@ class AccessibilitySubject {
 extension AccessibilitySubject: Subject {
 
     func addObserver(_ observer: Observer) {
-        observers.append(observer)
+        guard !observers.contains(where: { $0.observer === observer }) else { return }
+        observers.append(WeakObserver(observer: observer))
     }
 
     func removeObserver(_ observer: Observer) {
-        observers.removeAll(where: { $0 === observer })
+        observers.removeAll(where: { $0.observer === observer })
     }
 
     func removeObservers() {
@@ -66,11 +78,26 @@ extension AccessibilitySubject: Subject {
 
 extension AccessibilitySubject {
 
+    ///
+    /// Delivery runs on whichever thread posted the notification, while
+    /// registration runs on the monitor's queue, so this only reads the
+    /// observer list - a released observer is skipped here rather than
+    /// swept, which would be a second writer.
+    ///
     func notifyObservers(with state: AccessibilityState) {
         observers
-            .forEach {
-                guard let observer = $0 as? AccessibilityObserver else { return }
-                observer.accessibilityStateDidChange(state)
-            }
+            .compactMap { $0.observer as? AccessibilityObserver }
+            .forEach { $0.accessibilityStateDidChange(state) }
     }
+}
+
+// MARK: - Weak observer
+
+///
+/// Observers are held weakly: a subject outlives the objects listening to it,
+/// and must not keep them alive.
+///
+private struct WeakObserver {
+
+    weak var observer: Observer?
 }

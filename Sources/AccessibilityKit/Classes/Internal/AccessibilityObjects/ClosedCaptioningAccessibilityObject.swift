@@ -9,6 +9,16 @@ import UIKit
 
 struct ClosedCaptioningAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isClosedCaptioningEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isClosedCaptioningEnabled: @escaping () -> Bool = { UIAccessibility.isClosedCaptioningEnabled }) {
+        self.isClosedCaptioningEnabled = isClosedCaptioningEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct ClosedCaptioningAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isClosedCaptioningEnabled),
+            value: .flag(isClosedCaptioningEnabled()),
             customIdentifier: customIdentifier
         )
     }

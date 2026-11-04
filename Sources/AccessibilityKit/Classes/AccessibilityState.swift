@@ -8,13 +8,38 @@
 import Foundation
 import UIKit
 
+///
+/// The state of a single accessibility feature at the moment it was read.
+///
+/// ## Overview
+///
+/// States are produced by the library, never constructed by a consumer. To
+/// adjust one, use ``withValue(_:)``, which preserves the feature's identity.
+///
+/// Two states are equal when their ``type`` and ``value`` match; ``name`` and
+/// ``identifier`` are ignored. Sorting orders them by the type's raw value.
+///
 public struct AccessibilityState {
 
-    // MARK: - Public methods
+    // MARK: - Public properties
 
+    /// The accessibility feature this state describes.
     public let type: AccessibilityType
+
+    /// A human-readable name for the feature, suitable for display.
     public let name: String
+
+    /// The value the feature reported.
     public let value: AccessibilityValue
+
+    ///
+    /// The identifier the feature is reported under.
+    ///
+    /// This is the custom identifier supplied on the tracking object, or the
+    /// ``type``'s raw value when none was given. Each entry in the encoded
+    /// output carries it alongside the value, so it is how a feature is found
+    /// in the payload.
+    ///
     public let identifier: String
 
     // MARK: - Lifecycle
@@ -40,6 +65,17 @@ extension AccessibilityState: Encodable {
         case identifier, value
     }
 
+    ///
+    /// Encodes the state as its ``identifier`` and the payload of its
+    /// ``value``.
+    ///
+    /// The value's case is not written — a ``AccessibilityValue/flag(_:)``
+    /// encodes as a boolean and the numeric cases as a number, so the output
+    /// carries only `identifier` and `value`.
+    ///
+    /// - Parameter encoder: The encoder to write to.
+    /// - Throws: Any error the encoder throws.
+    ///
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(identifier, forKey: .identifier)
@@ -56,6 +92,13 @@ extension AccessibilityState: Encodable {
 
 extension AccessibilityState: Equatable {
     
+    ///
+    /// Compares two states by ``type`` and ``value`` only.
+    ///
+    /// ``name`` and ``identifier`` are deliberately ignored, so the same
+    /// feature reporting the same value is equal regardless of the identifier
+    /// it happens to be reported under.
+    ///
     public static func == (lhs: AccessibilityState, rhs: AccessibilityState) -> Bool {
         return lhs.type == rhs.type && lhs.value == rhs.value
     }
@@ -65,6 +108,12 @@ extension AccessibilityState: Equatable {
 
 extension AccessibilityState: Comparable {
 
+    ///
+    /// Orders states by the raw value of their ``type``, so a snapshot's
+    /// states always appear in a predictable order. Neither of two states of
+    /// the same type sorts before the other, so their relative order is
+    /// unspecified.
+    ///
     public static func < (lhs: AccessibilityState, rhs: AccessibilityState) -> Bool {
         return lhs.type.rawValue < rhs.type.rawValue
     }
@@ -74,5 +123,47 @@ extension AccessibilityState: Comparable {
 
 extension AccessibilityState: Identifiable {
 
+    ///
+    /// The state's ``identifier``, used as its identity in SwiftUI lists.
+    ///
     public var id: String { identifier }
+}
+
+// MARK: - Value transformation
+
+public extension AccessibilityState {
+
+    ///
+    /// Returns a copy of the state carrying a different value.
+    ///
+    /// Use this to correct a value that has already been produced — for
+    /// example, to round a font scale to two decimal places:
+    ///
+    /// ```swift
+    /// let rounded = state.withValue(.scale(((state.value.scaleValue ?? 1) * 100).rounded() / 100))
+    /// ```
+    ///
+    /// The ``type``, ``name`` and ``identifier`` are preserved, so a corrected
+    /// state keeps identifying the same accessibility feature. Because the
+    /// identifier is kept, keep the kind of value too: to report a different
+    /// kind — a font scale as a flag, say — use a transform with a
+    /// `customIdentifier` instead.
+    ///
+    /// To correct a value everywhere it is reported — observed changes, the
+    /// encoded output and the accessibility monitor alike — pass a transform
+    /// to ``AccessibilityTrackingObject/init(type:customIdentifier:transform:)``
+    /// on the objects in the tracking configuration instead of applying this
+    /// at each call site.
+    ///
+    /// - Parameter value: The value the returned state should carry.
+    /// - Returns: A copy of the state with `value` replaced.
+    ///
+    func withValue(_ value: AccessibilityValue) -> AccessibilityState {
+        return AccessibilityState(
+            type: type,
+            name: name,
+            value: value,
+            customIdentifier: identifier
+        )
+    }
 }

@@ -9,6 +9,16 @@ import UIKit
 
 struct SwitchControlAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isSwitchControlRunning: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isSwitchControlRunning: @escaping () -> Bool = { UIAccessibility.isSwitchControlRunning }) {
+        self.isSwitchControlRunning = isSwitchControlRunning
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct SwitchControlAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isSwitchControlRunning),
+            value: .flag(isSwitchControlRunning()),
             customIdentifier: customIdentifier
         )
     }

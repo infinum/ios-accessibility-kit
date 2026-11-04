@@ -7,9 +7,19 @@
 
 import Foundation
 
+///
+/// Holds the tracking configuration, owns a subject per tracked feature, and
+/// delivers snapshots to the registered observation.
+///
+/// Subject mutation is serialised with a barrier on `concurrentQueue`, and
+/// snapshot delivery hops that same queue, so delivery is ordered behind a
+/// reconfiguration that is still in flight. Completions run on the main
+/// queue. `configuration` and the registered completion are read and written
+/// outside that queue, which therefore does not order them.
+///
 final class AccessibilityMonitor {
 
-    // MARK: - Public methods
+    // MARK: - Internal properties
 
     static let shared = AccessibilityMonitor()
 
@@ -21,18 +31,23 @@ final class AccessibilityMonitor {
     )
     private var configuration: AccessibilityTrackingConfiguration? {
         didSet {
-            clearSnapshots()
+            configurationGeneration += 1
             guard let configuration = configuration else { return }
             configureSubjects(for: configuration)
         }
     }
+    /// Bumped on every reconfiguration, so a snapshot can tell whether the
+    /// configuration it was taken under is still the current one.
+    private var configurationGeneration = 0
     private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
-    private var snapshots = [AccessibilitySnapshot]()
     private var subjects = [Subject]()
+    private let notificationCenter: NotificationCenter
 
     // MARK: - Lifecycle
 
-    private init() {}
+    init(notificationCenter: NotificationCenter = .default) {
+        self.notificationCenter = notificationCenter
+    }
 
     // MARK: - Public methods
 
@@ -64,15 +79,24 @@ extension AccessibilityMonitor: AccessibilityObserver {
 private extension AccessibilityMonitor {
 
     func configureSubjects(for configuration: AccessibilityTrackingConfiguration) {
-        concurrentQueue.async(flags: .barrier) { [unowned self] in
-            subjects.forEach { $0.removeObservers() }
-            subjects = Set(configuration.objects.map(\.type))
-                .map(AccessibilitySubject.init(type: ))
-            subjects.forEach { $0.addObserver(self) }
+        concurrentQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+
+            // The old subjects are released by the assignment below, and a
+            // released subject takes its observer list and its notification
+            // registration with it.
+            self.subjects = Set(configuration.objects.map(\.type))
+                .map { AccessibilitySubject(type: $0, notificationCenter: self.notificationCenter) }
+            self.subjects.forEach { $0.addObserver(self) }
         }
     }
 
     func createSnapshot(isInitial: Bool = false) {
+        // Read before the configuration: the generation is bumped after the
+        // configuration is written, so a reconfiguration landing between the
+        // two reads leaves this snapshot with a stale generation, never with
+        // stale objects under a current one.
+        let generation = configurationGeneration
         guard
             let configuration = configuration,
             (configuration.fetchType == .continuous || isInitial)
@@ -81,16 +105,15 @@ private extension AccessibilityMonitor {
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
-        concurrentQueue.async(flags: .barrier) { [unowned self] in
-            snapshots.append(snapshot)
+        // Hops the barrier queue so delivery is ordered behind a
+        // reconfiguration that is still in flight. The snapshot itself is
+        // taken above, before the hop, so one taken under a configuration
+        // that has since been replaced is dropped rather than delivered.
+        concurrentQueue.async(flags: .barrier) { [weak self] in
             DispatchQueue.main.async {
-                snapshotChangeHandler?(snapshot)
+                guard let self = self, self.configurationGeneration == generation else { return }
+                self.snapshotChangeHandler?(snapshot)
             }
         }
-    }
-
-    func clearSnapshots() {
-        snapshots = []
-        snapshotChangeHandler = nil
     }
 }

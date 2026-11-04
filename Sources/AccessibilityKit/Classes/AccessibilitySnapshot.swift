@@ -7,20 +7,58 @@
 
 import Foundation
 
+///
+/// The state of every tracked accessibility feature, each read in turn when
+/// the snapshot is taken.
+///
+/// ## Overview
+///
+/// Snapshots come from ``AccessibilityKit/currentAccessibilitySnapshot(for:)``
+/// or from ``AccessibilityKit/observeAccessibilityTracking(completion:)``.
+///
+/// A snapshot is `Encodable`, and ``Swift/Encodable/toDictionary()`` converts
+/// it for sending onward. The encoded form is a `values` array of
+/// `identifier` / `value` pairs:
+///
+/// ```json
+/// {
+///     "values": [
+///         { "identifier": "bold_text", "value": true },
+///         { "identifier": "font_scale", "value": 1.2352941176470589 }
+///     ]
+/// }
+/// ```
+///
 public struct AccessibilitySnapshot {
 
+    ///
+    /// The states of the tracked features, sorted by accessibility type.
+    ///
     public let states: [AccessibilityState]
 
-    init(states: [AccessibilityState]) {
+    ///
+    /// Creates a snapshot from states that have already been produced.
+    ///
+    /// Use this to re-wrap states adjusted with
+    /// ``AccessibilityState/withValue(_:)`` so they can be encoded and sent on
+    /// like any other snapshot.
+    ///
+    /// - Parameter states: The states to carry. They come out ordered by
+    ///   accessibility type whatever order they are supplied in.
+    ///
+    public init(states: [AccessibilityState]) {
         self.states = states.sorted()
     }
 
     init(trackingObjects: [AccessibilityTrackingObject]) {
         self.init(
-            states: trackingObjects.map {
-                AccessibilityObjectFactory
-                    .object(for: $0.type)
-                    .state(customIdentifier: $0.customIdentifier)
+            states: trackingObjects.map { trackingObject in
+                let state = AccessibilityObjectFactory
+                    .object(for: trackingObject.type)
+                    .state(customIdentifier: trackingObject.customIdentifier)
+
+                guard let transform = trackingObject.transform else { return state }
+                return state.withValue(transform(state.value))
             }
         )
     }

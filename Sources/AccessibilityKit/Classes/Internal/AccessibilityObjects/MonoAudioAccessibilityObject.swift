@@ -9,6 +9,16 @@ import UIKit
 
 struct MonoAudioAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isMonoAudioEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isMonoAudioEnabled: @escaping () -> Bool = { UIAccessibility.isMonoAudioEnabled }) {
+        self.isMonoAudioEnabled = isMonoAudioEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct MonoAudioAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isMonoAudioEnabled),
+            value: .flag(isMonoAudioEnabled()),
             customIdentifier: customIdentifier
         )
     }

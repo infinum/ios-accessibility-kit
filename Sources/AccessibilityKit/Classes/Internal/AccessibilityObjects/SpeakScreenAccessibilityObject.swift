@@ -9,6 +9,16 @@ import UIKit
 
 struct SpeakScreenAccessibilityObject: AccessibilityObject {
 
+    // MARK: - Private properties
+
+    private let isSpeakScreenEnabled: () -> Bool
+
+    // MARK: - Lifecycle
+
+    init(isSpeakScreenEnabled: @escaping () -> Bool = { UIAccessibility.isSpeakScreenEnabled }) {
+        self.isSpeakScreenEnabled = isSpeakScreenEnabled
+    }
+
     // MARK: - Public properties
 
     var type: AccessibilityType {
@@ -29,7 +39,7 @@ struct SpeakScreenAccessibilityObject: AccessibilityObject {
         return AccessibilityState(
             type: type,
             name: name,
-            value: .flag(UIAccessibility.isSpeakScreenEnabled),
+            value: .flag(isSpeakScreenEnabled()),
             customIdentifier: customIdentifier
         )
     }
