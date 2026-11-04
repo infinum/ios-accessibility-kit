@@ -103,9 +103,9 @@ extension AccessibilitySubject: Subject {
 private extension AccessibilitySubject {
 
     ///
-    /// A released observer is skipped rather than swept out of the list:
-    /// pruning belongs to registration, and the monitor registers exactly
-    /// once per subject.
+    /// A released observer is skipped rather than swept out of the list. The
+    /// monitor registers exactly once per subject, so the list never holds
+    /// more than one entry that could need sweeping.
     ///
     func notifyObservers(with state: AccessibilityState) {
         observers

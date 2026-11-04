@@ -192,9 +192,9 @@ struct AccessibilitySubjectTests {
     }
 
     ///
-    /// The released observer is registered last, so nothing prunes its box
-    /// before the notification: this exercises the skip on the delivery
-    /// path rather than the pruning on the registration path.
+    /// Nothing sweeps a released observer's box out of the list, so it is
+    /// still there when the notification arrives: this exercises the skip on
+    /// the delivery path.
     ///
     @Test("Skips observers that have been released")
     func skipsReleasedObservers() {

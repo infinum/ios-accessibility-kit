@@ -33,7 +33,7 @@ The value types — `AccessibilitySnapshot`, `AccessibilityState`, `Accessibilit
 
 AccessibilityKit is available through [Swift Package Manager (SPM)](https://www.swift.org/package-manager/).
 
-To install it via SPM, open your project in Xcode, go to `File` -> `Swift Packages` -> `Add Package Dependency...`, and enter the URL of the repository.
+To install it via SPM, open your project in Xcode, go to `File` -> `Add Package Dependencies...`, and enter the URL of the repository.
 
 ## Usage
 
@@ -132,7 +132,7 @@ An object returned in the completion is of a type `AccessibilitySnapshot`, which
 
 The object type in the array is `AccessibilityState` which provides `type`, `name`, `value`, and `identifier`. All those properties can be used to identify every accessibility feature based on the type, name, value, or identifier.
 
-`AccessibilitySnapshot` is `Encodable`, and `toDictionary()` converts it for sending onward. It throws rather than reporting failure as `nil`. The encoded form is a `values` array of `identifier` / `value` pairs:
+`AccessibilitySnapshot` is `Encodable`, and `toDictionary()` converts it for sending onward. It throws rather than reporting failure as `nil`: whatever `JSONEncoder` or `JSONSerialization` raises, or `AccessibilityEncodingError.notAJSONObject` if the encoded form is not a JSON object. The encoded form is a `values` array of `identifier` / `value` pairs:
 
 ```json
 {
@@ -179,27 +179,30 @@ If there is a need to observe accessibility feature changes, the method above is
 To do that, use  `AccessibilityKit.shared.configureAccessibilityTracking(with:)` in the `AppDelegate`'s method `application(_:didFinishLaunchingWithOptions:)` to configure tracking for the app lifecycle.
 
 ```swift
-let configuration = try AccessibilityTrackingConfiguration(
-    fetchType: .continuous,
-    objects: [
-        AccessibilityTrackingObject(type: .boldText),
-        AccessibilityTrackingObject(
-            type: .buttonShapes,
-            customIdentifier: "button_shapes_enabled"
-        ),
-        AccessibilityTrackingObject(
-            type: .fontScale,
-            customIdentifier: "font_scaling"
-        ),
-        AccessibilityTrackingObject(type: .reduceMotion),
-        AccessibilityTrackingObject(type: .voiceOver)
-    ]
-)
-
-AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+do {
+    let configuration = try AccessibilityTrackingConfiguration(
+        fetchType: .continuous,
+        objects: [
+            AccessibilityTrackingObject(type: .boldText),
+            AccessibilityTrackingObject(
+                type: .buttonShapes,
+                customIdentifier: "button_shapes_enabled"
+            ),
+            AccessibilityTrackingObject(
+                type: .fontScale,
+                customIdentifier: "font_scaling"
+            ),
+            AccessibilityTrackingObject(type: .reduceMotion),
+            AccessibilityTrackingObject(type: .voiceOver)
+        ]
+    )
+    AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+} catch {
+    assertionFailure("Invalid accessibility tracking configuration: \(error)")
+}
 ```
 
-No two tracking objects may share an identifier; the initializer throws `AccessibilityTrackingError.duplicateIdentifier(_:)` instead of reporting entries a consumer cannot tell apart.
+No two tracking objects may share an identifier; the initializer throws `AccessibilityTrackingError.duplicateIdentifier(_:)` instead of reporting entries a consumer cannot tell apart. Launch methods do not throw, and a rejected configuration is a mistake in the list rather than a runtime condition, so the sample surfaces it during development.
 
 After that, the observing method can be used afterward to get the latest accessibility feature states.
 

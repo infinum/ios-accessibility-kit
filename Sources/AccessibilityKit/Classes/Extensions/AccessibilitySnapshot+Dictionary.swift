@@ -12,7 +12,13 @@ import Foundation
 ///
 public enum AccessibilityEncodingError: Error, Equatable {
 
+    ///
     /// The snapshot encoded to JSON, but not to a JSON object.
+    ///
+    /// A snapshot always encodes to an object today, so this is not expected
+    /// in practice. It exists so that a change to the encoded shape is
+    /// reported rather than handed back as an empty dictionary.
+    ///
     case notAJSONObject
 }
 

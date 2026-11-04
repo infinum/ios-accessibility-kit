@@ -12,18 +12,22 @@ configure tracking once, then observe.
 Build an ``AccessibilityTrackingConfiguration`` naming the features to follow and how often to
 report, and hand it to
 ``AccessibilityKit/AccessibilityKit/configureAccessibilityTracking(with:)``. Application launch is
-the natural place:
+the natural place. Launch methods do not throw, and a rejected configuration is a mistake in a list
+you wrote rather than a runtime condition, so surface it during development:
 
 ```swift
-let configuration = try AccessibilityTrackingConfiguration(
-    fetchType: .continuous,
-    objects: [
-        AccessibilityTrackingObject(type: .boldText),
-        AccessibilityTrackingObject(type: .voiceOver)
-    ]
-)
-
-AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+do {
+    let configuration = try AccessibilityTrackingConfiguration(
+        fetchType: .continuous,
+        objects: [
+            AccessibilityTrackingObject(type: .boldText),
+            AccessibilityTrackingObject(type: .voiceOver)
+        ]
+    )
+    AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+} catch {
+    assertionFailure("Invalid accessibility tracking configuration: \(error)")
+}
 ```
 
 ``AccessibilityFetchType/continuous`` reports on every change.

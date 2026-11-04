@@ -38,9 +38,12 @@ AccessibilityTrackingObject(type: .fontScale, customIdentifier: "text_size")
 
 ### Correcting the value
 
-A font scale of `1.29` may only be interesting as "large text is enabled". A `transform` corrects
-the value where it is produced, so the correction applies everywhere the feature is reported —
-direct snapshots, observed changes, the encoded output, and the accessibility monitor:
+A font scale of `1.2353` may only be interesting as "large text is enabled". A `transform` corrects
+the value where it is produced, so the encoded output carries the corrected value too. Passed to
+``AccessibilityKit/AccessibilityKit/currentAccessibilitySnapshot(for:)``, it corrects only that
+snapshot; to correct observed changes and the accessibility monitor as well, include it in the
+configuration passed to
+``AccessibilityKit/AccessibilityKit/configureAccessibilityTracking(with:)``:
 
 ```swift
 AccessibilityTrackingObject(
@@ -56,8 +59,9 @@ snapshot with ``AccessibilitySnapshot/init(states:)``.
 ### Sending it onward
 
 ``AccessibilitySnapshot`` is `Encodable`, and ``AccessibilitySnapshot/toDictionary()`` converts it.
-The conversion throws whatever `JSONEncoder` or `JSONSerialization` raises, so it reports a failure
-rather than handing back `nil`:
+The conversion throws whatever `JSONEncoder` or `JSONSerialization` raises, or
+``AccessibilityEncodingError/notAJSONObject`` if the encoded form is not a JSON object, so it
+reports a failure rather than handing back `nil`:
 
 ```swift
 let payload = try snapshot.toDictionary()

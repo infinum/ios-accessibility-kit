@@ -24,7 +24,7 @@ struct AccessibilityKitApp: App {
             )
             AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
         } catch {
-            // A duplicate accessibility type is a mistake in the configuration
+            // Two objects sharing an identifier is a mistake in the configuration
             // above, not a runtime condition, so surface it during development.
             assertionFailure("Invalid accessibility tracking configuration: \(error)")
         }
