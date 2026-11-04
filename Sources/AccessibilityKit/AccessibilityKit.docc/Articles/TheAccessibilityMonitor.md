@@ -14,7 +14,8 @@ from when it was presented.
 
 It observes through
 ``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``, so tracking must be
-configured first. See <doc:ConfiguringContinuousTracking>.
+configured first. See <doc:ConfiguringContinuousTracking>. Only one observation is active at a
+time, so showing the monitor replaces your app's own; register again once it is dismissed.
 
 ### From UIKit
 

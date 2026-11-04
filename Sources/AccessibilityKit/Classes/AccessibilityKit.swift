@@ -28,12 +28,15 @@ import SwiftUI
 /// `application(_:didFinishLaunchingWithOptions:)`, say — and then observe:
 ///
 /// ```swift
-/// let configuration = try AccessibilityTrackingConfiguration(
-///     fetchType: .continuous,
-///     objects: [AccessibilityTrackingObject(type: .voiceOver)]
-/// )
-///
-/// AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+/// do {
+///     let configuration = try AccessibilityTrackingConfiguration(
+///         fetchType: .continuous,
+///         objects: [AccessibilityTrackingObject(type: .voiceOver)]
+///     )
+///     AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+/// } catch {
+///     assertionFailure("Invalid accessibility tracking configuration: \(error)")
+/// }
 ///
 /// AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 ///     // handle the snapshot
