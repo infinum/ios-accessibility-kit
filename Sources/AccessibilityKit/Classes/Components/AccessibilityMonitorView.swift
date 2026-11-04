@@ -43,9 +43,8 @@ public struct AccessibilityMonitorView: View {
     }
 
     ///
-    /// The monitor's content: one row per tracked accessibility feature,
-    /// showing its name, the identifier it is reported under, and its current
-    /// value.
+    /// The monitor's content: one row per tracking object, showing the
+    /// feature's name, the identifier it is reported under, and its value.
     ///
     public var body: some View {
         NavigationView {

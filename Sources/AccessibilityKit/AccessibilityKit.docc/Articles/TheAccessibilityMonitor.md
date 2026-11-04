@@ -4,9 +4,13 @@ Show the tracked features and their current values on screen.
 
 ## Overview
 
-The monitor is a screen listing every tracked accessibility feature with the identifier it is
-reported under and its current value. It is a development aid: it shows exactly what your app
-reports, including any `transform` applied, so the screen and your payload can never disagree.
+The monitor is a screen listing every tracking object with the identifier it is reported under
+and its value. It is a development aid: it shows exactly what your app reports, including any
+`transform` applied, so the screen and your payload can never disagree.
+
+The list follows changes only when tracking is configured with
+``AccessibilityFetchType/continuous``. Under ``AccessibilityFetchType/initial`` it shows the values
+from when it was presented.
 
 It observes through
 ``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``, so tracking must be

@@ -105,9 +105,9 @@ struct AccessibilityMonitorTests {
     }
 
     ///
-    /// Waits for the initial snapshot first: it is delivered after the
-    /// subjects are configured, so by then a subject holding the monitor
-    /// strongly would already keep it alive.
+    /// Waits for the initial snapshot first, so the monitor has been
+    /// configured, observed and has delivered before it is let go: its
+    /// release then shows no subject or pending delivery holds it.
     ///
     @Test("Releases a configured monitor once nothing else holds it")
     func releasesConfiguredMonitor() async throws {
@@ -154,6 +154,42 @@ struct AccessibilityMonitorTests {
         await Self.settle()
 
         #expect(counter.count == 2)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// One subject runs per type, whatever the number of objects tracking
+    /// it, so a change to a feature tracked twice produces one snapshot
+    /// carrying both entries rather than one snapshot per object.
+    ///
+    @Test("Emits once per change for a feature tracked under two identifiers")
+    func emitsOnceForFeatureTrackedTwice() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [
+                    AccessibilityTrackingObject(type: .fontScale),
+                    AccessibilityTrackingObject(
+                        type: .fontScale,
+                        customIdentifier: "large_text_enabled",
+                        transform: { _ in .flag(true) }
+                    )
+                ]
+            )
+        )
+
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { counter.record($0) }
+        await Self.wait(until: { counter.count == 1 })
+
+        center.post(name: UIContentSizeCategory.didChangeNotification, object: nil)
+        await Self.wait(until: { counter.count >= 2 })
+        await Self.settle()
+
+        #expect(counter.count == 2)
+        #expect(Set(counter.lastIdentifiers) == ["font_scale", "large_text_enabled"])
         withExtendedLifetime(monitor) { }
     }
 
@@ -272,6 +308,8 @@ private final class EmissionCounter {
     /// The features each emitted snapshot reported, in delivery order.
     private(set) var emittedTypes = [[AccessibilityType]]()
     private(set) var lastDeliveryWasOnMainThread: Bool?
+    /// The identifiers the most recently recorded snapshot reported.
+    private(set) var lastIdentifiers = [String]()
 
     func increment() {
         count += 1
@@ -280,6 +318,7 @@ private final class EmissionCounter {
 
     func record(_ snapshot: AccessibilitySnapshot) {
         emittedTypes.append(snapshot.states.map(\.type))
+        lastIdentifiers = snapshot.states.map(\.identifier)
         increment()
     }
 }
