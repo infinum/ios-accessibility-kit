@@ -157,9 +157,15 @@ struct AccessibilityMonitorTests {
     }
 
     ///
-    /// Runs on the main actor so the change and the reconfiguration both
-    /// happen before the main queue gets a chance to deliver the snapshot
-    /// the change queued.
+    /// Runs on the main actor so the change, the reconfiguration and the
+    /// second observation all happen before the main queue gets a chance to
+    /// deliver the snapshot the change queued.
+    ///
+    /// Observing again queues the new configuration's initial snapshot
+    /// behind the stale one — both hop the barrier queue, then the main
+    /// queue, in order — so its arrival bounds the wait without a fixed
+    /// delay: had the stale snapshot been delivered, it would have arrived
+    /// first.
     ///
     @MainActor
     @Test("Drops a snapshot taken under a configuration that has since been replaced")
@@ -169,7 +175,7 @@ struct AccessibilityMonitorTests {
         monitor.configureAccessibilityTracking(with: Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
-        monitor.observeAccessibilityTracking { _ in counter.increment() }
+        monitor.observeAccessibilityTracking { counter.record($0) }
         await Self.wait(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
@@ -179,9 +185,10 @@ struct AccessibilityMonitorTests {
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
-        await Self.settle()
+        monitor.observeAccessibilityTracking { counter.record($0) }
+        await Self.wait(until: { counter.emittedTypes.contains([.boldText]) })
 
-        #expect(counter.count == 1)
+        #expect(counter.emittedTypes == [[.voiceOver], [.boldText]])
         withExtendedLifetime(monitor) { }
     }
 }
@@ -228,12 +235,20 @@ private final class EmissionCounter {
 
     private let lock = NSLock()
     private var value = 0
+    private var types = [[AccessibilityType]]()
     private var lastWasOnMainThread: Bool?
 
     var count: Int {
         lock.lock()
         defer { lock.unlock() }
         return value
+    }
+
+    /// The features each emitted snapshot reported, in delivery order.
+    var emittedTypes: [[AccessibilityType]] {
+        lock.lock()
+        defer { lock.unlock() }
+        return types
     }
 
     var lastDeliveryWasOnMainThread: Bool? {
@@ -247,5 +262,12 @@ private final class EmissionCounter {
         defer { lock.unlock() }
         value += 1
         lastWasOnMainThread = Thread.isMainThread
+    }
+
+    func record(_ snapshot: AccessibilitySnapshot) {
+        lock.lock()
+        types.append(snapshot.states.map(\.type))
+        lock.unlock()
+        increment()
     }
 }
