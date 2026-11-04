@@ -32,6 +32,7 @@ final class AccessibilityMonitor {
             configurationGeneration += 1
             guard let configuration = configuration else { return }
             configureSubjects(for: configuration)
+            refreshSnapshotObservers()
         }
     }
     /// Bumped on every reconfiguration, so a snapshot can tell whether the
@@ -140,6 +141,23 @@ private extension AccessibilityMonitor {
         DispatchQueue.main.async { [weak self] in
             guard self?.configurationGeneration == generation else { return }
             delivery()
+        }
+    }
+
+    ///
+    /// Hands snapshot observers — the accessibility monitor UI — the newly
+    /// configured features straight away, so the screen never keeps showing
+    /// rows for features that are no longer tracked, nor stays empty because
+    /// its first snapshot was dropped. The app's own completion is left
+    /// alone: reconfiguring emits no snapshot to it.
+    ///
+    func refreshSnapshotObservers() {
+        pruneSnapshotObservers()
+        guard !snapshotObservers.isEmpty, let snapshot = configuredSnapshot() else { return }
+
+        let observers = snapshotObservers
+        deliverLater {
+            observers.forEach { $0.observer?.accessibilitySnapshotDidChange(snapshot) }
         }
     }
 

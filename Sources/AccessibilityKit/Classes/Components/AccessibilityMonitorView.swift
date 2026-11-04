@@ -24,7 +24,8 @@ import SwiftUI
 /// ``AccessibilityKit/observeAccessibilityTracking(completion:)``. Tracking
 /// must be configured first, and values it shows carry any transform the
 /// tracking objects apply. The list follows changes only when tracking is
-/// configured with ``AccessibilityFetchType/continuous``.
+/// configured with ``AccessibilityFetchType/continuous``, and is refreshed
+/// whenever tracking is reconfigured.
 ///
 public struct AccessibilityMonitorView: View {
 

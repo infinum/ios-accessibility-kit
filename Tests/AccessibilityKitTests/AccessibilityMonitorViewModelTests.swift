@@ -56,4 +56,62 @@ struct AccessibilityMonitorViewModelTests {
         #expect(appCounter.count == 3)
         withExtendedLifetime(monitor) { }
     }
+
+    ///
+    /// Reconfiguring refreshes the monitor, so the view model must take every
+    /// snapshot it is handed, not only its first.
+    ///
+    @Test("Shows the newly configured features after reconfiguring")
+    func showsNewlyConfiguredFeatures() async throws {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .initial,
+                objects: [AccessibilityTrackingObject(type: .voiceOver)]
+            )
+        )
+
+        let viewModel = AccessibilityMonitorViewModel(monitor: monitor)
+        await poll(until: { viewModel.states.map(\.type) == [.voiceOver] })
+
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .initial,
+                objects: [AccessibilityTrackingObject(type: .boldText)]
+            )
+        )
+        await poll(until: { viewModel.states.map(\.type) == [.boldText] })
+
+        #expect(viewModel.states.map(\.type) == [.boldText])
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// Uses the shared instances, as production does, so the view model's
+    /// default wiring is what is under test: had it registered through the
+    /// app's single observation slot, the completion below would go quiet.
+    ///
+    @Test("Leaves the shared observation alone with its default wiring")
+    func leavesSharedObservationAlone() async throws {
+        let kit = AccessibilityKit.shared
+        kit.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [AccessibilityTrackingObject(type: .voiceOver)]
+            )
+        )
+
+        let appCounter = EmissionCounter()
+        kit.observeAccessibilityTracking { _ in appCounter.increment() }
+        await poll(until: { appCounter.count == 1 })
+
+        let viewModel = AccessibilityMonitorViewModel()
+        await poll(until: { !viewModel.states.isEmpty })
+
+        NotificationCenter.default.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await poll(until: { appCounter.count == 2 })
+
+        #expect(appCounter.count == 2)
+        withExtendedLifetime(viewModel) { }
+    }
 }

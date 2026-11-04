@@ -10,7 +10,8 @@ and its value. It is a development aid: it shows exactly what your app reports, 
 
 The list follows changes only when tracking is configured with
 ``AccessibilityFetchType/continuous``. Under ``AccessibilityFetchType/initial`` it shows the values
-from when it was presented.
+from when it was presented. Reconfiguring tracking refreshes it with the newly configured features,
+so it never keeps rows for features that are no longer tracked.
 
 It observes the configured tracking on its own — presenting it does not replace an observation
 the app registered with

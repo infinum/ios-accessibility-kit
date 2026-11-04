@@ -111,9 +111,8 @@ public final class AccessibilityKit {
     /// the previous completion. A snapshot already in flight still reaches
     /// the completion that was registered when it was taken, unless tracking
     /// is reconfigured first, so a replacement never receives someone else's
-    /// first snapshot. Until it is replaced the
-    /// completion is kept, and reconfiguring tracking does not clear it, so
-    /// capture its owner weakly.
+    /// first snapshot. Until it is replaced, the completion is kept, and
+    /// reconfiguring tracking does not clear it, so capture its owner weakly.
     ///
     /// - Parameter completion: Called with each snapshot. If tracking has
     ///   not been configured yet, no first snapshot is delivered; the
@@ -131,7 +130,8 @@ public final class AccessibilityKit {
     /// The list updates as settings change only when tracking is configured
     /// with ``AccessibilityFetchType/continuous``; under
     /// ``AccessibilityFetchType/initial`` it shows the values from when it
-    /// was presented.
+    /// was presented. Reconfiguring tracking refreshes it with the newly
+    /// configured features.
     ///
     /// Requires tracking to have been configured — the monitor shows the
     /// features from that configuration, with any transforms applied, so it

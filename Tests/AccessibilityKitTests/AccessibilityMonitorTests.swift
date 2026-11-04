@@ -413,9 +413,10 @@ struct AccessibilityMonitorTests {
 
     ///
     /// The change, the reconfiguration and the second change all run in one
-    /// main-actor turn, so both snapshots are queued before either is
-    /// delivered. The second one's arrival bounds the wait: had the stale
-    /// snapshot been delivered, it would have arrived first.
+    /// main-actor turn, so the stale snapshot, the reconfiguration's refresh
+    /// and the second change are all queued before any is delivered. Waiting
+    /// for three deliveries bounds the wait: had the stale snapshot been
+    /// delivered, it would have been the second.
     ///
     @Test("Drops a snapshot observer's snapshot from a replaced configuration")
     func dropsSnapshotObserverSnapshotFromReplacedConfiguration() async throws {
@@ -435,9 +436,9 @@ struct AccessibilityMonitorTests {
             )
         )
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await poll(until: { observer.snapshots.contains { $0.states.map(\.type) == [.boldText] } })
+        await poll(until: { observer.snapshots.count >= 3 })
 
-        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
+        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText], [.boldText]])
         withExtendedLifetime(monitor) { }
     }
 
@@ -461,9 +462,62 @@ struct AccessibilityMonitorTests {
             )
         )
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await poll(until: { observer.snapshots.contains { $0.states.map(\.type) == [.boldText] } })
+        await poll(until: { observer.snapshots.count >= 2 })
+        await settle()
 
-        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.boldText]])
+        // The reconfiguration's refresh, then the change; never the stale first.
+        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.boldText], [.boldText]])
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// The monitor UI must not keep showing rows for features that are no
+    /// longer tracked, and under `.initial` no change would ever replace
+    /// them. The app's completion gets nothing from the reconfiguration.
+    ///
+    @Test("Refreshes snapshot observers, and only them, when tracking is reconfigured")
+    func refreshesSnapshotObserversOnReconfiguration() async throws {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+
+        let counter = EmissionCounter()
+        monitor.observeAccessibilityTracking { counter.record($0) }
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { counter.count == 1 && observer.snapshots.count == 1 })
+
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .initial,
+                objects: [AccessibilityTrackingObject(type: .boldText)]
+            )
+        )
+        await poll(until: { observer.snapshots.count >= 2 })
+        await settle()
+
+        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
+        #expect(counter.emittedTypes == [[.voiceOver]])
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// A change is handed to the observers registered when it was scheduled,
+    /// so an observer added while it is in flight gets only its own first
+    /// snapshot.
+    ///
+    @Test("Leaves a change already in flight out of an observer added after it")
+    func leavesInFlightChangeOutOfALaterObserver() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { !observer.snapshots.isEmpty })
+        await settle()
+
+        #expect(observer.snapshots.count == 1)
         withExtendedLifetime(monitor) { }
     }
 
