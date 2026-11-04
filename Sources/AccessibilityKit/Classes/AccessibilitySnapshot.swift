@@ -8,7 +8,8 @@
 import Foundation
 
 ///
-/// The state of every tracked accessibility feature, read at one moment.
+/// The state of every tracked accessibility feature, each read in turn when
+/// the snapshot is taken.
 ///
 /// ## Overview
 ///
