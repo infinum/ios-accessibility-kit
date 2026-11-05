@@ -483,6 +483,44 @@ struct AccessibilityMonitorTests {
     }
 
     ///
+    /// A delivery reaches the completion first and the observers after it,
+    /// in one turn. A completion that reconfigures tracking makes the
+    /// snapshot stale for everyone after it, so the observers must get only
+    /// the refresh for the new configuration, never the stale snapshot.
+    ///
+    @Test("Drops a change for snapshot observers when the completion reconfigures tracking")
+    func dropsChangeForObserversWhenCompletionReconfigures() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+
+        let boldText = try AccessibilityTrackingConfiguration(
+            fetchType: .continuous,
+            objects: [AccessibilityTrackingObject(type: .boldText)]
+        )
+        let calls = EmissionCounter()
+        // Reconfigures when handed the change, not its first snapshot, so the
+        // reconfiguration lands between the completion and the observers.
+        monitor.observeAccessibilityTracking { [weak monitor] _ in
+            calls.increment()
+            guard calls.count == 2 else { return }
+            monitor?.configureAccessibilityTracking(with: boldText)
+        }
+        await poll(until: { calls.count == 1 && observer.snapshots.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await poll(until: { observer.snapshots.count >= 2 })
+        await settle()
+
+        #expect(calls.count == 2)
+        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
     /// The change, the reconfiguration and the second change all run in one
     /// main-actor turn, so the stale snapshot, the reconfiguration's refresh
     /// and the second change are all queued before any is delivered. Waiting

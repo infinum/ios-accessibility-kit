@@ -134,9 +134,11 @@ private extension AccessibilityMonitor {
     /// captured now, so a snapshot goes only to whoever was registered when
     /// it was taken.
     ///
-    /// Nothing is delivered once tracking has been reconfigured since the
-    /// snapshot was taken, and the completion is skipped once it has been
-    /// replaced: a replaced completion is never called again.
+    /// Each recipient is checked as it is reached. Once tracking has been
+    /// reconfigured since the snapshot was taken — even by an earlier
+    /// recipient of this same delivery — nobody further receives it, and the
+    /// completion is skipped once it has been replaced: a replaced completion
+    /// is never called again.
     ///
     func deliverLater(
         _ snapshot: AccessibilitySnapshot,
@@ -154,6 +156,7 @@ private extension AccessibilityMonitor {
             }
 
             for entry in observers {
+                guard self.configurationGeneration == configurationGeneration else { return }
                 entry.observer?.accessibilitySnapshotDidChange(snapshot)
             }
         }
