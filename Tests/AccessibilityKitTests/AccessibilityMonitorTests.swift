@@ -774,8 +774,12 @@ struct AccessibilityMonitorTests {
         withExtendedLifetime(monitor) { }
     }
 
-    @Test("Delivers nothing to a snapshot observer when tracking is unconfigured")
-    func deliversNothingToASnapshotObserverWithoutConfiguration() async {
+    ///
+    /// A monitor opened before tracking is configured stays empty, and is
+    /// filled in by the refresh once tracking is configured.
+    ///
+    @Test("Fills in a snapshot observer added before tracking is configured")
+    func fillsInASnapshotObserverAddedBeforeConfiguration() async throws {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
 
         let observer = SpySnapshotObserver()
@@ -783,6 +787,33 @@ struct AccessibilityMonitorTests {
         await settle()
 
         #expect(observer.snapshots.isEmpty)
+
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+        await poll(until: { !observer.snapshots.isEmpty })
+        await settle()
+
+        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver]])
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// The monitor UI is held to the fetch type like the completion is:
+    /// under `.initial` it keeps the values from when it was presented.
+    ///
+    @Test("Does not notify a snapshot observer of a change when fetching once")
+    func doesNotNotifySnapshotObserverForInitialFetch() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { observer.snapshots.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await settle()
+
+        #expect(observer.snapshots.count == 1)
         withExtendedLifetime(monitor) { }
     }
 

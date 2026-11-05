@@ -72,13 +72,14 @@ final class AccessibilityMonitor {
     }
 
     ///
-    /// Registers an additional, weakly held snapshot listener. It receives
-    /// the current snapshot on registration, every change under a
-    /// continuous configuration, and a refresh on each reconfiguration,
-    /// without touching the completion registered through
-    /// ``observeAccessibilityTracking(completion:)``. Registering an
-    /// observer that is already registered does nothing, and hands it
-    /// nothing.
+    /// Registers an additional, weakly held snapshot listener, without
+    /// touching the completion registered through
+    /// ``observeAccessibilityTracking(completion:)``. It receives the current
+    /// snapshot on registration if tracking is configured, every change under
+    /// a continuous configuration, and a refresh each time tracking is
+    /// configured, which is how a listener registered first is filled in.
+    /// Registering an observer that is already registered does nothing, and
+    /// hands it nothing.
     ///
     func addSnapshotObserver(_ observer: AccessibilitySnapshotObserver) {
         pruneSnapshotObservers()
@@ -97,11 +98,7 @@ extension AccessibilityMonitor: AccessibilityObserver {
     func accessibilityStateDidChange(_ state: AccessibilityState) {
         guard configuration?.fetchType == .continuous else { return }
 
-        // A snapshot nobody is registered to receive is not taken: whoever
-        // registers later is handed a snapshot of their own.
         pruneSnapshotObservers()
-        guard snapshotChangeHandler != nil || !snapshotObservers.isEmpty else { return }
-
         deliverLater(toCompletion: snapshotChangeHandler, observers: snapshotObservers)
     }
 }
@@ -142,6 +139,10 @@ private extension AccessibilityMonitor {
         toCompletion completion: ((AccessibilitySnapshot) -> Void)?,
         observers: [WeakSnapshotObserver]
     ) {
+        // A snapshot nobody is registered to receive is not taken: whoever
+        // registers later is handed a snapshot of their own.
+        guard completion != nil || observers.contains(where: { $0.observer != nil }) else { return }
+
         // Recorded before the snapshot is taken: transforms run while it is,
         // and one that reconfigures tracking or replaces the completion must
         // leave this snapshot stale rather than go unnoticed.
@@ -172,8 +173,6 @@ private extension AccessibilityMonitor {
     ///
     func refreshSnapshotObservers() {
         pruneSnapshotObservers()
-        guard !snapshotObservers.isEmpty else { return }
-
         deliverLater(toCompletion: nil, observers: snapshotObservers)
     }
 
