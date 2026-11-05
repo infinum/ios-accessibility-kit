@@ -50,7 +50,7 @@ The method `currentAccessibilitySnapshot(for:)`  returns a snapshot of a type `A
 
 To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. It takes the `type` of accessibility feature to track, defined by the `AccessibilityType` enum, and optionally a `customIdentifier` to report that feature under and a `transform` to correct its value.
 
-Give every tracking object its own identifier. The configuration's initializer and `currentAccessibilitySnapshot(for:)` throw `AccessibilityTrackingError.duplicateIdentifier(_:)` when two objects would be reported under the same identifier. One feature can be tracked twice, for example raw and corrected, as long as each object has its own `customIdentifier`.
+Give every tracking object its own identifier. The configuration's initializer and `currentAccessibilitySnapshot(for:)` throw `AccessibilityTrackingError.duplicateIdentifier(_:)` when two objects would be reported under the same identifier. One feature can be tracked twice, for example raw and corrected, as long as the two are reported under different identifiers, so give at least one of them a `customIdentifier`.
 
 A default identifier is used for every tracked accessibility feature when a custom identifier is not used. Default identifiers are defined as:
 
@@ -128,7 +128,7 @@ After the `AccessibilityKit` is configured, you can observe changes via` observe
 
 This method will return one or multiple snapshots based on the `fetchType` configured in the `AccessibilityTrackingConfiguration` init method.
 
-An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type, and by identifier where one feature is tracked more than once. Snapshots are delivered on the main queue. The completion is kept until the next call replaces it, even across reconfiguring, so capture its owner weakly.
+An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type, and by identifier where one feature is tracked more than once. Snapshots are delivered on the main queue. The completion is kept until the next call replaces it, even across reconfiguring, so capture its owner weakly. A replaced completion is not called again, not even for a snapshot already in flight, and the replacement receives only snapshots taken after it was registered.
 
 The object type in the array is `AccessibilityState` which provides `type`, `name`, `value`, and `identifier`. All those properties can be used to identify every accessibility feature based on the type, name, value, or identifier.
 

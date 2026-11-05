@@ -35,10 +35,17 @@ final class AccessibilityMonitor {
             refreshSnapshotObservers()
         }
     }
-    /// Bumped on every reconfiguration, so a snapshot can tell whether the
-    /// configuration it was taken under is still the current one.
+    private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)? {
+        didSet { completionGeneration += 1 }
+    }
+    /// Bumped on every reconfiguration, so a snapshot in flight can tell
+    /// whether the configuration it was taken under is still the current one.
     private var configurationGeneration = 0
-    private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
+    /// Bumped whenever the completion is replaced, so a snapshot in flight can
+    /// tell whether the completion it was taken for is still registered.
+    /// Snapshot observers do not look at it: replacing the app's completion
+    /// leaves them alone.
+    private var completionGeneration = 0
     private var snapshotObservers = [WeakSnapshotObserver]()
     private var subjects = [Subject]()
     private let notificationCenter: NotificationCenter
@@ -63,12 +70,7 @@ final class AccessibilityMonitor {
         snapshotChangeHandler = completion
 
         guard let snapshot = configuredSnapshot() else { return }
-        // Delivered asynchronously so the completion never runs inside the
-        // caller's own registration call, and captured here so the snapshot
-        // lands in this completion even if it is replaced while in flight.
-        deliverLater {
-            completion(snapshot)
-        }
+        deliverLater(snapshot, toCompletion: completion, observers: [])
     }
 
     ///
@@ -81,12 +83,12 @@ final class AccessibilityMonitor {
     func addSnapshotObserver(_ observer: AccessibilitySnapshotObserver) {
         pruneSnapshotObservers()
         guard !snapshotObservers.contains(where: { $0.observer === observer }) else { return }
-        snapshotObservers.append(WeakSnapshotObserver(observer: observer))
+
+        let entry = WeakSnapshotObserver(observer: observer)
+        snapshotObservers.append(entry)
 
         guard let snapshot = configuredSnapshot() else { return }
-        deliverLater { [weak observer] in
-            observer?.accessibilitySnapshotDidChange(snapshot)
-        }
+        deliverLater(snapshot, toCompletion: nil, observers: [entry])
     }
 }
 
@@ -95,20 +97,15 @@ final class AccessibilityMonitor {
 extension AccessibilityMonitor: AccessibilityObserver {
 
     func accessibilityStateDidChange(_ state: AccessibilityState) {
+        // A snapshot nobody is registered to receive is not taken: whoever
+        // registers later is handed a snapshot of their own.
         guard
             configuration?.fetchType == .continuous,
+            snapshotChangeHandler != nil || snapshotObservers.contains(where: { $0.observer != nil }),
             let snapshot = configuredSnapshot()
         else { return }
 
-        // The completion and observers are captured here, at scheduling time,
-        // so a snapshot lands with whoever was registered when the change
-        // occurred — never with a replacement registered while in flight.
-        let handler = snapshotChangeHandler
-        let observers = snapshotObservers
-        deliverLater {
-            handler?(snapshot)
-            observers.forEach { $0.observer?.accessibilitySnapshotDidChange(snapshot) }
-        }
+        deliverLater(snapshot, toCompletion: snapshotChangeHandler, observers: snapshotObservers)
     }
 }
 
@@ -132,16 +129,33 @@ private extension AccessibilityMonitor {
     }
 
     ///
-    /// Runs `delivery` on a later main-queue turn, never inside the call that
-    /// scheduled it, and drops it if tracking is reconfigured in between: a
-    /// snapshot taken under a configuration that has since been replaced is
-    /// never delivered.
+    /// Delivers `snapshot` on a later main-queue turn, never inside the call
+    /// that scheduled it, to `completion` and then to `observers`. Both are
+    /// captured now, so a snapshot goes only to whoever was registered when
+    /// it was taken.
     ///
-    func deliverLater(_ delivery: @escaping () -> Void) {
-        let generation = configurationGeneration
+    /// Nothing is delivered once tracking has been reconfigured since the
+    /// snapshot was taken, and the completion is skipped once it has been
+    /// replaced: a replaced completion is never called again.
+    ///
+    func deliverLater(
+        _ snapshot: AccessibilitySnapshot,
+        toCompletion completion: ((AccessibilitySnapshot) -> Void)?,
+        observers: [WeakSnapshotObserver]
+    ) {
+        let configurationGeneration = self.configurationGeneration
+        let completionGeneration = self.completionGeneration
+
         DispatchQueue.main.async { [weak self] in
-            guard self?.configurationGeneration == generation else { return }
-            delivery()
+            guard let self, self.configurationGeneration == configurationGeneration else { return }
+
+            if let completion, self.completionGeneration == completionGeneration {
+                completion(snapshot)
+            }
+
+            for entry in observers {
+                entry.observer?.accessibilitySnapshotDidChange(snapshot)
+            }
         }
     }
 
@@ -156,10 +170,7 @@ private extension AccessibilityMonitor {
         pruneSnapshotObservers()
         guard !snapshotObservers.isEmpty, let snapshot = configuredSnapshot() else { return }
 
-        let observers = snapshotObservers
-        deliverLater {
-            observers.forEach { $0.observer?.accessibilitySnapshotDidChange(snapshot) }
-        }
+        deliverLater(snapshot, toCompletion: nil, observers: snapshotObservers)
     }
 
     func pruneSnapshotObservers() {

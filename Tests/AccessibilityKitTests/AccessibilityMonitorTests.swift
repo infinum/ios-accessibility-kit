@@ -312,12 +312,15 @@ struct AccessibilityMonitorTests {
     }
 
     ///
-    /// Registering twice in one turn leaves both initial deliveries in flight.
-    /// Each must land in the completion that was registered when it was
-    /// created, not whichever happens to be registered when the hop completes.
+    /// Registering twice in one turn leaves both first snapshots in flight.
+    /// The replaced completion must not be called, and the replacement must
+    /// receive its own first snapshot once, not the replaced one's as well.
     ///
-    @Test("Delivers an in-flight snapshot to the completion that observed it")
-    func deliversInFlightSnapshotToItsOwnCompletion() async throws {
+    /// The settle after the poll is what catches an extra delivery: the
+    /// poll returns as soon as the replacement has one.
+    ///
+    @Test("Delivers the first snapshot once, to the replacement, when observing twice in one turn")
+    func deliversFirstSnapshotOnceToReplacement() async throws {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
         monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
@@ -325,20 +328,21 @@ struct AccessibilityMonitorTests {
         let second = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in first.increment() }
         monitor.observeAccessibilityTracking { _ in second.increment() }
-        await poll(until: { first.count == 1 && second.count == 1 })
+        await poll(until: { second.count == 1 })
+        await settle()
 
-        #expect(first.count == 1)
+        #expect(first.count == 0)
         #expect(second.count == 1)
         withExtendedLifetime(monitor) { }
     }
 
     ///
-    /// The change path captures the completion at scheduling time, so a
-    /// change already in flight lands with whoever was observing when it
-    /// happened rather than with a replacement registered in between.
+    /// There is no way to stop observing other than replacing the
+    /// completion, so a replaced completion must not be called again, not
+    /// even for a change it was registered for when the change happened.
     ///
-    @Test("Delivers a change in flight to the completion that was observing")
-    func deliversInFlightChangeToTheObservingCompletion() async throws {
+    @Test("Does not call a replaced completion for a change already in flight")
+    func doesNotCallReplacedCompletionForChangeInFlight() async throws {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
         monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
@@ -352,10 +356,42 @@ struct AccessibilityMonitorTests {
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         let second = EmissionCounter()
         monitor.observeAccessibilityTracking { _ in second.increment() }
-        await poll(until: { first.count == 2 && second.count == 1 })
+        await poll(until: { second.count == 1 })
+        await settle()
 
-        #expect(first.count == 2)
+        #expect(first.count == 1)
         #expect(second.count == 1)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// A snapshot nobody can receive is not worth reading: a transform runs
+    /// once per snapshot taken, so counting its calls shows whether one was.
+    /// A change is handled inside the post, so no wait is needed.
+    ///
+    @Test("Takes no snapshot for a change while nothing is observing")
+    func takesNoSnapshotWithoutObservation() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        let transformCalls = EmissionCounter()
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [
+                    AccessibilityTrackingObject(
+                        type: .voiceOver,
+                        transform: { value in
+                            transformCalls.increment()
+                            return value
+                        }
+                    )
+                ]
+            )
+        )
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(transformCalls.count == 0)
         withExtendedLifetime(monitor) { }
     }
 
@@ -415,6 +451,33 @@ struct AccessibilityMonitorTests {
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await poll(until: { observer.snapshots.count == 2 })
 
+        #expect(observer.snapshots.count == 2)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// Replacing the app's completion drops what was in flight for the old
+    /// one, but the monitor UI is not the app's completion: the change it
+    /// was registered for when the change happened still reaches it.
+    ///
+    @Test("Still notifies snapshot observers of a change in flight when the completion is replaced")
+    func notifiesSnapshotObserversAcrossReplacedCompletion() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let first = EmissionCounter()
+        let observer = SpySnapshotObserver()
+        monitor.observeAccessibilityTracking { _ in first.increment() }
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { first.count == 1 && observer.snapshots.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        monitor.observeAccessibilityTracking { _ in }
+        await poll(until: { observer.snapshots.count == 2 })
+        await settle()
+
+        #expect(first.count == 1)
         #expect(observer.snapshots.count == 2)
         withExtendedLifetime(monitor) { }
     }

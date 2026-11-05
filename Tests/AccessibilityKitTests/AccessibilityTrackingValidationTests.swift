@@ -105,8 +105,14 @@ struct AccessibilityTrackingValidationTests {
             ]
         )
 
-        let values = Dictionary(uniqueKeysWithValues: snapshot.states.map { ($0.identifier, $0.value) })
-        #expect(values.count == 2)
+        // Checked before the lookup below, which keeps the first of two
+        // states sharing an identifier rather than trapping on them.
+        #expect(snapshot.states.map(\.identifier) == ["font_scale", "large_text_enabled"])
+
+        let values = Dictionary(
+            snapshot.states.map { ($0.identifier, $0.value) },
+            uniquingKeysWith: { first, _ in first }
+        )
         #expect(values["font_scale"]?.scaleValue != nil)
         #expect(values["large_text_enabled"] == .flag(true))
     }

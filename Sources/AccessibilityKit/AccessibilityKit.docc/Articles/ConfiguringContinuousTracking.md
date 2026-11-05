@@ -36,7 +36,8 @@ do {
 The initialiser throws ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if two tracking
 objects would be reported under the same identifier, since the snapshot would carry entries a
 consumer cannot tell apart. One feature can still be tracked twice — raw and corrected, say — as
-long as each object has its own `customIdentifier`.
+long as the two are reported under different identifiers, so give at least one of them a
+`customIdentifier`.
 
 ### Observing
 
@@ -53,8 +54,8 @@ Completions are delivered asynchronously on the main queue, so a completion neve
 own call to observe.
 
 Only one observation is active at a time — calling this again replaces the previous completion. A
-snapshot already in flight still reaches the completion registered when it was taken, so a
-replacement never receives someone else's first snapshot.
+replaced completion is not called again, not even for a snapshot already in flight, and the
+replacement receives only snapshots taken after it was registered.
 Reconfiguring tracking keeps the observation you already registered, but emits no snapshot of its
 own: the next one arrives at the next change, and only if the new configuration is
 ``AccessibilityFetchType/continuous``. A snapshot taken under the replaced configuration and not

@@ -54,8 +54,9 @@ public struct AccessibilitySnapshot: Sendable {
     ///   type, whatever order they are supplied in.
     ///
     public init(states: [AccessibilityState]) {
-        // The identifier breaks ties here rather than in `<`, which has to
-        // agree with `==`, and `==` ignores the identifier.
+        // The identifier breaks ties here rather than in `<`: `==` ignores
+        // the identifier, so a `<` ordered by it would call two equal states
+        // unequal.
         self.states = states.sorted { lhs, rhs in
             lhs < rhs || (!(rhs < lhs) && lhs.identifier < rhs.identifier)
         }

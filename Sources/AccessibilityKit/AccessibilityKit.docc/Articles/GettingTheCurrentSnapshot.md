@@ -25,8 +25,9 @@ for state in snapshot.states {
 
 Each identifier may appear only once: entries a consumer cannot tell apart are the thing being
 prevented. The call throws ``AccessibilityTrackingError/duplicateIdentifier(_:)`` when two
-tracking objects would be reported under one identifier. The same feature can appear twice under
-two custom identifiers.
+tracking objects would be reported under one identifier. The same feature can appear twice, as
+long as the two are reported under different identifiers, so give at least one of them a
+`customIdentifier`.
 
 ### Reporting a feature under your own identifier
 
