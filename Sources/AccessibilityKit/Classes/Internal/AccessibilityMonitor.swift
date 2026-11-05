@@ -27,15 +27,18 @@ final class AccessibilityMonitor {
 
     private var configuration: AccessibilityTrackingConfiguration? {
         didSet {
-            configurationGeneration += 1
+            generation += 1
             guard let configuration = configuration else { return }
             configureSubjects(for: configuration)
         }
     }
-    /// Bumped on every reconfiguration, so a snapshot can tell whether the
-    /// configuration it was taken under is still the current one.
-    private var configurationGeneration = 0
-    private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)?
+    private var snapshotChangeHandler: ((AccessibilitySnapshot) -> Void)? {
+        didSet { generation += 1 }
+    }
+    /// Bumped whenever the configuration or the completion is replaced, so a
+    /// snapshot in flight can tell whether both are still the ones it was
+    /// taken for.
+    private var generation = 0
     private var subjects = [Subject]()
     private let notificationCenter: NotificationCenter
 
@@ -84,22 +87,26 @@ private extension AccessibilityMonitor {
     }
 
     func createSnapshot(isInitial: Bool = false) {
-        let generation = configurationGeneration
+        // Without a completion the snapshot could never be delivered, since
+        // registering one bumps the generation, so it is not taken at all.
         guard
             let configuration = configuration,
+            let handler = snapshotChangeHandler,
             (configuration.fetchType == .continuous || isInitial)
         else { return }
 
+        let generation = self.generation
         let snapshot = AccessibilitySnapshot(
             trackingObjects: configuration.objects
         )
         // Delivered asynchronously so a completion never runs inside the
         // caller's own call to `observeAccessibilityTracking(completion:)`.
-        // A snapshot taken under a configuration that has since been
-        // replaced is dropped rather than delivered.
+        // A snapshot whose configuration or completion has been replaced by
+        // the time it lands is dropped: a replaced completion is never called
+        // again, and its replacement receives only snapshots taken for it.
         DispatchQueue.main.async { [weak self] in
-            guard let self, self.configurationGeneration == generation else { return }
-            self.snapshotChangeHandler?(snapshot)
+            guard self?.generation == generation else { return }
+            handler(snapshot)
         }
     }
 }

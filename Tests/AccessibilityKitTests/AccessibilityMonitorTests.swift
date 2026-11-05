@@ -308,6 +308,88 @@ struct AccessibilityMonitorTests {
         #expect(second.count == 2)
         withExtendedLifetime(monitor) { }
     }
+
+    ///
+    /// Registering twice in one turn leaves both first snapshots in flight.
+    /// The replaced completion must not be called, and the replacement must
+    /// receive its own first snapshot once, not the replaced one's as well.
+    ///
+    /// The settle after the poll is what catches an extra delivery: the
+    /// poll returns as soon as the replacement has one.
+    ///
+    @Test("Delivers the first snapshot once, to the replacement, when observing twice in one turn")
+    func deliversFirstSnapshotOnceToReplacement() async throws {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+
+        let first = EmissionCounter()
+        let second = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in first.increment() }
+        monitor.observeAccessibilityTracking { _ in second.increment() }
+        await Self.wait(until: { second.count == 1 })
+        await Self.settle()
+
+        #expect(first.count == 0)
+        #expect(second.count == 1)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// There is no way to stop observing other than replacing the
+    /// completion, so a replaced completion must not be called again, not
+    /// even for a change it was registered for when the change happened.
+    ///
+    @Test("Does not call a replaced completion for a change already in flight")
+    func doesNotCallReplacedCompletionForChangeInFlight() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let first = EmissionCounter()
+        let second = EmissionCounter()
+        monitor.observeAccessibilityTracking { _ in first.increment() }
+        await Self.wait(until: { first.count == 1 })
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        monitor.observeAccessibilityTracking { _ in second.increment() }
+        await Self.wait(until: { second.count == 1 })
+        await Self.settle()
+
+        #expect(first.count == 1)
+        #expect(second.count == 1)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// A snapshot nobody can receive is not worth reading: a transform runs
+    /// once per snapshot taken, so counting its calls shows whether one was.
+    /// A change is handled inside the post, so no wait is needed.
+    ///
+    @Test("Takes no snapshot for a change while nothing is observing")
+    func takesNoSnapshotWithoutObservation() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        let transformCalls = EmissionCounter()
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .continuous,
+                objects: [
+                    AccessibilityTrackingObject(
+                        type: .voiceOver,
+                        transform: { value in
+                            transformCalls.increment()
+                            return value
+                        }
+                    )
+                ]
+            )
+        )
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(transformCalls.count == 0)
+        withExtendedLifetime(monitor) { }
+    }
 }
 
 // MARK: - Helpers
