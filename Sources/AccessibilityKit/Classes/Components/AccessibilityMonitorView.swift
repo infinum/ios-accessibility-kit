@@ -30,9 +30,10 @@ import SwiftUI
 public struct AccessibilityMonitorView: View {
 
     // `@StateObject`, not `@ObservedObject`: an observed object built inline
-    // is re-created whenever the containing view rebuilds this one, and the
-    // monitor holds its snapshot observers weakly — the view must own one
-    // stable view model.
+    // is re-created whenever the containing view rebuilds this one. Each new
+    // view model registers afresh and starts with an empty list until its
+    // first snapshot lands, and under `.initial` it shows the values from
+    // the rebuild rather than from when the monitor was presented.
     @StateObject private var viewModel = AccessibilityMonitorViewModel()
     let onDismiss: () -> Void
 

@@ -138,8 +138,10 @@ public final class AccessibilityKit {
     /// configured features.
     ///
     /// The monitor shows the features from the tracking configuration, with
-    /// any transforms applied, so it shows exactly what the app reports. It
-    /// stays empty until tracking is configured.
+    /// any transforms applied, under the identifiers the app's snapshots
+    /// carry. It stays empty until tracking is configured. Unlike the app's
+    /// completion it is refreshed when tracking is reconfigured, so until
+    /// the next change the two can show different values.
     ///
     /// The monitor observes on its own, so presenting it does not replace a
     /// completion registered through

@@ -385,9 +385,8 @@ struct AccessibilityMonitorTests {
     }
 
     ///
-    /// A released observer leaves a dead entry behind until something prunes
-    /// it. The change path must prune before deciding anyone is listening,
-    /// or the dead entry alone gets a snapshot taken.
+    /// A released observer can leave a dead entry in the list. A dead entry
+    /// is nobody, so it must not be enough for a change to take a snapshot.
     ///
     @Test("Takes no snapshot for a change when the only observer has been released")
     func takesNoSnapshotForReleasedObserver() async throws {
