@@ -646,6 +646,7 @@ struct AccessibilityMonitorTests {
         )
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
         await poll(until: { observer.snapshots.count >= 3 })
+        await settle()
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText], [.boldText]])
         withExtendedLifetime(monitor) { }

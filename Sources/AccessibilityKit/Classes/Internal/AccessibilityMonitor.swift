@@ -184,8 +184,9 @@ private extension AccessibilityMonitor {
 // MARK: - Weak snapshot observer
 
 ///
-/// Snapshot observers are held weakly: the monitor outlives the views
-/// listening to it, and must not keep them alive.
+/// Snapshot observers are held weakly: the view model holds its monitor, so
+/// holding it back would be a cycle, and a dismissed screen must stop being
+/// told anything.
 ///
 private struct WeakSnapshotObserver {
 
