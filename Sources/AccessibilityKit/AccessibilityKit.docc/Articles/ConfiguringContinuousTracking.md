@@ -36,7 +36,8 @@ do {
 The initialiser throws ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if two tracking
 objects would be reported under the same identifier, since the snapshot would carry entries a
 consumer cannot tell apart. One feature can still be tracked twice — raw and corrected, say — as
-long as each object has its own `customIdentifier`.
+long as the two are reported under different identifiers, so give at least one of them a
+`customIdentifier`.
 
 ### Observing
 
