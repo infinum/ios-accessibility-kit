@@ -33,7 +33,29 @@ The value types — `AccessibilitySnapshot`, `AccessibilityState`, `Accessibilit
 
 AccessibilityKit is available through [Swift Package Manager (SPM)](https://www.swift.org/package-manager/).
 
-To install it via SPM, open your project in Xcode, go to `File` -> `Add Package Dependencies...`, and enter the URL of the repository.
+To install it via SPM, open your project in Xcode, go to `File` -> `Add Package Dependencies...`, and enter the URL of the repository:
+
+```text
+https://github.com/infinum/ios-accessibility-kit
+```
+
+Or add it to your own `Package.swift`. Declare the package, then list the product under the target that imports it:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/infinum/ios-accessibility-kit", from: "1.1.0")
+],
+targets: [
+    .target(
+        name: "YourTarget",
+        dependencies: [
+            .product(name: "AccessibilityKit", package: "ios-accessibility-kit")
+        ]
+    )
+]
+```
+
+The full API reference is written in DocC. In Xcode, choose `Product` -> `Build Documentation` to browse it.
 
 ## Usage
 
@@ -124,7 +146,7 @@ Another parameter needed for this configuration is an object of the type `Access
 
 #### Observing changes
 
-After the `AccessibilityKit` is configured, you can observe changes via` observeAccessibilityTracking(completion:)`. 
+After the `AccessibilityKit` is configured, you can observe changes via `observeAccessibilityTracking(completion:)`.
 
 This method will return one or multiple snapshots based on the `fetchType` configured in the `AccessibilityTrackingConfiguration` init method.
 
@@ -148,11 +170,11 @@ The identifiers are the default ones from the table above. Any feature given a `
 
 #### Accessibility monitor
 
-**AccessibilityKit** also provides a user interface for observing changes. To be able to instantiate the view controller, use the method; `AccessibilityKit.shared.presentAccessibilityMonitor(on:)`.
+**AccessibilityKit** also provides a user interface for observing changes. From UIKit, present it with `AccessibilityKit.shared.presentAccessibilityMonitor(on:)`. From SwiftUI, use `AccessibilityMonitorView` directly; it does not dismiss itself, so the closure you pass is where you do that.
 
 The monitor observes the configured tracking on its own, so presenting it does not replace an observation the app registered with `observeAccessibilityTracking(completion:)`, which keeps receiving its snapshots while the monitor is open. The monitor follows changes only when tracking is configured as `continuous`; under `initial` it shows the values from when it was presented. Reconfiguring tracking refreshes it with the newly configured features, and a monitor opened before tracking is configured fills in once it is.
 
-### Getting started
+### Examples
 
 To add **AccessibilityKit** to your project, install it with Swift Package Manager as described in [Getting started](#getting-started).
 
@@ -218,6 +240,14 @@ The accessibility monitor can be shown whenever it is needed. It lists the confi
 AccessibilityKit.shared.presentAccessibilityMonitor(on: viewController)
 ```
 
+In SwiftUI, embed the view instead:
+
+```swift
+.sheet(isPresented: $isPresented) {
+    AccessibilityMonitorView { isPresented = false }
+}
+```
+
 ## Contributing
 
 We believe that the community can help us improve and build better a product.
@@ -248,12 +278,3 @@ limitations under the License.
 ## Credits
 
 Maintained and sponsored by [Infinum](https://infinum.com).
-
-<div align="center">
-    <a href='https://infinum.com'>
-    <picture>
-        <source srcset="https://assets.infinum.com/brand/logo/static/white.svg" media="(prefers-color-scheme: dark)">
-        <img src="https://assets.infinum.com/brand/logo/static/default.svg">
-    </picture>
-    </a>
-</div>
