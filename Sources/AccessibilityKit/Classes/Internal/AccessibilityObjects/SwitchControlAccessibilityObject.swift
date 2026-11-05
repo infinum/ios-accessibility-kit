@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct SwitchControlAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isSwitchControlRunning: () -> Bool
+    private let isSwitchControlRunning: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isSwitchControlRunning: @escaping () -> Bool = { UIAccessibility.isSwitchControlRunning }) {
+    init(isSwitchControlRunning: @escaping @MainActor () -> Bool = { UIAccessibility.isSwitchControlRunning }) {
         self.isSwitchControlRunning = isSwitchControlRunning
     }
 

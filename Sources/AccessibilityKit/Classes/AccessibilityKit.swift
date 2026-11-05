@@ -19,7 +19,7 @@ import SwiftUI
 /// setup is needed:
 ///
 /// ```swift
-/// let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+/// let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
 ///     for: [AccessibilityTrackingObject(type: .voiceOver)]
 /// )
 /// ```
@@ -28,18 +28,22 @@ import SwiftUI
 /// `application(_:didFinishLaunchingWithOptions:)`, say — and then observe:
 ///
 /// ```swift
-/// AccessibilityKit.shared.configureAccessibilityTracking(
-///     with: AccessibilityTrackingConfiguration(
+/// do {
+///     let configuration = try AccessibilityTrackingConfiguration(
 ///         fetchType: .continuous,
 ///         objects: [AccessibilityTrackingObject(type: .voiceOver)]
 ///     )
-/// )
+///     AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+/// } catch {
+///     assertionFailure("Invalid accessibility tracking configuration: \(error)")
+/// }
 ///
 /// AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 ///     // handle the snapshot
 /// }
 /// ```
 ///
+@MainActor
 public final class AccessibilityKit {
 
     // MARK: - Public properties
@@ -64,10 +68,15 @@ public final class AccessibilityKit {
     ///
     /// Tracking does not need to be configured to call this.
     ///
-    /// - Parameter objects: The features to read.
+    /// - Parameter objects: The features to read, each under an identifier
+    ///   of its own.
     /// - Returns: A snapshot of those features, as they are right now.
+    /// - Throws: ``AccessibilityTrackingError/duplicateIdentifier(_:)`` if
+    ///   two objects are supplied under the same identifier.
     ///
-    public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) -> AccessibilitySnapshot {
+    public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) throws -> AccessibilitySnapshot {
+        try objects.validateUniqueIdentifiers()
+
         return monitor.currentAccessibilitySnapshot(for: objects)
     }
 
@@ -77,11 +86,15 @@ public final class AccessibilityKit {
     /// Call this before ``observeAccessibilityTracking(completion:)``.
     /// Calling it again replaces the previous configuration. An observation
     /// already registered stays registered, but reconfiguring does not emit
-    /// a snapshot of its own: the next one arrives at the next change, and
-    /// only if the new configuration is
+    /// a snapshot of its own to it: the next one arrives at the next change,
+    /// and only if the new configuration is
     /// ``AccessibilityFetchType/continuous``. A snapshot taken under the
     /// previous configuration and not yet delivered, the first one
     /// included, is dropped.
+    ///
+    /// An open accessibility monitor is refreshed: a snapshot of the newly
+    /// configured features is taken during this call, running their
+    /// transforms, and delivered to the monitor on the main queue.
     ///
     /// - Parameter configuration: The features to track and the fetch type.
     ///
@@ -98,9 +111,12 @@ public final class AccessibilityKit {
     /// ``AccessibilityFetchType/initial`` reports only that first snapshot,
     /// ``AccessibilityFetchType/continuous`` reports again on every change.
     ///
-    /// Only one observation is active at a time — calling this again replaces
-    /// the previous completion. Until then the completion is kept, and
-    /// reconfiguring tracking does not clear it, so capture its owner weakly.
+    /// Only one completion is registered at a time — calling this again
+    /// replaces the previous completion, which is not called again, not even for a
+    /// snapshot already in flight. The replacement receives only snapshots
+    /// taken after it was registered, starting with its own first one. Until
+    /// it is replaced, the completion is kept, and reconfiguring tracking does
+    /// not clear it, so capture its owner weakly.
     ///
     /// - Parameter completion: Called with each snapshot. If tracking has
     ///   not been configured yet, no first snapshot is delivered; the
@@ -118,16 +134,20 @@ public final class AccessibilityKit {
     /// The list updates as settings change only when tracking is configured
     /// with ``AccessibilityFetchType/continuous``; under
     /// ``AccessibilityFetchType/initial`` it shows the values from when it
-    /// was presented.
+    /// was presented. Reconfiguring tracking refreshes it with the newly
+    /// configured features.
     ///
-    /// Requires tracking to have been configured — the monitor shows the
-    /// features from that configuration, with any transforms applied, so it
-    /// shows exactly what the app reports.
+    /// The monitor shows the features from the tracking configuration, with
+    /// any transforms applied, under the identifiers the app's snapshots
+    /// carry. It stays empty until tracking is configured. Its snapshots are
+    /// taken when it is presented and whenever tracking is configured, the
+    /// completion's when it is registered and on each change, so the two can
+    /// show different values — under ``AccessibilityFetchType/initial``, for
+    /// as long as both are open.
     ///
-    /// - Important: The monitor observes through
-    ///   ``observeAccessibilityTracking(completion:)``, and only one
-    ///   observation is active at a time, so presenting it replaces the
-    ///   app's own. Register again after the monitor is dismissed.
+    /// The monitor observes on its own, so presenting it does not replace a
+    /// completion registered through
+    /// ``observeAccessibilityTracking(completion:)``.
     ///
     /// - Parameter viewController: The view controller to present from.
     ///

@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct ClosedCaptioningAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isClosedCaptioningEnabled: () -> Bool
+    private let isClosedCaptioningEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isClosedCaptioningEnabled: @escaping () -> Bool = { UIAccessibility.isClosedCaptioningEnabled }) {
+    init(isClosedCaptioningEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isClosedCaptioningEnabled }) {
         self.isClosedCaptioningEnabled = isClosedCaptioningEnabled
     }
 

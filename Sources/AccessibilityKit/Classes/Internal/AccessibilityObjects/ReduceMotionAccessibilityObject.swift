@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct ReduceMotionAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isReduceMotionEnabled: () -> Bool
+    private let isReduceMotionEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isReduceMotionEnabled: @escaping () -> Bool = { UIAccessibility.isReduceMotionEnabled }) {
+    init(isReduceMotionEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isReduceMotionEnabled }) {
         self.isReduceMotionEnabled = isReduceMotionEnabled
     }
 

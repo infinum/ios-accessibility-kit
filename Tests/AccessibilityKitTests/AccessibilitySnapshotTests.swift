@@ -8,6 +8,7 @@ import Testing
 @testable import AccessibilityKit
 
 @Suite("AccessibilitySnapshot")
+@MainActor
 struct AccessibilitySnapshotTests {
 
     @Test("Sorts states produced from tracking objects")
@@ -104,6 +105,44 @@ struct AccessibilitySnapshotTests {
     }
 
     ///
+    /// Both orders are tried, so the result cannot be the supplied order
+    /// surviving a sort that happens to be stable.
+    ///
+    @Test("Orders states of one type by identifier", arguments: [false, true])
+    func ordersSameTypeStatesByIdentifier(reversed: Bool) {
+        let raw = AccessibilityState(type: .fontScale, name: "Font scale", value: .scale(1.2))
+        let corrected = AccessibilityState(
+            type: .fontScale, name: "Font scale", value: .flag(true), customIdentifier: "a_large_text"
+        )
+        let supplied = [raw, corrected]
+
+        let snapshot = AccessibilitySnapshot(states: reversed ? supplied.reversed() : supplied)
+
+        #expect(snapshot.states.map(\.identifier) == ["a_large_text", "font_scale"])
+    }
+
+    ///
+    /// The identifiers sort the opposite way to the types, so a sort by
+    /// identifier alone would fail: the identifier only breaks ties between
+    /// states of the same type.
+    ///
+    @Test("Orders states by type before identifier")
+    func ordersByTypeBeforeIdentifier() {
+        let snapshot = AccessibilitySnapshot(
+            states: [
+                AccessibilityState(
+                    type: .voiceOver, name: "VoiceOver", value: .flag(false), customIdentifier: "a_voice_over"
+                ),
+                AccessibilityState(
+                    type: .boldText, name: "Bold text", value: .flag(false), customIdentifier: "z_bold_text"
+                )
+            ]
+        )
+
+        #expect(snapshot.states.map(\.type) == [.boldText, .voiceOver])
+    }
+
+    ///
     /// `values` is an **array** of `{ identifier, value }` objects, not a
     /// dictionary keyed by identifier.
     ///
@@ -119,12 +158,29 @@ struct AccessibilitySnapshotTests {
             ]
         )
 
-        let values = try #require(snapshot.toDictionary()?["values"] as? [[String: Any]])
+        let values = try #require(try snapshot.toDictionary()["values"] as? [[String: Any]])
 
         #expect(values.count == 2)
         #expect(values.first?["identifier"] as? String == "bold_text")
         #expect(values.first?["value"] as? Bool == true)
         #expect(values.last?["identifier"] as? String == "font_scaling")
         #expect(values.last?["value"] as? Double == 1.25)
+    }
+
+    ///
+    /// `JSONEncoder` rejects a non-finite number, and the conversion must
+    /// pass that on rather than hand back an empty or partial dictionary.
+    ///
+    @Test("Throws the encoder's error for a value it cannot encode")
+    func throwsForNonFiniteValue() {
+        let snapshot = AccessibilitySnapshot(
+            states: [
+                AccessibilityState(type: .fontScale, name: "Font Scale", value: .scale(.nan))
+            ]
+        )
+
+        #expect(throws: EncodingError.self) {
+            try snapshot.toDictionary()
+        }
     }
 }

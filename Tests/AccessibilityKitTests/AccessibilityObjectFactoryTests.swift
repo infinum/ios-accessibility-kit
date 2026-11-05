@@ -8,6 +8,7 @@ import UIKit
 @testable import AccessibilityKit
 
 @Suite("AccessibilityObjectFactory")
+@MainActor
 struct AccessibilityObjectFactoryTests {
 
     @Test("Produces an object carrying the requested type", arguments: AccessibilityType.allCases)

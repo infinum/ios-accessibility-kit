@@ -16,9 +16,9 @@ import Foundation
 /// Snapshots come from ``AccessibilityKit/currentAccessibilitySnapshot(for:)``
 /// or from ``AccessibilityKit/observeAccessibilityTracking(completion:)``.
 ///
-/// A snapshot is `Encodable`, and ``Swift/Encodable/toDictionary()`` converts
-/// it for sending onward. The encoded form is a `values` array of
-/// `identifier` / `value` pairs:
+/// A snapshot is `Encodable`, and ``toDictionary()`` converts it for sending
+/// onward. The encoded form is a `values` array of `identifier` / `value`
+/// pairs:
 ///
 /// ```json
 /// {
@@ -29,10 +29,11 @@ import Foundation
 /// }
 /// ```
 ///
-public struct AccessibilitySnapshot {
+public struct AccessibilitySnapshot: Sendable {
 
     ///
-    /// The states of the tracked features, sorted by accessibility type.
+    /// The states of the tracked features, sorted by accessibility type, and
+    /// by identifier among states of the same type.
     ///
     public let states: [AccessibilityState]
 
@@ -43,13 +44,25 @@ public struct AccessibilitySnapshot {
     /// ``AccessibilityState/withValue(_:)`` so they can be encoded and sent on
     /// like any other snapshot.
     ///
+    /// Unlike the tracking paths, this does not check the states it is given:
+    /// a snapshot built from two others can carry one identifier twice. Keep
+    /// identifiers unique — an identifier is what a consumer tells entries
+    /// apart by, and what the accessibility monitor keys its rows on.
+    ///
     /// - Parameter states: The states to carry. They come out ordered by
-    ///   accessibility type whatever order they are supplied in.
+    ///   accessibility type, and by identifier among states of the same
+    ///   type, whatever order they are supplied in.
     ///
     public init(states: [AccessibilityState]) {
-        self.states = states.sorted()
+        // The identifier breaks ties here rather than in `<`: `==` ignores
+        // the identifier, so a `<` ordered by it would call two equal states
+        // unequal.
+        self.states = states.sorted { lhs, rhs in
+            lhs < rhs || (!(rhs < lhs) && lhs.identifier < rhs.identifier)
+        }
     }
 
+    @MainActor
     init(trackingObjects: [AccessibilityTrackingObject]) {
         self.init(
             states: trackingObjects.map { trackingObject in

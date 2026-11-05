@@ -19,16 +19,21 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It observes through ``AccessibilityKit/observeAccessibilityTracking(completion:)``,
-/// so tracking must be configured first, and values it shows carry any
-/// transform the tracking objects apply. The list follows changes only when
-/// tracking is configured with ``AccessibilityFetchType/continuous``.
-///
-/// - Important: Only one observation is active at a time, so showing the
-///   monitor replaces the app's own. Register again once it is dismissed.
+/// It observes the configured tracking on its own — presenting it does not
+/// replace a completion the app registered through
+/// ``AccessibilityKit/observeAccessibilityTracking(completion:)``. The values
+/// it shows carry any transform the tracking objects apply. The list stays
+/// empty until tracking is configured, follows changes only when tracking is
+/// configured with ``AccessibilityFetchType/continuous``, and is refreshed
+/// whenever tracking is configured again.
 ///
 public struct AccessibilityMonitorView: View {
 
+    // `@StateObject`, not `@ObservedObject`: an observed object built inline
+    // is re-created whenever the containing view rebuilds this one. Each new
+    // view model registers afresh and starts with an empty list until its
+    // first snapshot lands, and under `.initial` it shows the values from
+    // the rebuild rather than from when the monitor was presented.
     @StateObject private var viewModel = AccessibilityMonitorViewModel()
     let onDismiss: () -> Void
 
@@ -43,9 +48,8 @@ public struct AccessibilityMonitorView: View {
     }
 
     ///
-    /// The monitor's content: one row per tracked accessibility feature,
-    /// showing its name, the identifier it is reported under, and its current
-    /// value.
+    /// The monitor's content: one row per tracking object, showing the
+    /// feature's name, the identifier it is reported under, and its value.
     ///
     public var body: some View {
         NavigationView {

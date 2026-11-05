@@ -7,16 +7,17 @@
 
 import UIKit
 
+@MainActor
 struct FontScaleAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let contentSizeCategory: () -> UIContentSizeCategory
+    private let contentSizeCategory: @MainActor () -> UIContentSizeCategory
 
     // MARK: - Lifecycle
 
     init(
-        contentSizeCategory: @escaping () -> UIContentSizeCategory
+        contentSizeCategory: @escaping @MainActor () -> UIContentSizeCategory
             = { UIApplication.shared.preferredContentSizeCategory }
     ) {
         self.contentSizeCategory = contentSizeCategory

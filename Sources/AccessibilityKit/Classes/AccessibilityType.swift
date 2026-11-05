@@ -28,12 +28,12 @@ import Foundation
 /// without naming them individually:
 ///
 /// ```swift
-/// let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+/// let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
 ///     for: AccessibilityType.allCases.map { AccessibilityTrackingObject(type: $0) }
 /// )
 /// ```
 ///
-public enum AccessibilityType: String, CaseIterable, Encodable {
+public enum AccessibilityType: String, CaseIterable, Encodable, Sendable {
 
     /// Whether AssistiveTouch is running, which replaces gestures the user
     /// cannot perform with an on-screen menu. Reports a flag.

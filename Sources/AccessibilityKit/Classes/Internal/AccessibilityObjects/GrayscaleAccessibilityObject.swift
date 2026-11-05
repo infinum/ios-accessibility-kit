@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct GrayscaleAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isGrayscaleEnabled: () -> Bool
+    private let isGrayscaleEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isGrayscaleEnabled: @escaping () -> Bool = { UIAccessibility.isGrayscaleEnabled }) {
+    init(isGrayscaleEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isGrayscaleEnabled }) {
         self.isGrayscaleEnabled = isGrayscaleEnabled
     }
 

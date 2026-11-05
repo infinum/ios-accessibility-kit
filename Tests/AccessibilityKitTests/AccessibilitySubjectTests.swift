@@ -9,6 +9,7 @@ import UIKit
 @testable import AccessibilityKit
 
 @Suite("AccessibilitySubject")
+@MainActor
 struct AccessibilitySubjectTests {
 
     @Test("Notifies a registered observer when the notification is posted")
@@ -102,6 +103,32 @@ struct AccessibilitySubjectTests {
         #expect(observer.states.first?.type == .boldText)
     }
 
+    ///
+    /// The notification centre is not the library's, so anything in the
+    /// process can post these names from a background thread. That must reach
+    /// the observer rather than trap the process on the main-actor
+    /// assumption.
+    ///
+    @Test("Delivers a notification posted from a background thread")
+    func deliversNotificationPostedOffTheMainThread() async {
+        let center = NotificationCenter()
+        let subject = AccessibilitySubject(type: .voiceOver, notificationCenter: center)
+        let observer = SpyObserver()
+        subject.addObserver(observer)
+
+        DispatchQueue.global().async {
+            center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        }
+
+        await poll(until: { observer.states.count == 1 })
+
+        #expect(observer.states.count == 1)
+        #expect(observer.states.first?.type == .voiceOver)
+        // The hop holds the subject weakly, so nothing else keeps it alive
+        // until the background post lands.
+        withExtendedLifetime(subject) { }
+    }
+
     @Test("Ignores notifications for other accessibility features")
     func ignoresOtherNotifications() {
         let center = NotificationCenter()
@@ -168,9 +195,9 @@ struct AccessibilitySubjectTests {
     }
 
     ///
-    /// The released observer is registered last, so nothing prunes its box
-    /// before the notification: this exercises the skip on the delivery
-    /// path rather than the pruning on the registration path.
+    /// Nothing sweeps a released observer's box out of the list, so it is
+    /// still there when the notification arrives: this exercises the skip on
+    /// the delivery path.
     ///
     @Test("Skips observers that have been released")
     func skipsReleasedObservers() {
@@ -191,7 +218,9 @@ struct AccessibilitySubjectTests {
 
 // MARK: - Spies
 
-private final class SpyNotificationCenter: NotificationCenter {
+// `NotificationCenter` is `@unchecked Sendable`, so a subclass has to restate
+// it. The spy is only ever touched from the test that owns it.
+private final class SpyNotificationCenter: NotificationCenter, @unchecked Sendable {
 
     private(set) var removedObservers = [ObjectIdentifier?]()
 

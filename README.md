@@ -11,6 +11,7 @@ This library currently supports the **Swift** programming language.
 ## Table of contents
 
 * [Requirements](#requirements)
+* [Concurrency](#concurrency)
 * [Getting started](#getting-started)
 * [Usage](#usage)
 * [Contributing](#contributing)
@@ -20,7 +21,13 @@ This library currently supports the **Swift** programming language.
 ## Requirements
 
 * iOS 14 and above
-* Xcode 15 and above
+* Xcode 16 and above (Swift 6 toolchain)
+
+## Concurrency
+
+The library is built in the Swift 6 language mode. Reading accessibility state means touching main-actor `UIKit` state, so `AccessibilityKit` is `@MainActor`. Call it from the main actor, or `await` it from elsewhere.
+
+The value types — `AccessibilitySnapshot`, `AccessibilityState`, `AccessibilityValue`, `AccessibilityType`, `AccessibilityTrackingObject`, `AccessibilityTrackingConfiguration` and `AccessibilityFetchType` — are `Sendable`, so a snapshot can be handed to any context.
 
 ## Getting started
 
@@ -42,6 +49,8 @@ This library provides an easy way to get the current state of the accessibility 
 The method `currentAccessibilitySnapshot(for:)`  returns a snapshot of a type `AccessibilitySnapshot` containing all the necessary information about the state of accessibility features on a current device. 
 
 To configure which states will be tracked, pass an array of values of type `AccessibilityTrackingObject`. It takes the `type` of accessibility feature to track, defined by the `AccessibilityType` enum, and optionally a `customIdentifier` to report that feature under and a `transform` to correct its value.
+
+Give every tracking object its own identifier. The configuration's initializer and `currentAccessibilitySnapshot(for:)` throw `AccessibilityTrackingError.duplicateIdentifier(_:)` when two objects would be reported under the same identifier. One feature can be tracked twice, for example raw and corrected, as long as the two are reported under different identifiers, so give at least one of them a `customIdentifier`.
 
 A default identifier is used for every tracked accessibility feature when a custom identifier is not used. Default identifiers are defined as:
 
@@ -72,7 +81,7 @@ A default identifier is used for every tracked accessibility feature when a cust
 `AccessibilityType` conforms to `CaseIterable`, so every supported feature can be tracked without listing them by hand:
 
 ```swift
-let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
     for: AccessibilityType.allCases.map { AccessibilityTrackingObject(type: $0) }
 )
 ```
@@ -109,7 +118,7 @@ To track accessibility states in real-time, `AccessibilityKit` should be configu
 
 This method should get a configuration object as a parameter with all accessibility features that should be tracked. The type used for that is `AccessibilityTrackingConfiguration`.
 
-`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered, but emits no snapshot of its own, and a snapshot taken under the previous configuration that has not been delivered yet is dropped.
+`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered, but emits no snapshot of its own to it, and a snapshot taken under the previous configuration that has not been delivered yet is dropped. An open accessibility monitor, unlike the completion, is then handed a snapshot of the newly configured features.
 
 Another parameter needed for this configuration is an object of the type `AccessibilityTrackingObject`.
 
@@ -119,11 +128,11 @@ After the `AccessibilityKit` is configured, you can observe changes via` observe
 
 This method will return one or multiple snapshots based on the `fetchType` configured in the `AccessibilityTrackingConfiguration` init method.
 
-An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type. Snapshots are delivered on the main queue. The completion is kept until the next call replaces it, even across reconfiguring, so capture its owner weakly.
+An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type, and by identifier where one feature is tracked more than once. Snapshots are delivered on the main queue. The completion is kept until the next call replaces it, even across reconfiguring, so capture its owner weakly. A replaced completion is not called again, not even for a snapshot already in flight, and the replacement receives only snapshots taken after it was registered.
 
 The object type in the array is `AccessibilityState` which provides `type`, `name`, `value`, and `identifier`. All those properties can be used to identify every accessibility feature based on the type, name, value, or identifier.
 
-`AccessibilitySnapshot` is `Encodable`, and `toDictionary()` converts it for sending onward. The encoded form is a `values` array of `identifier` / `value` pairs:
+`AccessibilitySnapshot` is `Encodable`, and `toDictionary()` converts it for sending onward. It throws rather than reporting failure as `nil`: whatever `JSONEncoder` or `JSONSerialization` raises, or `AccessibilityEncodingError.notAJSONObject` if the encoded form is not a JSON object. The encoded form is a `values` array of `identifier` / `value` pairs:
 
 ```json
 {
@@ -141,7 +150,7 @@ The identifiers are the default ones from the table above. Any feature given a `
 
 **AccessibilityKit** also provides a user interface for observing changes. To be able to instantiate the view controller, use the method; `AccessibilityKit.shared.presentAccessibilityMonitor(on:)`.
 
-The monitor observes through `observeAccessibilityTracking(completion:)`, and only one observation is active at a time, so presenting it replaces the app's own. Register again once the monitor is dismissed. The monitor follows changes only when tracking is configured as `continuous`; under `initial` it shows the values from when it was presented.
+The monitor observes the configured tracking on its own, so presenting it does not replace an observation the app registered with `observeAccessibilityTracking(completion:)`, which keeps receiving its snapshots while the monitor is open. The monitor follows changes only when tracking is configured as `continuous`; under `initial` it shows the values from when it was presented. Reconfiguring tracking refreshes it with the newly configured features, and a monitor opened before tracking is configured fills in once it is.
 
 ### Getting started
 
@@ -152,7 +161,7 @@ To add **AccessibilityKit** to your project, install it with Swift Package Manag
 To get the latest state of accessibility features, there is no need to define **AccessibilityKit**. You can use a method for this anytime.
 
 ```swift
-let snapshot = AccessibilityKit.shared.currentAccessibilitySnapshot(
+let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
     for: [
         AccessibilityTrackingObject(type: .boldText),
         AccessibilityTrackingObject(
@@ -170,25 +179,30 @@ If there is a need to observe accessibility feature changes, the method above is
 To do that, use  `AccessibilityKit.shared.configureAccessibilityTracking(with:)` in the `AppDelegate`'s method `application(_:didFinishLaunchingWithOptions:)` to configure tracking for the app lifecycle.
 
 ```swift
-AccessibilityKit.shared.configureAccessibilityTracking(
-    with: AccessibilityTrackingConfiguration(
+do {
+    let configuration = try AccessibilityTrackingConfiguration(
         fetchType: .continuous,
         objects: [
             AccessibilityTrackingObject(type: .boldText),
             AccessibilityTrackingObject(
-                type: .buttonShapes, 
+                type: .buttonShapes,
                 customIdentifier: "button_shapes_enabled"
             ),
             AccessibilityTrackingObject(
-                type: .fontScale, 
+                type: .fontScale,
                 customIdentifier: "font_scaling"
             ),
             AccessibilityTrackingObject(type: .reduceMotion),
-            AccessibilityTrackingObject(type: .voiceOver),
+            AccessibilityTrackingObject(type: .voiceOver)
         ]
     )
-)
+    AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
+} catch {
+    assertionFailure("Invalid accessibility tracking configuration: \(error)")
+}
 ```
+
+No two tracking objects may share an identifier; the initializer throws `AccessibilityTrackingError.duplicateIdentifier(_:)` instead of reporting entries a consumer cannot tell apart. Launch methods do not throw, and a rejected configuration is a mistake in the list rather than a runtime condition, so the sample surfaces it during development.
 
 After that, the observing method can be used afterward to get the latest accessibility feature states.
 
@@ -198,7 +212,7 @@ AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 }
 ```
 
-Also, when **AccessibilityKit** is configured for active tracking, the activity monitor can be used and shown when needed.
+The accessibility monitor can be shown whenever it is needed. It lists the configured features, is empty until tracking is configured, and follows changes when tracking is `continuous`.
 
 ```swift
 AccessibilityKit.shared.presentAccessibilityMonitor(on: viewController)

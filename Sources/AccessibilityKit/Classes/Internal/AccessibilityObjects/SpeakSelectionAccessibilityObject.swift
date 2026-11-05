@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct SpeakSelectionAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let isSpeakSelectionEnabled: () -> Bool
+    private let isSpeakSelectionEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(isSpeakSelectionEnabled: @escaping () -> Bool = { UIAccessibility.isSpeakSelectionEnabled }) {
+    init(isSpeakSelectionEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.isSpeakSelectionEnabled }) {
         self.isSpeakSelectionEnabled = isSpeakSelectionEnabled
     }
 

@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct ButtonShapesAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let buttonShapesEnabled: () -> Bool
+    private let buttonShapesEnabled: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(buttonShapesEnabled: @escaping () -> Bool = { UIAccessibility.buttonShapesEnabled }) {
+    init(buttonShapesEnabled: @escaping @MainActor () -> Bool = { UIAccessibility.buttonShapesEnabled }) {
         self.buttonShapesEnabled = buttonShapesEnabled
     }
 

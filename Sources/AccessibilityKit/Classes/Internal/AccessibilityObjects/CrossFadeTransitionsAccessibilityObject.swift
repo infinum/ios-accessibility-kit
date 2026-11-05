@@ -7,15 +7,16 @@
 
 import UIKit
 
+@MainActor
 struct CrossFadeTransitionsAccessibilityObject: AccessibilityObject {
 
     // MARK: - Private properties
 
-    private let prefersCrossFadeTransitions: () -> Bool
+    private let prefersCrossFadeTransitions: @MainActor () -> Bool
 
     // MARK: - Lifecycle
 
-    init(prefersCrossFadeTransitions: @escaping () -> Bool = { UIAccessibility.prefersCrossFadeTransitions }) {
+    init(prefersCrossFadeTransitions: @escaping @MainActor () -> Bool = { UIAccessibility.prefersCrossFadeTransitions }) {
         self.prefersCrossFadeTransitions = prefersCrossFadeTransitions
     }
 
