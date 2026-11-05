@@ -92,6 +92,10 @@ public final class AccessibilityKit {
     /// previous configuration and not yet delivered, the first one
     /// included, is dropped.
     ///
+    /// An open accessibility monitor is refreshed: a snapshot of the newly
+    /// configured features is taken during this call, running their
+    /// transforms, and delivered to the monitor on the main queue.
+    ///
     /// - Parameter configuration: The features to track and the fetch type.
     ///
     public func configureAccessibilityTracking(with configuration: AccessibilityTrackingConfiguration) {

@@ -118,7 +118,7 @@ To track accessibility states in real-time, `AccessibilityKit` should be configu
 
 This method should get a configuration object as a parameter with all accessibility features that should be tracked. The type used for that is `AccessibilityTrackingConfiguration`.
 
-`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered, but emits no snapshot of its own to it, and a snapshot taken under the previous configuration that has not been delivered yet is dropped. An open accessibility monitor is the exception: it is refreshed with the newly configured features.
+`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered, but emits no snapshot of its own to it, and a snapshot taken under the previous configuration that has not been delivered yet is dropped. An open accessibility monitor, unlike the completion, is then handed a snapshot of the newly configured features.
 
 Another parameter needed for this configuration is an object of the type `AccessibilityTrackingObject`.
 
@@ -150,7 +150,7 @@ The identifiers are the default ones from the table above. Any feature given a `
 
 **AccessibilityKit** also provides a user interface for observing changes. To be able to instantiate the view controller, use the method; `AccessibilityKit.shared.presentAccessibilityMonitor(on:)`.
 
-The monitor observes the configured tracking on its own, so presenting it does not replace an observation the app registered with `observeAccessibilityTracking(completion:)` — both keep reporting. The monitor follows changes only when tracking is configured as `continuous`; under `initial` it shows the values from when it was presented. Reconfiguring tracking refreshes it with the newly configured features.
+The monitor observes the configured tracking on its own, so presenting it does not replace an observation the app registered with `observeAccessibilityTracking(completion:)` — both receive what the configuration reports. The monitor follows changes only when tracking is configured as `continuous`; under `initial` it shows the values from when it was presented. Reconfiguring tracking refreshes it with the newly configured features.
 
 ### Getting started
 
