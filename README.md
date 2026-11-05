@@ -48,10 +48,20 @@ To install it via SPM, open your project in Xcode, go to `File` -> `Add Package 
 https://github.com/infinum/ios-accessibility-kit
 ```
 
-Or add it to the dependencies of your own `Package.swift`:
+Or add it to your own `Package.swift`. Declare the package, then list the product under the target that imports it:
 
 ```swift
-.package(url: "https://github.com/infinum/ios-accessibility-kit", from: "2.0.0")
+dependencies: [
+    .package(url: "https://github.com/infinum/ios-accessibility-kit", from: "2.0.0")
+],
+targets: [
+    .target(
+        name: "YourTarget",
+        dependencies: [
+            .product(name: "AccessibilityKit", package: "ios-accessibility-kit")
+        ]
+    )
+]
 ```
 
 The full API reference is written in DocC. In Xcode, choose `Product` -> `Build Documentation` to browse it.
