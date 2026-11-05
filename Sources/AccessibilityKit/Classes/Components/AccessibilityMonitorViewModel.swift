@@ -1,6 +1,6 @@
 //
 //  AccessibilityMonitorViewModel.swift
-//  Pods
+//  AccessibilityKit
 //
 //  Created by Igor Vatavuk on 08.01.2025..
 //
