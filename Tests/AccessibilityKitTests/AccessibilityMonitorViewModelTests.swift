@@ -3,6 +3,7 @@
 //  AccessibilityKitTests
 //
 
+import Combine
 import Foundation
 import Testing
 import UIKit
@@ -35,11 +36,19 @@ struct AccessibilityMonitorViewModelTests {
         var viewModel: AccessibilityMonitorViewModel? = AccessibilityMonitorViewModel(monitor: monitor)
         await poll(until: { !(viewModel?.states.isEmpty ?? true) })
 
+        // Subscribed after the first snapshot has landed, so only the change
+        // is counted: the VoiceOver value comes from the system and cannot be
+        // flipped here, so the rows alone would look the same either way.
+        let stateUpdates = EmissionCounter()
+        let subscription = viewModel?.$states.dropFirst().sink { _ in stateUpdates.increment() }
+
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { appCounter.count == 2 })
+        await poll(until: { appCounter.count == 2 && stateUpdates.count == 1 })
 
         #expect(appCounter.count == 2)
+        #expect(stateUpdates.count == 1)
         #expect(viewModel?.states.first?.type == .voiceOver)
+        subscription?.cancel()
 
         // Dismissing the monitor releases its view model, which must leave
         // the app's own observation exactly as it was.
