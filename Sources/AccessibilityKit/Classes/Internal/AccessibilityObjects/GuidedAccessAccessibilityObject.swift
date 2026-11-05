@@ -26,10 +26,6 @@ struct GuidedAccessAccessibilityObject: AccessibilityObject {
         return .guidedAccess
     }
 
-    var name: String {
-        return "Guided Access"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.guidedAccessStatusDidChangeNotification
     }

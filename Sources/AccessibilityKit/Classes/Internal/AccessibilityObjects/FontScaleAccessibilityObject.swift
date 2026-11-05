@@ -29,10 +29,6 @@ struct FontScaleAccessibilityObject: AccessibilityObject {
         return .fontScale
     }
 
-    var name: String {
-        return "Font Scale"
-    }
-
     var notificationName: Notification.Name {
         return UIContentSizeCategory.didChangeNotification
     }
@@ -53,68 +49,11 @@ struct FontScaleAccessibilityObject: AccessibilityObject {
 
 private extension FontScaleAccessibilityObject {
 
-    // MARK: - Constants
-
     ///
-    /// Values are defined based on the Human Interface guidelines.
-    /// As a default value is used the `body` size for every category.
-    ///
-    /// Source: https://developer.apple.com/design/human-interface-guidelines/ios/visual-design/typography
-    ///
-    enum FontSize: Double {
-        case xs   = 14.0
-        case s    = 15.0
-        case m    = 16.0
-        case l    = 17.0
-        case xl   = 19.0
-        case xxl  = 21.0
-        case xxxl = 23.0
-        case ax1  = 28.0
-        case ax2  = 33.0
-        case ax3  = 40.0
-        case ax4  = 47.0
-        case ax5  = 53.0
-    }
-
-    // MARK: - Calculations
-
-    ///
-    /// Font scale is defined by `body` size of the category.
-    /// The `large` category is set as a default (normal) scale.
+    /// Font scale is the `body` size of the preferred category over the
+    /// `body` size of the default (`large`) category.
     ///
     var fontScale: Double {
-        let preferredFontSize = preferredFontSize(for: contentSizeCategory())
-        return preferredFontSize.rawValue / FontSize.l.rawValue
-    }
-
-    func preferredFontSize(for contentSizeCategory: UIContentSizeCategory) -> FontSize {
-        switch contentSizeCategory {
-        case .extraSmall:
-            return .xs
-        case .small:
-            return .s
-        case .medium:
-            return .m
-        case .large:
-            return .l
-        case .extraLarge:
-            return .xl
-        case .extraExtraLarge:
-            return .xxl
-        case .extraExtraExtraLarge:
-            return .xxxl
-        case .accessibilityMedium:
-            return .ax1
-        case .accessibilityLarge:
-            return .ax2
-        case .accessibilityExtraLarge:
-            return .ax3
-        case .accessibilityExtraExtraLarge:
-            return .ax4
-        case .accessibilityExtraExtraExtraLarge:
-            return .ax5
-        default:
-            return .l
-        }
+        return BodyTextSize(contentSizeCategory()).scale
     }
 }

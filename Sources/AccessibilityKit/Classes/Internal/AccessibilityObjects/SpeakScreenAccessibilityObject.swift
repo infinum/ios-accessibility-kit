@@ -26,10 +26,6 @@ struct SpeakScreenAccessibilityObject: AccessibilityObject {
         return .speakScreen
     }
 
-    var name: String {
-        return "Speak Screen"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.speakScreenStatusDidChangeNotification
     }

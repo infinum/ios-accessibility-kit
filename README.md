@@ -12,22 +12,31 @@ This library currently supports the **Swift** programming language.
 
 * [Requirements](#requirements)
 * [Concurrency](#concurrency)
+* [Migrating to 2.0](#migrating-to-20)
 * [Getting started](#getting-started)
 * [Usage](#usage)
+* [Example app](#example-app)
 * [Contributing](#contributing)
 * [License](#license)
 * [Credits](#credits)
 
 ## Requirements
 
-* iOS 14 and above
+* iOS 15 and above
 * Xcode 16 and above (Swift 6 toolchain)
 
 ## Concurrency
 
 The library is built in the Swift 6 language mode. Reading accessibility state means touching main-actor `UIKit` state, so `AccessibilityKit` is `@MainActor`. Call it from the main actor, or `await` it from elsewhere.
 
-The value types — `AccessibilitySnapshot`, `AccessibilityState`, `AccessibilityValue`, `AccessibilityType`, `AccessibilityTrackingObject`, `AccessibilityTrackingConfiguration` and `AccessibilityFetchType` — are `Sendable`, so a snapshot can be handed to any context.
+The value types — `AccessibilitySnapshot`, `AccessibilityState`, `AccessibilityValue`, `AccessibilityType`, `AccessibilityGroup`, `AccessibilityTrackingObject`, `AccessibilityTrackingConfiguration` and `AccessibilityFetchType` — are `Sendable`, so a snapshot can be handed to any context. So is `AccessibilityObservation`, which can be released from any thread.
+
+## Migrating to 2.0
+
+* **iOS 15 and above.** The package no longer supports iOS 14.
+* **Keep the observation.** `observeAccessibilityTracking(completion:)` now returns an `AccessibilityObservation`, and the observation ends when it is released. Code that ignores the result still compiles, with an "unused result" warning, but receives no snapshots. Store the result in a property. Calling the method again no longer replaces the previous completion: both receive snapshots until each observation ends.
+* **Display names in sentence case.** `AccessibilityState.name` now matches the new `AccessibilityType.displayName`: "Bold text" rather than "Bold Text", "AssistiveTouch" rather than "Assistive Touch".
+* **Open the kit instead of the monitor.** `presentAccessibilityMonitor(on:)` is deprecated. Use `AccessibilityKit.shared.present()`, or turn on `entryPoints` so people can open the kit themselves. `AccessibilityMonitorView` is still available, and shows the redesigned Monitor.
 
 ## Getting started
 
@@ -42,7 +51,7 @@ https://github.com/infinum/ios-accessibility-kit
 Or add it to the dependencies of your own `Package.swift`:
 
 ```swift
-.package(url: "https://github.com/infinum/ios-accessibility-kit", from: "1.1.0")
+.package(url: "https://github.com/infinum/ios-accessibility-kit", from: "2.0.0")
 ```
 
 The full API reference is written in DocC. In Xcode, choose `Product` -> `Build Documentation` to browse it.
@@ -130,7 +139,7 @@ To track accessibility states in real-time, `AccessibilityKit` should be configu
 
 This method should get a configuration object as a parameter with all accessibility features that should be tracked. The type used for that is `AccessibilityTrackingConfiguration`.
 
-`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered, but emits no snapshot of its own to it, and a snapshot taken under the previous configuration that has not been delivered yet is dropped. An open accessibility monitor, unlike the completion, is then handed a snapshot of the newly configured features.
+`AccessibilityTrackingConfiguration` in its init method defines `fetchType` of type `AccessibilityFetchType` which can be `initial` or `continuous`. Based on the fetch type, values will be returned only once (`initial`), or it will continuously observe changes (`continuous`). The first snapshot is delivered as soon as observation begins. Reconfiguring tracking replaces the tracked features and keeps any observation already registered, but emits no snapshot of its own to it, and a snapshot taken under the previous configuration that has not been delivered yet is dropped. An open Monitor, unlike your observations, is then handed a snapshot of the newly configured features.
 
 Another parameter needed for this configuration is an object of the type `AccessibilityTrackingObject`.
 
@@ -140,7 +149,9 @@ After the `AccessibilityKit` is configured, you can observe changes via `observe
 
 This method will return one or multiple snapshots based on the `fetchType` configured in the `AccessibilityTrackingConfiguration` init method.
 
-An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type, and by identifier where one feature is tracked more than once. Snapshots are delivered on the main queue. The completion is kept until the next call replaces it, even across reconfiguring, so capture its owner weakly. A replaced completion is not called again, not even for a snapshot already in flight, and the replacement receives only snapshots taken after it was registered.
+The method returns an `AccessibilityObservation`. Keep it for as long as you want snapshots: the observation ends when you call `cancel()` on it or release it, and its completion is not called again after that, not even for a snapshot already in flight. Any number of observations can run side by side, and each receives its own first snapshot and every change after it. Reconfiguring tracking does not end an observation, so capture the completion's owner weakly.
+
+An object returned in the completion is of a type `AccessibilitySnapshot`, which carries an array of the states for every tracked accessibility feature, sorted by accessibility type, and by identifier where one feature is tracked more than once, plus the `date` it was taken. Snapshots are delivered on the main queue.
 
 The object type in the array is `AccessibilityState` which provides `type`, `name`, `value`, and `identifier`. All those properties can be used to identify every accessibility feature based on the type, name, value, or identifier.
 
@@ -158,11 +169,23 @@ The object type in the array is `AccessibilityState` which provides `type`, `nam
 
 The identifiers are the default ones from the table above. Any feature given a `customIdentifier` appears under that identifier instead.
 
-#### Accessibility monitor
+#### The kit
 
-**AccessibilityKit** also provides a user interface for observing changes. From UIKit, present it with `AccessibilityKit.shared.presentAccessibilityMonitor(on:)`. From SwiftUI, use `AccessibilityMonitorView` directly; it does not dismiss itself, so the closure you pass is where you do that.
+**AccessibilityKit** also has a user interface for looking at the settings while the app runs: the kit. It opens as a sheet over the app, from a window of its own, and its home lists the kit's tools. The first tool is the Monitor, which lists every tracked feature grouped as in Settings, with search, On and Changed filters, and a detail screen per feature showing its identifier, the notification tracking listens to, and what it has done this session. It can share the snapshot as text and JSON.
 
-The monitor observes the configured tracking on its own, so presenting it does not replace an observation the app registered with `observeAccessibilityTracking(completion:)`, which keeps receiving its snapshots while the monitor is open. The monitor follows changes only when tracking is configured as `continuous`; under `initial` it shows the values from when it was presented. Reconfiguring tracking refreshes it with the newly configured features, and a monitor opened before tracking is configured fills in once it is.
+Turn on the ways people can open it with `entryPoints`: a floating button above the app, a shake of the device, or both. The kit is a debugging aid, so set them in debug builds only:
+
+```swift
+#if DEBUG
+AccessibilityKit.shared.entryPoints = [.floatingButton, .shake]
+#endif
+```
+
+The button can be dragged to any corner and stays there across launches; long-press it to hide it until the next launch. Shaking is off unless you include it, so an app that uses shake to undo keeps it. To open the kit from code, call `AccessibilityKit.shared.present()`.
+
+The kit observes the configured tracking on its own, so opening it does not affect an observation the app registered with `observeAccessibilityTracking(completion:)`. The Monitor follows changes only when tracking is configured as `continuous`, marking each setting that changed since launch; under `initial` it shows the values from when it was opened. Until tracking is configured, it explains how to set it up.
+
+To show the Monitor somewhere of your own, embed `AccessibilityMonitorView`; it does not dismiss itself, so the closure you pass is where you do that. `presentAccessibilityMonitor(on:)` still works, but is deprecated in favour of `present()`.
 
 ### Examples
 
@@ -219,24 +242,43 @@ No two tracking objects may share an identifier; the initializer throws `Accessi
 After that, the observing method can be used afterward to get the latest accessibility feature states.
 
 ```swift
-AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
+observation = AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
     ...
 }
 ```
 
-The accessibility monitor can be shown whenever it is needed. It lists the configured features, is empty until tracking is configured, and follows changes when tracking is `continuous`.
+Keep `observation` in a property: releasing it ends the observation.
+
+#### Opening the kit
+
+Turn on the kit's entry points once tracking is configured:
 
 ```swift
-AccessibilityKit.shared.presentAccessibilityMonitor(on: viewController)
+#if DEBUG
+AccessibilityKit.shared.entryPoints = [.floatingButton, .shake]
+#endif
 ```
 
-In SwiftUI, embed the view instead:
+To show only the Monitor, in a sheet of your own, embed the view instead:
 
 ```swift
 .sheet(isPresented: $isPresented) {
     AccessibilityMonitorView { isPresented = false }
 }
 ```
+
+## Example app
+
+The Example app is a test bench: one realistic product screen with four accessibility problems planted on purpose, so the kit's tools have something to find. The Monitor ships today; Audit, Inspect, Overlays and Text size, named in the table below, are planned tools. Everything else on the screen is built correctly, as the reference for what good looks like. It tracks every setting and turns on the kit button and shake.
+
+| # | Planted issue | Found by |
+|:--|:--------------|:---------|
+| 1 | The heart button has no accessibility label, so VoiceOver says only "Button" | Audit, Inspect |
+| 2 | The heart button's target is 32 × 32 pt | Audit, Overlays, Inspect |
+| 3 | The delivery line's contrast is 2.7:1 (needs 4.5:1) | Audit |
+| 4 | The size buttons are a fixed 32 × 32 pt, so their numbers clip from about AX2 | Audit, Overlays, Text size |
+
+Each is marked `Planted issue N` in [`ProductView.swift`](Example/AccessibilityKit/ProductView.swift); leave them in when cleaning up. The Example scheme has two launch arguments, off by default, to try the kit's other states: `-kitFetchType initial` (a one-time snapshot) and `-kitTrackNothing` (nothing tracked). The Example app needs iOS 17.
 
 ## Contributing
 

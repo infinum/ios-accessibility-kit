@@ -28,20 +28,26 @@ class AccessibilitySubject {
 
     // MARK: - Private properties
 
-    private let object: AccessibilityObject
+    private let type: AccessibilityType
+    private let readState: AccessibilityStateReader
     private let notificationCenter: NotificationCenter
     private var observers = [WeakObserver]()
 
     // MARK: - Lifecycle
 
-    init(type: AccessibilityType, notificationCenter: NotificationCenter = .default) {
-        self.object = AccessibilityObjectFactory.object(for: type)
+    init(
+        type: AccessibilityType,
+        notificationCenter: NotificationCenter = .default,
+        readState: @escaping AccessibilityStateReader = AccessibilityObjectFactory.readState
+    ) {
+        self.type = type
+        self.readState = readState
         self.notificationCenter = notificationCenter
 
         notificationCenter.addObserver(
             self,
             selector: #selector(accessibilityStateDidChange(_:)),
-            name: object.notificationName,
+            name: type.notificationName,
             object: nil
         )
     }
@@ -76,7 +82,7 @@ class AccessibilitySubject {
     }
 
     private func readStateAndNotify() {
-        notifyObservers(with: object.state(customIdentifier: nil))
+        notifyObservers(with: readState(type))
     }
 }
 

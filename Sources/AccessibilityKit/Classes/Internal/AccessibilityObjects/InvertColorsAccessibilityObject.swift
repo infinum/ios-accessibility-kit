@@ -26,10 +26,6 @@ struct InvertColorsAccessibilityObject: AccessibilityObject {
         return .invertColors
     }
 
-    var name: String {
-        return "Invert Colors"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.invertColorsStatusDidChangeNotification
     }

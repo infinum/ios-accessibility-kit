@@ -26,10 +26,6 @@ struct SpeakSelectionAccessibilityObject: AccessibilityObject {
         return .speakSelection
     }
 
-    var name: String {
-        return "Speak Selection"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.speakSelectionStatusDidChangeNotification
     }

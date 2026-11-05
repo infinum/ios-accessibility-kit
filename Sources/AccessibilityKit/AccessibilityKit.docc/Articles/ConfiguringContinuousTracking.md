@@ -45,21 +45,23 @@ long as the two are reported under different identifiers, so give at least one o
 snapshot as soon as observation begins, and then follows the configured fetch type:
 
 ```swift
-AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
+observation = AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
     // handle the snapshot
 }
 ```
 
-Completions are delivered asynchronously on the main queue, so a completion never runs inside your
-own call to observe.
+Keep the ``AccessibilityObservation`` it returns: the observation lasts until you call
+``AccessibilityObservation/cancel()`` or release it. An observation that has ended is not called
+again, not even for a snapshot already in flight.
 
-Only one completion is registered at a time — calling this again replaces the previous one. A
-replaced completion is not called again, not even for a snapshot already in flight, and the
-replacement receives only snapshots taken after it was registered.
+Completions are delivered asynchronously on the main queue, so a completion never runs inside your
+own call to observe. Any number of observations can run side by side; each receives its own first
+snapshot and every change after it.
+
 Reconfiguring tracking keeps the observation you already registered, but emits no snapshot of its
 own: the next one arrives at the next change, and only if the new configuration is
 ``AccessibilityFetchType/continuous``. A snapshot taken under the replaced configuration and not
-yet delivered is dropped, for the completion and the accessibility monitor alike. The monitor is
+yet delivered is dropped, for your observations and the kit's Monitor alike. The Monitor is
 then refreshed with the new configuration's features, without waiting for a change, on the main
 queue like any other delivery. Your completion is not refreshed: it keeps what it last received
 until the next change, which only a continuous configuration delivers.

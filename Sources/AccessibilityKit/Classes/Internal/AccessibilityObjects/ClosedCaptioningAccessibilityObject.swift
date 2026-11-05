@@ -26,10 +26,6 @@ struct ClosedCaptioningAccessibilityObject: AccessibilityObject {
         return .closedCaptioning
     }
 
-    var name: String {
-        return "Closed Captioning"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.closedCaptioningStatusDidChangeNotification
     }

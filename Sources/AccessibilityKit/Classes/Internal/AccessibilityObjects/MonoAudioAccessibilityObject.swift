@@ -26,10 +26,6 @@ struct MonoAudioAccessibilityObject: AccessibilityObject {
         return .monoAudio
     }
 
-    var name: String {
-        return "Mono Audio"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.monoAudioStatusDidChangeNotification
     }

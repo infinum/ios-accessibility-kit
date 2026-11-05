@@ -38,6 +38,20 @@ public struct AccessibilitySnapshot: Sendable {
     public let states: [AccessibilityState]
 
     ///
+    /// When the snapshot was taken.
+    ///
+    /// It is not part of the encoded output, which carries only the values.
+    ///
+    public let date: Date
+
+    ///
+    /// How far the session history had got when the snapshot was taken, so
+    /// the kit shows history up to that point and no further. Ordered by
+    /// recording rather than by clock, so a clock change cannot reorder it.
+    ///
+    var historyMark: Int?
+
+    ///
     /// Creates a snapshot from states that have already been produced.
     ///
     /// Use this to re-wrap states adjusted with
@@ -49,11 +63,14 @@ public struct AccessibilitySnapshot: Sendable {
     /// identifiers unique — an identifier is what a consumer tells entries
     /// apart by, and what the accessibility monitor keys its rows on.
     ///
-    /// - Parameter states: The states to carry. They come out ordered by
-    ///   accessibility type, and by identifier among states of the same
-    ///   type, whatever order they are supplied in.
+    /// - Parameters:
+    ///   - states: The states to carry. They come out ordered by
+    ///     accessibility type, and by identifier among states of the same
+    ///     type, whatever order they are supplied in.
+    ///   - date: When the states were read. Defaults to now.
     ///
-    public init(states: [AccessibilityState]) {
+    public init(states: [AccessibilityState], date: Date = Date()) {
+        self.date = date
         // The identifier breaks ties here rather than in `<`: `==` ignores
         // the identifier, so a `<` ordered by it would call two equal states
         // unequal.
@@ -63,12 +80,19 @@ public struct AccessibilitySnapshot: Sendable {
     }
 
     @MainActor
-    init(trackingObjects: [AccessibilityTrackingObject]) {
+    init(
+        trackingObjects: [AccessibilityTrackingObject],
+        readState: AccessibilityStateReader = AccessibilityObjectFactory.readState
+    ) {
         self.init(
             states: trackingObjects.map { trackingObject in
-                let state = AccessibilityObjectFactory
-                    .object(for: trackingObject.type)
-                    .state(customIdentifier: trackingObject.customIdentifier)
+                let raw = readState(trackingObject.type)
+                let state = AccessibilityState(
+                    type: raw.type,
+                    name: raw.name,
+                    value: raw.value,
+                    customIdentifier: trackingObject.customIdentifier
+                )
 
                 guard let transform = trackingObject.transform else { return state }
                 return state.withValue(transform(state.value))

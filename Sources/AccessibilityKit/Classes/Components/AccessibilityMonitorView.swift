@@ -8,10 +8,12 @@
 import SwiftUI
 
 ///
-/// A screen listing the tracked accessibility features and their values.
+/// The kit's Monitor on its own: the tracked accessibility features and
+/// their values, searchable and filterable, each with its session history.
 ///
-/// Present it with ``AccessibilityKit/presentAccessibilityMonitor(on:)`` from
-/// UIKit, or embed this view directly in SwiftUI:
+/// The kit shows the same screen, so most apps open it with
+/// ``AccessibilityKit/present()`` or ``AccessibilityKit/entryPoints``.
+/// Embed this view to show the Monitor somewhere of your own:
 ///
 /// ```swift
 /// .sheet(isPresented: $isPresented) {
@@ -19,86 +21,47 @@ import SwiftUI
 /// }
 /// ```
 ///
-/// It observes the configured tracking on its own — presenting it does not
-/// replace a completion the app registered through
+/// It observes the configured tracking on its own, so it does not affect an
+/// observation the app registered through
 /// ``AccessibilityKit/observeAccessibilityTracking(completion:)``. The values
-/// it shows carry any transform the tracking objects apply. The list stays
-/// empty until tracking is configured, follows changes only when tracking is
-/// configured with ``AccessibilityFetchType/continuous``, and is refreshed
-/// whenever tracking is configured again.
+/// it shows carry any transform the tracking objects apply. It explains how
+/// to set up tracking until tracking is configured, follows changes only
+/// when tracking is configured with ``AccessibilityFetchType/continuous``,
+/// and is refreshed whenever tracking is configured again.
 ///
 public struct AccessibilityMonitorView: View {
 
     // `@StateObject`, not `@ObservedObject`: an observed object built inline
     // is re-created whenever the containing view rebuilds this one. Each new
-    // view model registers afresh and starts with an empty list until its
-    // first snapshot lands, and under `.initial` it shows the values from
-    // the rebuild rather than from when the monitor was presented.
+    // view model registers afresh, loses the filter and search, and under
+    // `.initial` shows the values from the rebuild rather than from when the
+    // monitor was presented.
     @StateObject private var viewModel = AccessibilityMonitorViewModel()
     let onDismiss: () -> Void
 
     ///
     /// Creates the accessibility monitor.
     ///
-    /// - Parameter onDismiss: Called when the user taps the close button. The
-    ///   monitor does not dismiss itself.
+    /// - Parameter onDismiss: Called when the user taps the close button or
+    ///   presses Escape. The monitor does not dismiss itself.
     ///
-    public init(onDismiss: @escaping () -> Void ) {
+    public init(onDismiss: @escaping () -> Void) {
         self.onDismiss = onDismiss
     }
 
     ///
-    /// The monitor's content: one row per tracking object, showing the
-    /// feature's name, the identifier it is reported under, and its value.
+    /// The Monitor in a navigation stack of its own, with a close button.
     ///
     public var body: some View {
-        NavigationView {
-            ZStack {
-                backgroundColor
-
-                ScrollView {
-                    accessibilityStateListView
-                        .navigationTitle("Accessibility Kit")
-                        .toolbar { toolbarButton }
+        KitNavigationContainer {
+            MonitorScreen(model: viewModel)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        KitCloseButton(action: onDismiss)
+                            .keyboardShortcut(.cancelAction)
+                    }
                 }
-            }
         }
-    }
-}
-
-private extension AccessibilityMonitorView {
-
-    var backgroundColor: some View {
-        Color(.systemGray5).edgesIgnoringSafeArea(.all)
-    }
-
-    var accessibilityStateListView: some View {
-        VStack {
-            ForEach(viewModel.states) { state in
-                AccessibilityStateView(
-                    name: state.name,
-                    identifier: state.identifier,
-                    value: viewModel.formattedValue(for: state.value),
-                    valueColor: viewModel.color(for: state.value)
-                )
-            }
-
-        }
-    }
-
-    var toolbarButton: some ToolbarContent {
-        ToolbarItem {
-            Button(
-                action: { onDismiss() },
-                label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .resizable()
-                        .frame(width: 30, height: 30)
-                        .foregroundColor(Color(.systemGray6))
-                        .background(Color.gray)
-                        .clipShape(Circle())
-                }
-            )
-        }
+        .tint(KitColor.text)
     }
 }

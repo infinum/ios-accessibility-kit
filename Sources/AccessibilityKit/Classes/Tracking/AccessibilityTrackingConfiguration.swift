@@ -148,6 +148,16 @@ public struct AccessibilityTrackingConfiguration: Sendable {
     }
 }
 
+// MARK: - Identifier
+
+extension AccessibilityTrackingObject {
+
+    /// The identifier the feature is reported under: the custom one, or the type's raw value.
+    var identifier: String {
+        return customIdentifier ?? type.rawValue
+    }
+}
+
 // MARK: - Validation
 
 extension Array where Element == AccessibilityTrackingObject {
@@ -162,7 +172,7 @@ extension Array where Element == AccessibilityTrackingObject {
         var seenIdentifiers = Set<String>()
 
         for object in self {
-            let identifier = object.customIdentifier ?? object.type.rawValue
+            let identifier = object.identifier
 
             guard seenIdentifiers.insert(identifier).inserted else {
                 throw AccessibilityTrackingError.duplicateIdentifier(identifier)

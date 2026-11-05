@@ -1,35 +1,44 @@
-# The accessibility monitor
+# The kit and its Monitor
 
-Show the tracked features and their current values on screen.
+Look at the accessibility settings while your app runs.
 
 ## Overview
 
-The monitor is a screen listing every tracking object with the identifier it is reported under
-and its value. It is a development aid: each row is reported under the same identifier, and with
-the same `transform` applied, as in the snapshots your app receives.
+The kit is a development aid that sits above your app. It has one way in and one home: open it,
+and a sheet shows the kit's tools. Its first tool is the Monitor, which lists every tracked
+feature under the identifier it is reported under, with the same `transform` applied, as in the
+snapshots your app receives. Each feature opens a detail screen with its identifier, the
+notification tracking listens to, and what it has done this session.
 
-The list follows changes only when tracking is configured with
-``AccessibilityFetchType/continuous``. Under ``AccessibilityFetchType/initial`` it shows the values
-from when it was presented. Reconfiguring tracking refreshes it with the newly configured features,
-replacing the rows of features that are no longer tracked.
+The Monitor follows changes only when tracking is configured with
+``AccessibilityFetchType/continuous``, marking each setting that changed since launch. Under
+``AccessibilityFetchType/initial`` it shows the values from when it was opened. Reconfiguring
+tracking refreshes it with the newly configured features. Until tracking is configured, it explains
+how to set it up. See <doc:ConfiguringContinuousTracking>.
 
-It observes the configured tracking on its own — presenting it does not replace an observation
-the app registered with
-``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``. Until tracking is
-configured the list is empty, and it fills in once it is. See <doc:ConfiguringContinuousTracking>.
+The kit observes tracking on its own, so opening it does not affect an observation your app
+registered with ``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``.
 
-### From UIKit
+### Opening the kit
 
-``AccessibilityKit/AccessibilityKit/presentAccessibilityMonitor(on:)`` presents it:
+Turn on its entry points, in debug builds only:
 
 ```swift
-AccessibilityKit.shared.presentAccessibilityMonitor(on: viewController)
+#if DEBUG
+AccessibilityKit.shared.entryPoints = [.floatingButton, .shake]
+#endif
 ```
 
-### From SwiftUI
+The floating button lives in a window of the kit's own, above your app's. Drag it to any corner;
+long-press it to hide it until the next launch. Shaking is off unless you include it, so an app
+that uses shake to undo keeps it.
 
-Use ``AccessibilityMonitorView`` directly. It does not dismiss itself — the closure is where you
-do that:
+To open the kit from code, call ``AccessibilityKit/AccessibilityKit/present()``.
+
+### Showing the Monitor yourself
+
+Use ``AccessibilityMonitorView`` to show the Monitor somewhere of your own. It does not dismiss
+itself — the closure is where you do that:
 
 ```swift
 .sheet(isPresented: $isPresented) {

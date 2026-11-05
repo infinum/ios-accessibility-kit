@@ -56,3 +56,22 @@ final class EmissionCounter {
         increment()
     }
 }
+
+///
+/// Stands in for the system's accessibility settings, so a test can change
+/// one and post its notification. Every feature reads off unless set, and
+/// font scale reads as the default size.
+///
+@MainActor
+final class SystemValues {
+
+    var values = [AccessibilityType: AccessibilityValue]()
+
+    /// Holds this object strongly: a monitor may outlive the test's reference.
+    var read: AccessibilityStateReader {
+        return { type in
+            let value = self.values[type] ?? (type == .fontScale ? .scale(1) : .flag(false))
+            return AccessibilityState(type: type, name: type.displayName, value: value)
+        }
+    }
+}

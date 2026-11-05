@@ -19,6 +19,8 @@ let snapshot = try AccessibilityKit.shared.currentAccessibilitySnapshot(
 To follow changes for the life of the app, configure tracking once and then observe. See
 <doc:ConfiguringContinuousTracking>.
 
+To look at the settings while the app runs, open the kit. See <doc:TheAccessibilityMonitor>.
+
 ## Topics
 
 ### Essentials
@@ -30,12 +32,14 @@ To follow changes for the life of the app, configure tracking once and then obse
 ### Reading accessibility state
 
 - ``AccessibilityKit/AccessibilityKit``
+- ``AccessibilityObservation``
 - ``AccessibilitySnapshot``
 - ``AccessibilityState``
 
 ### Describing what to track
 
 - ``AccessibilityType``
+- ``AccessibilityGroup``
 - ``AccessibilityTrackingObject``
 - ``AccessibilityTrackingConfiguration``
 - ``AccessibilityFetchType``
@@ -51,4 +55,5 @@ To follow changes for the life of the app, configure tracking once and then obse
 
 ### User interface
 
+- ``AccessibilityKitEntryPoint``
 - ``AccessibilityMonitorView``

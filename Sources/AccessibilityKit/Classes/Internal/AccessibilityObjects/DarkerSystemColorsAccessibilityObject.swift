@@ -26,10 +26,6 @@ struct DarkerSystemColorsAccessibilityObject: AccessibilityObject {
         return .darkerSystemColors
     }
 
-    var name: String {
-        return "Darker System Colors"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.darkerSystemColorsStatusDidChangeNotification
     }

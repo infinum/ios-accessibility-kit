@@ -26,10 +26,6 @@ struct BoldTextAccessibilityObject: AccessibilityObject {
         return .boldText
     }
 
-    var name: String {
-        return "Bold Text"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.boldTextStatusDidChangeNotification
     }

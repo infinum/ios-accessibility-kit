@@ -26,10 +26,6 @@ struct GrayscaleAccessibilityObject: AccessibilityObject {
         return .grayscale
     }
 
-    var name: String {
-        return "Grayscale"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.grayscaleStatusDidChangeNotification
     }

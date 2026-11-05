@@ -26,10 +26,6 @@ struct SwitchControlAccessibilityObject: AccessibilityObject {
         return .switchControl
     }
 
-    var name: String {
-        return "Switch Control"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.switchControlStatusDidChangeNotification
     }

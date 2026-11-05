@@ -26,10 +26,6 @@ struct ReduceTransparencyAccessibilityObject: AccessibilityObject {
         return .reduceTransparency
     }
 
-    var name: String {
-        return "Reduce Transparency"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.reduceTransparencyStatusDidChangeNotification
     }
