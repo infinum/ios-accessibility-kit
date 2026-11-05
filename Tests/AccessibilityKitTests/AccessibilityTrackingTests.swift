@@ -21,7 +21,6 @@ struct AccessibilityTrackingTests {
     /// configuring and observing cannot race with that delivery.
     ///
     @Test("Applies transforms to observed snapshots")
-    @MainActor
     func appliesTransformToObservedSnapshot() async throws {
         let kit = AccessibilityKit(
             monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())

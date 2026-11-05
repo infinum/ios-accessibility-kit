@@ -124,6 +124,9 @@ struct AccessibilitySubjectTests {
 
         #expect(observer.states.count == 1)
         #expect(observer.states.first?.type == .voiceOver)
+        // The hop holds the subject weakly, so nothing else keeps it alive
+        // until the background post lands.
+        withExtendedLifetime(subject) { }
     }
 
     @Test("Ignores notifications for other accessibility features")
