@@ -20,13 +20,13 @@ This library currently supports the **Swift** programming language.
 ## Requirements
 
 * iOS 14 and above
-* Xcode 12 and above
+* Xcode 15 and above
 
 ## Getting started
 
 AccessibilityKit is available through [Swift Package Manager (SPM)](https://www.swift.org/package-manager/).
 
-To install it via SPM, open your project in Xcode, go to `File` -> `Swift Packages` -> `Add Package Dependency...`, and enter the URL of the repository.
+To install it via SPM, open your project in Xcode, go to `File` -> `Add Package Dependencies...`, and enter the URL of the repository.
 
 ## Usage
 
