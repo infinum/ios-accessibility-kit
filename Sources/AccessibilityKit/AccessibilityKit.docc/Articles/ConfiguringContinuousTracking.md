@@ -60,7 +60,8 @@ Reconfiguring tracking keeps the observation you already registered, but emits n
 own: the next one arrives at the next change, and only if the new configuration is
 ``AccessibilityFetchType/continuous``. A snapshot taken under the replaced configuration and not
 yet delivered is dropped, for the completion and the accessibility monitor alike. The monitor is
-then handed the new configuration's features straight away. Your completion is not: it keeps what
+then refreshed with the new configuration's features, without waiting for a change, on the main
+queue like any other delivery. Your completion is not: it keeps what
 it last received until the next change, which only a continuous configuration delivers.
 
 ### Isolation

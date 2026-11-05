@@ -78,7 +78,9 @@ final class AccessibilityMonitor {
     /// the current snapshot on registration, every change under a
     /// continuous configuration, and a refresh on each reconfiguration,
     /// without touching the completion registered through
-    /// ``observeAccessibilityTracking(completion:)``.
+    /// ``observeAccessibilityTracking(completion:)``. Registering an
+    /// observer that is already registered does nothing, and hands it
+    /// nothing.
     ///
     func addSnapshotObserver(_ observer: AccessibilitySnapshotObserver) {
         pruneSnapshotObservers()
@@ -97,11 +99,13 @@ final class AccessibilityMonitor {
 extension AccessibilityMonitor: AccessibilityObserver {
 
     func accessibilityStateDidChange(_ state: AccessibilityState) {
+        guard configuration?.fetchType == .continuous else { return }
+
         // A snapshot nobody is registered to receive is not taken: whoever
         // registers later is handed a snapshot of their own.
+        pruneSnapshotObservers()
         guard
-            configuration?.fetchType == .continuous,
-            snapshotChangeHandler != nil || snapshotObservers.contains(where: { $0.observer != nil }),
+            snapshotChangeHandler != nil || !snapshotObservers.isEmpty,
             let snapshot = configuredSnapshot()
         else { return }
 
@@ -164,10 +168,10 @@ private extension AccessibilityMonitor {
 
     ///
     /// Hands snapshot observers — the accessibility monitor UI — the newly
-    /// configured features straight away, so the screen never keeps showing
-    /// rows for features that are no longer tracked, nor stays empty because
-    /// its first snapshot was dropped. The app's own completion is left
-    /// alone: reconfiguring emits no snapshot to it.
+    /// configured features without waiting for a change, so the screen never
+    /// keeps showing rows for features that are no longer tracked, nor stays
+    /// empty because its first snapshot was dropped. The app's own completion
+    /// is left alone: reconfiguring emits no snapshot to it.
     ///
     func refreshSnapshotObservers() {
         pruneSnapshotObservers()

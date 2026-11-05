@@ -15,8 +15,8 @@ so it never keeps rows for features that are no longer tracked.
 
 It observes the configured tracking on its own — presenting it does not replace an observation
 the app registered with
-``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``. Tracking must be
-configured first. See <doc:ConfiguringContinuousTracking>.
+``AccessibilityKit/AccessibilityKit/observeAccessibilityTracking(completion:)``. Until tracking is
+configured the list is empty, and it fills in once it is. See <doc:ConfiguringContinuousTracking>.
 
 ### From UIKit
 

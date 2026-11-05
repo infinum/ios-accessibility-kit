@@ -133,9 +133,9 @@ public final class AccessibilityKit {
     /// was presented. Reconfiguring tracking refreshes it with the newly
     /// configured features.
     ///
-    /// Requires tracking to have been configured — the monitor shows the
-    /// features from that configuration, with any transforms applied, so it
-    /// shows exactly what the app reports.
+    /// The monitor shows the features from the tracking configuration, with
+    /// any transforms applied, so it shows exactly what the app reports. It
+    /// stays empty until tracking is configured.
     ///
     /// The monitor observes on its own, so presenting it does not replace a
     /// completion registered through

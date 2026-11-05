@@ -21,18 +21,18 @@ import SwiftUI
 ///
 /// It observes the configured tracking on its own — presenting it does not
 /// replace a completion the app registered through
-/// ``AccessibilityKit/observeAccessibilityTracking(completion:)``. Tracking
-/// must be configured first, and values it shows carry any transform the
-/// tracking objects apply. The list follows changes only when tracking is
+/// ``AccessibilityKit/observeAccessibilityTracking(completion:)``. The values
+/// it shows carry any transform the tracking objects apply. The list stays
+/// empty until tracking is configured, follows changes only when tracking is
 /// configured with ``AccessibilityFetchType/continuous``, and is refreshed
-/// whenever tracking is reconfigured.
+/// whenever tracking is configured again.
 ///
 public struct AccessibilityMonitorView: View {
 
     // `@StateObject`, not `@ObservedObject`: an observed object built inline
     // is re-created whenever the containing view rebuilds this one, and the
-    // monitor holds its snapshot
-    // observers weakly — the view must own one stable view model.
+    // monitor holds its snapshot observers weakly — the view must own one
+    // stable view model.
     @StateObject private var viewModel = AccessibilityMonitorViewModel()
     let onDismiss: () -> Void
 
