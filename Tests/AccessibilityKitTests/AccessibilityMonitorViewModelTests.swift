@@ -117,6 +117,8 @@ struct AccessibilityMonitorViewModelTests {
         let viewModel = AccessibilityMonitorViewModel()
         await poll(until: { !viewModel.states.isEmpty })
 
+        #expect(!viewModel.states.isEmpty)
+
         NotificationCenter.default.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await poll(until: { appCounter.count == 2 })
 

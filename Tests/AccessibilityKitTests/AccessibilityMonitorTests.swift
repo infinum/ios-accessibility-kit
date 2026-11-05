@@ -396,8 +396,8 @@ struct AccessibilityMonitorTests {
     }
 
     ///
-    /// Two registrations of one observer is what re-presenting the monitor
-    /// looks like.
+    /// Registering an observer that is already registered must not make it
+    /// a second recipient of every delivery.
     ///
     @Test("Tells an observer added twice only once")
     func tellsAnObserverAddedTwiceOnlyOnce() async throws {
@@ -649,7 +649,8 @@ struct AccessibilityMonitorTests {
     ///
     /// A change is handed to the observers registered when it was scheduled,
     /// so an observer added while it is in flight gets only its own first
-    /// snapshot.
+    /// snapshot. An observer registered beforehand makes sure the change is
+    /// scheduled at all: with nobody to receive it, none would be.
     ///
     @Test("Leaves a change already in flight out of an observer added after it")
     func leavesInFlightChangeOutOfALaterObserver() async throws {
@@ -657,13 +658,18 @@ struct AccessibilityMonitorTests {
         let monitor = AccessibilityMonitor(notificationCenter: center)
         monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
+        let earlier = SpySnapshotObserver()
+        monitor.addSnapshotObserver(earlier)
+        await poll(until: { earlier.snapshots.count == 1 })
+
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
-        await poll(until: { !observer.snapshots.isEmpty })
+        let later = SpySnapshotObserver()
+        monitor.addSnapshotObserver(later)
+        await poll(until: { earlier.snapshots.count == 2 && !later.snapshots.isEmpty })
         await settle()
 
-        #expect(observer.snapshots.count == 1)
+        #expect(earlier.snapshots.count == 2)
+        #expect(later.snapshots.count == 1)
         withExtendedLifetime(monitor) { }
     }
 
@@ -679,9 +685,14 @@ struct AccessibilityMonitorTests {
         withExtendedLifetime(monitor) { }
     }
 
+    ///
+    /// Configured, so the observer's first snapshot is still in flight when
+    /// it is let go: the pending delivery must not hold it either.
+    ///
     @Test("Does not retain its snapshot observers")
-    func doesNotRetainSnapshotObservers() {
+    func doesNotRetainSnapshotObservers() throws {
         let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
         weak var released: SpySnapshotObserver?
 
         do {
