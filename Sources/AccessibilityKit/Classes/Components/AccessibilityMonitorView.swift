@@ -29,7 +29,7 @@ import SwiftUI
 ///
 public struct AccessibilityMonitorView: View {
 
-    @ObservedObject private var viewModel = AccessibilityMonitorViewModel()
+    @StateObject private var viewModel = AccessibilityMonitorViewModel()
     let onDismiss: () -> Void
 
     ///
