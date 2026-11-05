@@ -27,8 +27,10 @@ struct AccessibilityMonitorTests {
         let recorder = MainThreadRecorder()
         monitor.observeAccessibilityTracking { _ in recorder.record(Thread.isMainThread) }
         await poll(until: { recorder.wasMainThread != nil })
+        await settle()
 
         #expect(recorder.wasMainThread == true)
+        #expect(recorder.count == 1)
         withExtendedLifetime(monitor) { }
     }
 
@@ -374,14 +376,68 @@ struct AccessibilityMonitorTests {
         let center = NotificationCenter()
         let monitor = AccessibilityMonitor(notificationCenter: center)
         let transformCalls = EmissionCounter()
+        monitor.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(transformCalls.count == 0)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// A released observer leaves a dead entry behind until something prunes
+    /// it. The change path must prune before deciding anyone is listening,
+    /// or the dead entry alone gets a snapshot taken.
+    ///
+    @Test("Takes no snapshot for a change when the only observer has been released")
+    func takesNoSnapshotForReleasedObserver() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        let transformCalls = EmissionCounter()
+        monitor.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
+
+        do {
+            let observer = SpySnapshotObserver()
+            monitor.addSnapshotObserver(observer)
+        }
+
+        // The observer's own first snapshot, taken when it registered.
+        #expect(transformCalls.count == 1)
+
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+
+        #expect(transformCalls.count == 1)
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// Transforms run while a snapshot is taken, and may reconfigure tracking
+    /// themselves. The snapshot they were part of was then taken under the
+    /// replaced configuration, so it must be dropped rather than land after
+    /// the refresh and bring the old rows back.
+    ///
+    @Test("Drops a change whose own transform reconfigures tracking")
+    func dropsChangeWhoseTransformReconfigures() async throws {
+        let center = NotificationCenter()
+        let monitor = AccessibilityMonitor(notificationCenter: center)
+        let boldText = try AccessibilityTrackingConfiguration(
+            fetchType: .continuous,
+            objects: [AccessibilityTrackingObject(type: .boldText)]
+        )
+        let transformCalls = EmissionCounter()
         monitor.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [
                     AccessibilityTrackingObject(
                         type: .voiceOver,
-                        transform: { value in
+                        // The first call takes the observer's first snapshot,
+                        // the second the change's.
+                        transform: { [weak monitor] value in
                             transformCalls.increment()
+                            if transformCalls.count == 2 {
+                                monitor?.configureAccessibilityTracking(with: boldText)
+                            }
                             return value
                         }
                     )
@@ -389,9 +445,54 @@ struct AccessibilityMonitorTests {
             )
         )
 
-        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        let observer = SpySnapshotObserver()
+        monitor.addSnapshotObserver(observer)
+        await poll(until: { observer.snapshots.count == 1 })
 
-        #expect(transformCalls.count == 0)
+        center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        await poll(until: { observer.snapshots.count >= 2 })
+        await settle()
+
+        #expect(transformCalls.count == 2)
+        #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
+        withExtendedLifetime(monitor) { }
+    }
+
+    ///
+    /// The completion's counterpart: a transform that registers a new
+    /// completion while the first snapshot is taken has replaced the
+    /// completion that snapshot was for, which must then never be called.
+    ///
+    @Test("Does not call a completion replaced by its own first snapshot's transform")
+    func dropsFirstSnapshotWhoseTransformReplacesCompletion() async throws {
+        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        let first = EmissionCounter()
+        let second = EmissionCounter()
+        let transformCalls = EmissionCounter()
+        monitor.configureAccessibilityTracking(
+            with: try AccessibilityTrackingConfiguration(
+                fetchType: .initial,
+                objects: [
+                    AccessibilityTrackingObject(
+                        type: .voiceOver,
+                        transform: { [weak monitor] value in
+                            transformCalls.increment()
+                            if transformCalls.count == 1 {
+                                monitor?.observeAccessibilityTracking { _ in second.increment() }
+                            }
+                            return value
+                        }
+                    )
+                ]
+            )
+        )
+
+        monitor.observeAccessibilityTracking { _ in first.increment() }
+        await poll(until: { second.count == 1 })
+        await settle()
+
+        #expect(first.count == 0)
+        #expect(second.count == 1)
         withExtendedLifetime(monitor) { }
     }
 
@@ -716,6 +817,25 @@ private extension AccessibilityMonitorTests {
             objects: [AccessibilityTrackingObject(type: .voiceOver)]
         )
     }
+
+    ///
+    /// A continuous VoiceOver configuration whose transform counts its calls.
+    /// It runs once per snapshot taken, so the count shows how many were.
+    ///
+    static func configuration(countingTransformsIn calls: EmissionCounter) throws -> AccessibilityTrackingConfiguration {
+        return try AccessibilityTrackingConfiguration(
+            fetchType: .continuous,
+            objects: [
+                AccessibilityTrackingObject(
+                    type: .voiceOver,
+                    transform: { value in
+                        calls.increment()
+                        return value
+                    }
+                )
+            ]
+        )
+    }
 }
 
 // MARK: - Recorder
@@ -727,9 +847,11 @@ private extension AccessibilityMonitorTests {
 private final class MainThreadRecorder {
 
     private(set) var wasMainThread: Bool?
+    private(set) var count = 0
 
     func record(_ value: Bool) {
         wasMainThread = value
+        count += 1
     }
 }
 
