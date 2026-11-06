@@ -268,8 +268,6 @@ To show only the Monitor, in a sheet of your own, embed the view instead:
 We believe that the community can help us improve and build better a product.
 Please refer to our [contributing guide](CONTRIBUTING.md) to learn about the types of contributions we accept and the process for submitting them.
 
-The [Example app](Example/README.md) is a test bench for the kit's tools: one product screen with accessibility problems planted on purpose.
-
 To ensure that our community remains respectful and professional, we defined a [code of conduct](CODE_OF_CONDUCT.md) that we expect all contributors to follow.
 
 We appreciate your interest and look forward to your contributions.
