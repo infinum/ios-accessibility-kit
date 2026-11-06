@@ -280,7 +280,7 @@ final class KitPresentationAnchor {
     func present(_ controller: UIViewController) {
         // The anchor's own window, or failing that the key window: the kit
         // makes its window key while it is open.
-        guard let window = view?.window ?? KitCoordinator.keyWindow(),
+        guard let window = view?.window ?? KitWindows.keyWindow(),
               let presenter = window.rootViewController?.kitTopmostPresented else { return }
         if let popover = controller.popoverPresentationController {
             if let view, view.window != nil {

@@ -10,30 +10,37 @@ import UIKit
 /// Runs the kit: its overlay window, its button and shake entry points, and
 /// the sheet whose root is the kit home.
 ///
+/// What to show and when the kit may open is decided by ``KitPresence``;
+/// the coordinator reports each event to it and puts the window, the
+/// button and the sheet right.
+///
 @MainActor
 final class KitCoordinator: NSObject {
 
     // MARK: - Internal properties
 
-    var entryPoints: Set<AccessibilityKitEntryPoint> = [] {
-        didSet { entryPointsDidChange() }
+    var entryPoints: Set<AccessibilityKitEntryPoint> {
+        get { presence.entryPoints }
+        set {
+            presence.entryPoints = newValue
+            entryPointsDidChange()
+        }
     }
 
     // MARK: - Private properties
 
     private let tracker: AccessibilityTracker
+    /// Every change puts the button, the window and the wait for a scene right.
+    private var presence = KitPresence() {
+        didSet { updateForPresence() }
+    }
     private var window: KitOverlayWindow?
     private var overlayController: KitOverlayViewController?
+    /// The kit's sheet, held to dismiss it and to match its dismissal report.
     private weak var kitController: KitHostingController?
     private weak var previousKeyWindow: UIWindow?
     private var sceneActivationObserver: NSObjectProtocol?
     private var sceneDisconnectionObserver: NSObjectProtocol?
-    /// `present()` was called before a window scene was active.
-    private var isPresentationPending = false
-    /// The kit button was long-pressed away until the next launch.
-    private var isButtonHiddenUntilRelaunch = false
-    /// A screen tool is running on the app, with the kit closed.
-    private var isScreenToolRunning = false
 
     // MARK: - Lifecycle
 
@@ -45,14 +52,15 @@ final class KitCoordinator: NSObject {
     // MARK: - Internal methods
 
     func present() {
-        guard kitController == nil, !isScreenToolRunning else { return }
+        guard presence.mayOpen else { return }
         guard let window = makeWindowIfPossible(), let root = window.rootViewController else {
-            isPresentationPending = true
+            presence.openingWaitsForScene()
             waitForActiveScene()
             return
         }
-        isPresentationPending = false
         // Still mid-transition from the last time; a later tap or shake opens it.
+        // An opening that waited for a scene never stops here: the window it
+        // finds is new, with nothing presented on it.
         guard root.presentedViewController == nil else { return }
 
         let model = KitModel(tracker: tracker)
@@ -81,7 +89,7 @@ final class KitCoordinator: NSObject {
 
         previousKeyWindow = window.windowScene?.windows.first { $0.isKeyWindow && $0 !== window }
         kitController = controller
-        updateVisibility()
+        presence.kitDidOpen()
         // Key, so hardware-keyboard commands such as Escape reach the kit.
         window.makeKey()
         root.present(controller, animated: true)
@@ -100,7 +108,7 @@ extension KitCoordinator: UIAdaptivePresentationControllerDelegate {
     /// Swiped down rather than closed with the button. The sheet's own
     /// dismissal report usually comes first, which makes this a no-op.
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        guard kitController != nil else { return }
+        guard presence.isKitOpen else { return }
         kitDidClose()
     }
 }
@@ -124,47 +132,55 @@ private extension KitCoordinator {
         // Back to the app's window, so the overlay never keeps key status
         // once the kit is closed.
         let appWindow = previousKeyWindow
-            ?? window?.windowScene.flatMap(Self.hostWindow(in:))
-            ?? Self.activeWindowScene().flatMap(Self.hostWindow(in:))
+            ?? window?.windowScene.flatMap(KitWindows.hostWindow(in:))
+            ?? KitWindows.activeWindowScene().flatMap(KitWindows.hostWindow(in:))
         appWindow?.makeKey()
         previousKeyWindow = nil
-        updateVisibility()
+        presence.kitDidClose()
     }
 
     ///
     /// A screen tool works on the app, so the kit closes first and the
     /// button stays hidden until the tool finishes. Finishing returns to the
     /// app, not to the kit home. A screen tool must call `finish` on every
-    /// way out, or the kit stays closed for the rest of the session.
+    /// way out: until it does, the kit stays closed.
     ///
     func start(_ kind: KitToolKind) {
         guard case .screenTool(let start) = kind else { return }
 
-        isScreenToolRunning = true
+        presence.screenToolDidStart()
         dismiss { [weak self] in
             start {
-                self?.isScreenToolRunning = false
-                self?.updateVisibility()
+                self?.presence.screenToolDidFinish()
             }
         }
     }
 
     func entryPointsDidChange() {
-        if entryPoints.contains(.shake) {
+        if presence.entryPoints.contains(.shake) {
             KitShakeDetector.installIfNeeded()
             KitShakeDetector.onShake = { [weak self] in self?.present() }
         } else {
             KitShakeDetector.onShake = nil
         }
 
-        if entryPoints.contains(.floatingButton), makeWindowIfPossible() == nil {
+        if presence.needsWindowAhead, makeWindowIfPossible() == nil {
             waitForActiveScene()
-        } else if entryPoints.isEmpty, !isPresentationPending, let sceneActivationObserver {
-            // Nothing is waiting for a scene any more.
-            NotificationCenter.default.removeObserver(sceneActivationObserver)
-            self.sceneActivationObserver = nil
         }
-        updateVisibility()
+    }
+
+    ///
+    /// Puts the button and the window right for the kit's presence, and
+    /// stops waiting for a scene once no window is needed ahead.
+    ///
+    func updateForPresence() {
+        if !presence.needsWindowAhead {
+            stopWaitingForActiveScene()
+        }
+        guard let window, let overlayController else { return }
+
+        overlayController.kitButton.isHidden = !presence.showsButton
+        window.isHidden = !presence.showsWindow
     }
 
     /// The overlay window, made on the app's active window scene if there is one.
@@ -176,18 +192,18 @@ private extension KitCoordinator {
             }
             // With several windows of the app open, the kit follows the one
             // in use, so it never opens in a scene nobody can see.
-            if windowScene.activationState != .foregroundActive, kitController == nil,
-               let activeScene = Self.activeWindowScene(), activeScene !== windowScene {
+            if windowScene.activationState != .foregroundActive, !presence.isKitOpen,
+               let activeScene = KitWindows.activeWindowScene(), activeScene !== windowScene {
                 window.windowScene = activeScene
-                overlayController?.hostWindow = Self.hostWindow(in: activeScene)
+                overlayController?.hostWindow = KitWindows.hostWindow(in: activeScene)
                 observeDisconnection(of: activeScene)
             }
             return window
         }
-        guard let scene = Self.activeWindowScene() else { return nil }
+        guard let scene = KitWindows.activeWindowScene() else { return nil }
 
         let overlayController = KitOverlayViewController()
-        overlayController.hostWindow = Self.hostWindow(in: scene)
+        overlayController.hostWindow = KitWindows.hostWindow(in: scene)
         overlayController.kitButton.addTarget(self, action: #selector(kitButtonTapped), for: .primaryActionTriggered)
         overlayController.kitButton.onHide = { [weak self] in self?.hideButtonUntilRelaunch() }
 
@@ -196,7 +212,7 @@ private extension KitCoordinator {
         self.window = window
         self.overlayController = overlayController
         observeDisconnection(of: scene)
-        updateVisibility()
+        updateForPresence()
         return window
     }
 
@@ -220,13 +236,13 @@ private extension KitCoordinator {
 
     func windowSceneDidDisconnect() {
         discardWindow()
-        guard !entryPoints.isEmpty || isPresentationPending else { return }
+        guard presence.needsWindowAhead else { return }
 
         // Another window of the app may already be active, and would send no
         // activation of its own.
         if makeWindowIfPossible() == nil {
             waitForActiveScene()
-        } else if isPresentationPending {
+        } else if presence.isOpeningPending {
             present()
         }
     }
@@ -239,34 +255,14 @@ private extension KitCoordinator {
         window?.isHidden = true
         window = nil
         overlayController = nil
-        // Whatever ran in the gone scene ended with it.
         kitController = nil
         previousKeyWindow = nil
-        isScreenToolRunning = false
-    }
-
-    ///
-    /// The kit button shows while its entry point is on, unless it was
-    /// hidden until relaunch, the kit is open, or a screen tool runs. The
-    /// window shows only while it has something on it.
-    ///
-    func updateVisibility() {
-        guard let window, let overlayController else { return }
-
-        let showsButton = entryPoints.contains(.floatingButton)
-            && !isButtonHiddenUntilRelaunch
-            && kitController == nil
-            && !isScreenToolRunning
-        overlayController.kitButton.isHidden = !showsButton
-        window.isHidden = !(showsButton || kitController != nil)
+        presence.sceneDidDisconnect()
     }
 
     func hideButtonUntilRelaunch() {
-        isButtonHiddenUntilRelaunch = true
-        updateVisibility()
-
-        let reopen = entryPoints.contains(.shake) ? " Shake the device to open the kit." : ""
-        KitAnnouncer.announcePolitely("Accessibility Kit button hidden until the app is launched again.\(reopen)")
+        let announcement = presence.hideButtonUntilRelaunch()
+        KitAnnouncer.announcePolitely(announcement)
     }
 
     @objc
@@ -290,39 +286,20 @@ private extension KitCoordinator {
         }
     }
 
+    func stopWaitingForActiveScene() {
+        guard let sceneActivationObserver else { return }
+
+        NotificationCenter.default.removeObserver(sceneActivationObserver)
+        self.sceneActivationObserver = nil
+    }
+
     func sceneDidActivate() {
         guard makeWindowIfPossible() != nil else { return }
 
-        if let sceneActivationObserver {
-            NotificationCenter.default.removeObserver(sceneActivationObserver)
-            self.sceneActivationObserver = nil
-        }
-        if isPresentationPending {
+        stopWaitingForActiveScene()
+        if presence.isOpeningPending {
             present()
         }
-    }
-}
-
-// MARK: - Windows
-
-extension KitCoordinator {
-
-    /// The key window of the app's active scene: the kit's own while it is open.
-    static func keyWindow() -> UIWindow? {
-        return activeWindowScene()?.windows.first { $0.isKeyWindow }
-    }
-
-    static func hostWindow(in scene: UIWindowScene) -> UIWindow? {
-        return scene.windows.first { $0.isKeyWindow && !($0 is KitOverlayWindow) }
-            ?? scene.windows.first { !($0 is KitOverlayWindow) }
-    }
-
-    static func activeWindowScene() -> UIWindowScene? {
-        let scenes = UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .filter { $0.session.role == .windowApplication }
-        return scenes.first { $0.activationState == .foregroundActive }
-            ?? scenes.first { $0.activationState == .foregroundInactive }
     }
 }
 
