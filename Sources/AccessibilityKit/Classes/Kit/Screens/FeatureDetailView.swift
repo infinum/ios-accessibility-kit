@@ -105,10 +105,10 @@ struct FeatureDetailView: View {
 
             fact(
                 title: "Listens to",
-                value: Self.breakable(row.type.notificationName.rawValue),
+                value: Self.breakable(row.type.feature.notificationName.rawValue),
                 font: .footnote.monospaced()
             )
-            .accessibilityLabel(Text(verbatim: "Listens to, \(row.type.notificationName.rawValue)"))
+            .accessibilityLabel(Text(verbatim: "Listens to, \(row.type.feature.notificationName.rawValue)"))
             .padding(.vertical, 12)
             .kitTopRule()
             .overlay(KitColor.rule.frame(height: 1), alignment: .bottom)

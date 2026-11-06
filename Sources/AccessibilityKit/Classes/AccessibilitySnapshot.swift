@@ -75,7 +75,7 @@ public struct AccessibilitySnapshot: Sendable {
     @MainActor
     init(
         trackingObjects: [AccessibilityTrackingObject],
-        readState: AccessibilityStateReader = AccessibilityObjectFactory.readState
+        readState: AccessibilityStateReader = AccessibilityType.readSystemState
     ) {
         self.init(
             states: trackingObjects.map { trackingObject in

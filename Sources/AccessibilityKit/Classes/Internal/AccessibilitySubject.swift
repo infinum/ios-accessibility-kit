@@ -38,7 +38,7 @@ class AccessibilitySubject {
     init(
         type: AccessibilityType,
         notificationCenter: NotificationCenter = .default,
-        readState: @escaping AccessibilityStateReader = AccessibilityObjectFactory.readState
+        readState: @escaping AccessibilityStateReader = AccessibilityType.readSystemState
     ) {
         self.type = type
         self.readState = readState
@@ -47,7 +47,7 @@ class AccessibilitySubject {
         notificationCenter.addObserver(
             self,
             selector: #selector(accessibilityStateDidChange(_:)),
-            name: type.notificationName,
+            name: type.feature.notificationName,
             object: nil
         )
     }

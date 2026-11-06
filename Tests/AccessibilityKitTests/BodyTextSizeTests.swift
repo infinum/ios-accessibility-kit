@@ -1,5 +1,5 @@
 //
-//  FontScaleAccessibilityObjectTests.swift
+//  BodyTextSizeTests.swift
 //  AccessibilityKitTests
 //
 
@@ -7,9 +7,12 @@ import Testing
 import UIKit
 @testable import AccessibilityKit
 
-@Suite("FontScaleAccessibilityObject")
-@MainActor
-struct FontScaleAccessibilityObjectTests {
+///
+/// The font scale tracking reports is the preferred category's `body` size
+/// over the default one's, so this mapping is the font scale feature.
+///
+@Suite("BodyTextSize")
+struct BodyTextSizeTests {
 
     ///
     /// Scales are the category's `body` size divided by the `large`
@@ -32,26 +35,11 @@ struct FontScaleAccessibilityObjectTests {
 
     @Test("Maps every content size category to its scale", arguments: mapping)
     func mapsCategoryToScale(category: UIContentSizeCategory, size: Double) {
-        let object = FontScaleAccessibilityObject(contentSizeCategory: { category })
-
-        #expect(object.state(customIdentifier: nil).value == .scale(size / 17.0))
+        #expect(BodyTextSize(category).scale == size / 17.0)
     }
 
     @Test("Falls back to the default scale for an unknown category")
     func fallsBackForUnknownCategory() {
-        let object = FontScaleAccessibilityObject(
-            contentSizeCategory: { UIContentSizeCategory(rawValue: "not a real category") }
-        )
-
-        #expect(object.state(customIdentifier: nil).value == .scale(1.0))
-    }
-
-    @Test("Reports the scale under the font scale identity")
-    func reportsFontScaleIdentity() {
-        let state = FontScaleAccessibilityObject(contentSizeCategory: { .large })
-            .state(customIdentifier: nil)
-
-        #expect(state.type == .fontScale)
-        #expect(state.identifier == "font_scale")
+        #expect(BodyTextSize(UIContentSizeCategory(rawValue: "not a real category")).scale == 1.0)
     }
 }
