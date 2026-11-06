@@ -47,11 +47,6 @@ struct AccessibilitySessionHistory: Sendable {
     private var nextSequence = 0
     private var hasStarted = false
 
-    /// Every entry recorded so far has a sequence below this.
-    var mark: Int {
-        return nextSequence
-    }
-
     ///
     /// Moves to the features a configuration tracks, read as `states`:
     /// features no longer tracked are dropped, features still tracked keep

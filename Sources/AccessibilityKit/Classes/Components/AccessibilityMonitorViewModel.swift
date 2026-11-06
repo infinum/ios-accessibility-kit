@@ -13,11 +13,10 @@ import UIKit
 /// Monitor and Feature detail show. One instance lives for as long as the
 /// kit is open, so the Monitor's filter and search survive pushes and pops.
 ///
-/// The tracker records the system's own values. The kit shows them with the
-/// configured transforms applied, up to the moment the delivered snapshot
-/// was taken, so a row's value, its change mark and its history agree.
-/// Transforms run for that when a snapshot is delivered, never while views
-/// are drawn, and each recorded value is transformed once per configuration.
+/// The tracker hands it each feature's value, displayed history and the
+/// tracking status, worked out together when the snapshot was taken. What
+/// stays here is what belongs to the screen: filter and search, change
+/// marks, announcements, status lines and sharing.
 ///
 @MainActor
 final class AccessibilityMonitorViewModel: ObservableObject {
@@ -36,15 +35,6 @@ final class AccessibilityMonitorViewModel: ObservableObject {
             case .changed: return "Changed"
             }
         }
-    }
-
-    enum TrackingStatus: Equatable {
-        /// Tracking is not configured, or tracks nothing.
-        case notTracked
-        /// Tracking follows changes as they happen.
-        case live
-        /// Tracking read the settings once, at this time.
-        case snapshot(Date)
     }
 
     struct Row: Identifiable, Equatable {
@@ -121,16 +111,12 @@ final class AccessibilityMonitorViewModel: ObservableObject {
     private let announce: @MainActor (String) -> Void
     private var changeTokens = [String: Int]()
     private var nextChangeToken = 1
-    /// Transformed values by identifier and entry sequence, valid for one
-    /// configuration, so each recorded value is transformed only once.
-    private var transformedValues = [String: [Int: AccessibilityValue]]()
-    private var transformedValuesGeneration: Int?
 
     // MARK: - Lifecycle
 
     ///
-    /// The tracker holds its snapshot observers weakly, so registering is
-    /// all this needs: the registration ends when the view model does.
+    /// The tracker holds its listeners weakly, so registering is all this
+    /// needs: the registration ends when the view model does.
     ///
     init(
         tracker: AccessibilityTracker = .shared,
@@ -138,10 +124,10 @@ final class AccessibilityMonitorViewModel: ObservableObject {
     ) {
         self.tracker = tracker
         self.announce = announce
-        // Right from the first frame, before the first snapshot lands, so a
+        // Right from the first frame, before the first update lands, so a
         // tracked app never flashes the nothing-tracked screen.
-        trackingStatus = Self.trackingStatus(tracker: tracker, date: Date())
-        tracker.addSnapshotObserver(self)
+        trackingStatus = tracker.trackingStatus
+        tracker.addListener(self)
     }
 }
 
@@ -251,34 +237,19 @@ extension AccessibilityMonitorViewModel {
     }
 }
 
-// MARK: - AccessibilitySnapshotObserver
+// MARK: - TrackerListener
 
-extension AccessibilityMonitorViewModel: AccessibilitySnapshotObserver {
+extension AccessibilityMonitorViewModel: TrackerListener {
 
-    func accessibilitySnapshotDidChange(_ snapshot: AccessibilitySnapshot, reason: SnapshotDeliveryReason) {
+    func trackerDidUpdate(_ update: TrackerUpdate) {
+        let snapshot = update.snapshot
+        let status = update.status
+        let histories = update.histories
         let previousValues = Dictionary(states.map { ($0.identifier, $0.value) }, uniquingKeysWith: { first, _ in first })
-        let status = snapshot.states.isEmpty ? .notTracked : Self.trackingStatus(tracker: tracker, date: snapshot.date)
-
-        // Transforms run below. One that reconfigures tracking makes this
-        // snapshot stale: nothing is kept, and the refresh for the new
-        // configuration follows.
-        let generation = tracker.configurationGeneration
-        let transforms = Dictionary(
-            tracker.trackingObjects.map { ($0.identifier, $0.transform) },
-            uniquingKeysWith: { first, _ in first }
-        )
         let sortedStates = snapshot.states.sorted(by: Self.displayOrder)
-        let histories = Dictionary(
-            sortedStates.map { state in
-                let history = displayedHistory(for: state, transform: transforms[state.identifier] ?? nil, upTo: snapshot.historyMark, generation: generation)
-                return (state.identifier, history)
-            },
-            uniquingKeysWith: { first, _ in first }
-        )
-        guard generation == tracker.configurationGeneration else { return }
 
         // Only a change the user just made: never a refresh after reconfiguring.
-        let changed = reason == .change
+        let changed = update.reason == .change
             ? sortedStates.filter { state in previousValues[state.identifier].map { $0 != state.value } ?? false }
             : []
         for state in changed {
@@ -335,55 +306,12 @@ private extension AccessibilityMonitorViewModel {
         }
     }
 
-    ///
-    /// A setting's history as the app reports it, up to `mark`: each recorded
-    /// value through the setting's transform, and a change kept only when
-    /// what the app reports changes, since a transform can fold several
-    /// system values into one.
-    ///
-    func displayedHistory(
-        for state: AccessibilityState,
-        transform: (@MainActor @Sendable (AccessibilityValue) -> AccessibilityValue)?,
-        upTo mark: Int?,
-        generation: Int
-    ) -> [AccessibilityHistoryEntry] {
-        if transformedValuesGeneration != generation {
-            transformedValues = [:]
-            transformedValuesGeneration = generation
-        }
-        var known = transformedValues[state.identifier] ?? [:]
-
-        let entries = tracker.history(for: state.type, upTo: mark)
-        var displayed = [AccessibilityHistoryEntry]()
-        for entry in entries {
-            let value: AccessibilityValue
-            if let cached = known[entry.sequence] {
-                value = cached
-            } else {
-                value = transform?(entry.value) ?? entry.value
-                known[entry.sequence] = value
-            }
-            guard entry.kind != .change || value != displayed.last?.value else { continue }
-            displayed.append(AccessibilityHistoryEntry(sequence: entry.sequence, date: entry.date, value: value, kind: entry.kind))
-        }
-
-        // Only what is still recorded is kept, so the cache stays as small as the history.
-        let recorded = Set(entries.map(\.sequence))
-        transformedValues[state.identifier] = known.filter { recorded.contains($0.key) }
-        return displayed
-    }
-
     func matches(_ row: Row, filter: Filter) -> Bool {
         switch filter {
         case .all: return true
         case .on: return row.isOn
         case .changed: return row.changeDate != nil
         }
-    }
-
-    static func trackingStatus(tracker: AccessibilityTracker, date: Date) -> TrackingStatus {
-        guard tracker.isTracking else { return .notTracked }
-        return tracker.fetchType == .continuous ? .live : .snapshot(date)
     }
 
     ///
