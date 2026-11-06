@@ -13,7 +13,7 @@ import UIKit
 /// Monitor and Feature detail show. One instance lives for as long as the
 /// kit is open, so the Monitor's filter and search survive pushes and pops.
 ///
-/// The monitor records the system's own values. The kit shows them with the
+/// The tracker records the system's own values. The kit shows them with the
 /// configured transforms applied, up to the moment the delivered snapshot
 /// was taken, so a row's value, its change mark and its history agree.
 /// Transforms run for that when a snapshot is delivered, never while views
@@ -115,9 +115,9 @@ final class AccessibilityMonitorViewModel: ObservableObject {
 
     // MARK: - Private properties
 
-    /// Held so the monitor lives as long as the screen showing it. The
-    /// monitor holds this view model weakly, so there is no cycle.
-    private let monitor: AccessibilityMonitor
+    /// Held so the tracker lives as long as the screen showing it. The
+    /// tracker holds this view model weakly, so there is no cycle.
+    private let tracker: AccessibilityTracker
     private let announce: @MainActor (String) -> Void
     private var changeTokens = [String: Int]()
     private var nextChangeToken = 1
@@ -129,19 +129,19 @@ final class AccessibilityMonitorViewModel: ObservableObject {
     // MARK: - Lifecycle
 
     ///
-    /// The monitor holds its snapshot observers weakly, so registering is
+    /// The tracker holds its snapshot observers weakly, so registering is
     /// all this needs: the registration ends when the view model does.
     ///
     init(
-        monitor: AccessibilityMonitor = .shared,
+        tracker: AccessibilityTracker = .shared,
         announce: @escaping @MainActor (String) -> Void = KitAnnouncer.announcePolitely
     ) {
-        self.monitor = monitor
+        self.tracker = tracker
         self.announce = announce
         // Right from the first frame, before the first snapshot lands, so a
         // tracked app never flashes the nothing-tracked screen.
-        trackingStatus = Self.trackingStatus(monitor: monitor, date: Date())
-        monitor.addSnapshotObserver(self)
+        trackingStatus = Self.trackingStatus(tracker: tracker, date: Date())
+        tracker.addSnapshotObserver(self)
     }
 }
 
@@ -257,14 +257,14 @@ extension AccessibilityMonitorViewModel: AccessibilitySnapshotObserver {
 
     func accessibilitySnapshotDidChange(_ snapshot: AccessibilitySnapshot, reason: SnapshotDeliveryReason) {
         let previousValues = Dictionary(states.map { ($0.identifier, $0.value) }, uniquingKeysWith: { first, _ in first })
-        let status = snapshot.states.isEmpty ? .notTracked : Self.trackingStatus(monitor: monitor, date: snapshot.date)
+        let status = snapshot.states.isEmpty ? .notTracked : Self.trackingStatus(tracker: tracker, date: snapshot.date)
 
         // Transforms run below. One that reconfigures tracking makes this
         // snapshot stale: nothing is kept, and the refresh for the new
         // configuration follows.
-        let generation = monitor.configurationGeneration
+        let generation = tracker.configurationGeneration
         let transforms = Dictionary(
-            monitor.trackingObjects.map { ($0.identifier, $0.transform) },
+            tracker.trackingObjects.map { ($0.identifier, $0.transform) },
             uniquingKeysWith: { first, _ in first }
         )
         let sortedStates = snapshot.states.sorted(by: Self.displayOrder)
@@ -275,7 +275,7 @@ extension AccessibilityMonitorViewModel: AccessibilitySnapshotObserver {
             },
             uniquingKeysWith: { first, _ in first }
         )
-        guard generation == monitor.configurationGeneration else { return }
+        guard generation == tracker.configurationGeneration else { return }
 
         // Only a change the user just made: never a refresh after reconfiguring.
         let changed = reason == .change
@@ -353,7 +353,7 @@ private extension AccessibilityMonitorViewModel {
         }
         var known = transformedValues[state.identifier] ?? [:]
 
-        let entries = monitor.history(for: state.type, upTo: mark)
+        let entries = tracker.history(for: state.type, upTo: mark)
         var displayed = [AccessibilityHistoryEntry]()
         for entry in entries {
             let value: AccessibilityValue
@@ -381,9 +381,9 @@ private extension AccessibilityMonitorViewModel {
         }
     }
 
-    static func trackingStatus(monitor: AccessibilityMonitor, date: Date) -> TrackingStatus {
-        guard monitor.isTracking else { return .notTracked }
-        return monitor.fetchType == .continuous ? .live : .snapshot(date)
+    static func trackingStatus(tracker: AccessibilityTracker, date: Date) -> TrackingStatus {
+        guard tracker.isTracking else { return .notTracked }
+        return tracker.fetchType == .continuous ? .live : .snapshot(date)
     }
 
     ///

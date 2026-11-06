@@ -21,7 +21,7 @@ final class KitCoordinator: NSObject {
 
     // MARK: - Private properties
 
-    private let monitor: AccessibilityMonitor
+    private let tracker: AccessibilityTracker
     private var window: KitOverlayWindow?
     private var overlayController: KitOverlayViewController?
     private weak var kitController: KitHostingController?
@@ -37,8 +37,8 @@ final class KitCoordinator: NSObject {
 
     // MARK: - Lifecycle
 
-    init(monitor: AccessibilityMonitor) {
-        self.monitor = monitor
+    init(tracker: AccessibilityTracker) {
+        self.tracker = tracker
         super.init()
     }
 
@@ -55,7 +55,7 @@ final class KitCoordinator: NSObject {
         // Still mid-transition from the last time; a later tap or shake opens it.
         guard root.presentedViewController == nil else { return }
 
-        let model = AccessibilityMonitorViewModel(monitor: monitor)
+        let model = AccessibilityMonitorViewModel(tracker: tracker)
         let controller = KitHostingController(
             rootView: KitRootView(
                 model: model,

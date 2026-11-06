@@ -21,8 +21,8 @@ struct AccessibilityMonitorViewModelTests {
     @Test("Shows snapshots without replacing the app's observation")
     func showsSnapshotsWithoutReplacingAppObservation() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .voiceOver)]
@@ -30,10 +30,10 @@ struct AccessibilityMonitorViewModelTests {
         )
 
         let appCounter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { _ in appCounter.increment() }
+        let observation = tracker.observeAccessibilityTracking { _ in appCounter.increment() }
         await poll(until: { appCounter.count == 1 })
 
-        var viewModel: AccessibilityMonitorViewModel? = AccessibilityMonitorViewModel(monitor: monitor)
+        var viewModel: AccessibilityMonitorViewModel? = AccessibilityMonitorViewModel(tracker: tracker)
         await poll(until: { !(viewModel?.states.isEmpty ?? true) })
 
         // Subscribed after the first snapshot has landed, so only the change
@@ -63,7 +63,7 @@ struct AccessibilityMonitorViewModelTests {
         await poll(until: { appCounter.count == 3 })
 
         #expect(appCounter.count == 3)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
@@ -72,18 +72,18 @@ struct AccessibilityMonitorViewModelTests {
     ///
     @Test("Shows the newly configured features after reconfiguring")
     func showsNewlyConfiguredFeatures() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .initial,
                 objects: [AccessibilityTrackingObject(type: .voiceOver)]
             )
         )
 
-        let viewModel = AccessibilityMonitorViewModel(monitor: monitor)
+        let viewModel = AccessibilityMonitorViewModel(tracker: tracker)
         await poll(until: { viewModel.states.map(\.type) == [.voiceOver] })
 
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .initial,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
@@ -92,23 +92,23 @@ struct AccessibilityMonitorViewModelTests {
         await poll(until: { viewModel.states.map(\.type) == [.boldText] })
 
         #expect(viewModel.states.map(\.type) == [.boldText])
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
-    /// The monitor holds the view model weakly, so unless the view model
-    /// holds the monitor, a monitor nobody else keeps goes away and the
+    /// The tracker holds the view model weakly, so unless the view model
+    /// holds the tracker, a tracker nobody else keeps goes away and the
     /// screen silently stops updating.
     ///
-    @Test("Keeps its monitor alive for as long as it lives")
+    @Test("Keeps its tracker alive for as long as it lives")
     func keepsItsMonitorAlive() {
-        weak var released: AccessibilityMonitor?
+        weak var released: AccessibilityTracker?
         let viewModel: AccessibilityMonitorViewModel
 
         do {
-            let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-            released = monitor
-            viewModel = AccessibilityMonitorViewModel(monitor: monitor)
+            let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+            released = tracker
+            viewModel = AccessibilityMonitorViewModel(tracker: tracker)
         }
 
         #expect(released != nil)

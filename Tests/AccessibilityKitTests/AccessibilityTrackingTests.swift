@@ -19,7 +19,7 @@ struct AccessibilityTrackingTests {
     @Test("Applies transforms to observed snapshots")
     func appliesTransformToObservedSnapshot() async throws {
         let kit = AccessibilityKit(
-            monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())
+            tracker: AccessibilityTracker(notificationCenter: NotificationCenter())
         )
 
         let configuration = try AccessibilityTrackingConfiguration(
@@ -39,7 +39,7 @@ struct AccessibilityTrackingTests {
         await poll(until: { recorder.snapshot != nil })
         await settle()
 
-        // `.initial` reports once, through the kit as through the monitor.
+        // `.initial` reports once, through the kit as through the tracker.
         #expect(recorder.count == 1)
         #expect(recorder.snapshot?.states.first?.value == .flag(true))
         #expect(recorder.snapshot?.states.first?.identifier == "large_text_enabled")

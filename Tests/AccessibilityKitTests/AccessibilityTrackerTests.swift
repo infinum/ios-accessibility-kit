@@ -1,5 +1,5 @@
 //
-//  AccessibilityMonitorTests.swift
+//  AccessibilityTrackerTests.swift
 //  AccessibilityKitTests
 //
 
@@ -9,56 +9,56 @@ import UIKit
 @testable import AccessibilityKit
 
 ///
-/// Subjects hold their observers weakly, so a monitor is kept alive only by
+/// Subjects hold their observers weakly, so a tracker is kept alive only by
 /// whoever owns it — `AccessibilityKit.shared` in production. Each test must
-/// therefore extend its monitor's lifetime past the last assertion, or ARC
+/// therefore extend its tracker's lifetime past the last assertion, or ARC
 /// releases it after its final use and the notification reaches nobody.
 /// The release test is the exception: letting go of it is what it checks.
 ///
-@Suite("AccessibilityMonitor")
+@Suite("AccessibilityTracker")
 @MainActor
-struct AccessibilityMonitorTests {
+struct AccessibilityTrackerTests {
 
     @Test("Emits the initial snapshot on the main queue")
     func emitsInitialSnapshotOnMainQueue() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let recorder = MainThreadRecorder()
-        let observation = monitor.observeAccessibilityTracking { _ in recorder.record(Thread.isMainThread) }
+        let observation = tracker.observeAccessibilityTracking { _ in recorder.record(Thread.isMainThread) }
         await poll(until: { recorder.wasMainThread != nil })
         await settle()
 
         #expect(recorder.wasMainThread == true)
         #expect(recorder.count == 1)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     @Test("Does not emit again for a change when fetching once")
     func doesNotEmitAgainForInitialFetch() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { _ in counter.increment() }
+        let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
         await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await settle()
 
         #expect(counter.count == 1)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     @Test("Emits again for every change when observing continuously")
     func emitsForEveryChangeWhenContinuous() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { _ in counter.increment() }
+        let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
         await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
@@ -70,15 +70,15 @@ struct AccessibilityMonitorTests {
         await poll(until: { counter.count == 3 })
 
         #expect(counter.count == 3)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     @Test("Observes the features supplied by the newest configuration")
     func observesTheNewestConfiguration() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
-        monitor.configureAccessibilityTracking(
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
@@ -86,7 +86,7 @@ struct AccessibilityMonitorTests {
         )
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { _ in counter.increment() }
+        let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
         await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
@@ -102,24 +102,24 @@ struct AccessibilityMonitorTests {
         await settle()
 
         #expect(counter.count == 2)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
-    /// Waits for the initial snapshot first, so the monitor has been
+    /// Waits for the initial snapshot first, so the tracker has been
     /// configured, observed and has delivered before it is let go: its
     /// release then shows no subject or pending delivery holds it.
     ///
-    @Test("Releases a configured monitor once nothing else holds it")
+    @Test("Releases a configured tracker once nothing else holds it")
     func releasesConfiguredMonitor() async throws {
         let counter = EmissionCounter()
-        weak var released: AccessibilityMonitor?
+        weak var released: AccessibilityTracker?
 
         do {
-            let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-            monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
-            let observation = monitor.observeAccessibilityTracking { _ in counter.increment() }
-            released = monitor
+            let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+            tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+            let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
+            released = tracker
             await poll(until: { counter.count == 1 })
             withExtendedLifetime(observation) { }
         }
@@ -131,14 +131,14 @@ struct AccessibilityMonitorTests {
     @Test("Keeps an existing observation when tracking is reconfigured")
     func keepsObservationAcrossReconfiguration() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { _ in counter.increment() }
+        let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
         await poll(until: { counter.count == 1 })
 
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
@@ -159,7 +159,7 @@ struct AccessibilityMonitorTests {
         await settle()
 
         #expect(counter.count == 2)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
@@ -170,8 +170,8 @@ struct AccessibilityMonitorTests {
     @Test("Emits once per change for a feature tracked under two identifiers")
     func emitsOnceForFeatureTrackedTwice() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [
@@ -186,7 +186,7 @@ struct AccessibilityMonitorTests {
         )
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { counter.record($0) }
+        let observation = tracker.observeAccessibilityTracking { counter.record($0) }
         await poll(until: { counter.count == 1 })
 
         center.post(name: UIContentSizeCategory.didChangeNotification, object: nil)
@@ -195,7 +195,7 @@ struct AccessibilityMonitorTests {
 
         #expect(counter.count == 2)
         #expect(Set(counter.lastIdentifiers) == ["font_scale", "large_text_enabled"])
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
@@ -211,25 +211,25 @@ struct AccessibilityMonitorTests {
     @Test("Drops a snapshot taken under a configuration that has since been replaced")
     func dropsSnapshotFromReplacedConfiguration() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { counter.record($0) }
+        let observation = tracker.observeAccessibilityTracking { counter.record($0) }
         await poll(until: { counter.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
-        let observation2 = monitor.observeAccessibilityTracking { counter.record($0) }
+        let observation2 = tracker.observeAccessibilityTracking { counter.record($0) }
         await poll(until: { counter.emittedTypes.contains([.boldText]) })
 
         #expect(counter.emittedTypes == [[.voiceOver], [.boldText]])
-        withExtendedLifetime((monitor, observation, observation2)) { }
+        withExtendedLifetime((tracker, observation, observation2)) { }
     }
 
     ///
@@ -238,18 +238,18 @@ struct AccessibilityMonitorTests {
     ///
     @Test("Delivers the first snapshot after observing returns, never inside it")
     func deliversFirstSnapshotAfterObservingReturns() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { counter.record($0) }
+        let observation = tracker.observeAccessibilityTracking { counter.record($0) }
 
         #expect(counter.count == 0)
 
         await poll(until: { counter.count == 1 })
 
         #expect(counter.count == 1)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
@@ -262,12 +262,12 @@ struct AccessibilityMonitorTests {
     @Test("Drops a first snapshot taken under a configuration that has since been replaced")
     func dropsFirstSnapshotFromReplacedConfiguration() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { counter.record($0) }
-        monitor.configureAccessibilityTracking(
+        let observation = tracker.observeAccessibilityTracking { counter.record($0) }
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
@@ -277,33 +277,33 @@ struct AccessibilityMonitorTests {
         await poll(until: { counter.emittedTypes.contains([.boldText]) })
 
         #expect(counter.emittedTypes == [[.boldText]])
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     @Test("Delivers nothing when tracking has not been configured")
     func deliversNothingWithoutConfiguration() async {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { _ in counter.increment() }
+        let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
         await settle()
 
         #expect(counter.count == 0)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     @Test("Delivers every change to every observation")
     func deliversToEveryObservation() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let first = EmissionCounter()
         let second = EmissionCounter()
-        let firstObservation = monitor.observeAccessibilityTracking { _ in first.increment() }
+        let firstObservation = tracker.observeAccessibilityTracking { _ in first.increment() }
         await poll(until: { first.count == 1 })
 
-        let secondObservation = monitor.observeAccessibilityTracking { _ in second.increment() }
+        let secondObservation = tracker.observeAccessibilityTracking { _ in second.increment() }
         await poll(until: { second.count == 1 })
         await settle()
 
@@ -315,7 +315,7 @@ struct AccessibilityMonitorTests {
 
         #expect(first.count == 2)
         #expect(second.count == 2)
-        withExtendedLifetime((monitor, firstObservation, secondObservation)) { }
+        withExtendedLifetime((tracker, firstObservation, secondObservation)) { }
     }
 
     ///
@@ -324,31 +324,31 @@ struct AccessibilityMonitorTests {
     ///
     @Test("Delivers each observation its own first snapshot once when observing twice in one turn")
     func deliversEachFirstSnapshotOnce() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let first = EmissionCounter()
         let second = EmissionCounter()
-        let firstObservation = monitor.observeAccessibilityTracking { _ in first.increment() }
-        let secondObservation = monitor.observeAccessibilityTracking { _ in second.increment() }
+        let firstObservation = tracker.observeAccessibilityTracking { _ in first.increment() }
+        let secondObservation = tracker.observeAccessibilityTracking { _ in second.increment() }
         await poll(until: { first.count == 1 && second.count == 1 })
         await settle()
 
         #expect(first.count == 1)
         #expect(second.count == 1)
-        withExtendedLifetime((monitor, firstObservation, secondObservation)) { }
+        withExtendedLifetime((tracker, firstObservation, secondObservation)) { }
     }
 
     @Test("Stops calling an observation once it is cancelled")
     func stopsCallingACancelledObservation() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let cancelled = EmissionCounter()
         let kept = EmissionCounter()
-        let cancelledObservation = monitor.observeAccessibilityTracking { _ in cancelled.increment() }
-        let keptObservation = monitor.observeAccessibilityTracking { _ in kept.increment() }
+        let cancelledObservation = tracker.observeAccessibilityTracking { _ in cancelled.increment() }
+        let keptObservation = tracker.observeAccessibilityTracking { _ in kept.increment() }
         await poll(until: { cancelled.count == 1 && kept.count == 1 })
 
         cancelledObservation.cancel()
@@ -358,7 +358,7 @@ struct AccessibilityMonitorTests {
 
         #expect(cancelled.count == 1)
         #expect(kept.count == 2)
-        withExtendedLifetime((monitor, cancelledObservation, keptObservation)) { }
+        withExtendedLifetime((tracker, cancelledObservation, keptObservation)) { }
     }
 
     ///
@@ -368,11 +368,11 @@ struct AccessibilityMonitorTests {
     @Test("Stops calling an observation once it is released")
     func stopsCallingAReleasedObservation() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
-        var observation: AccessibilityObservation? = monitor.observeAccessibilityTracking { _ in counter.increment() }
+        var observation: AccessibilityObservation? = tracker.observeAccessibilityTracking { _ in counter.increment() }
         await poll(until: { counter.count == 1 })
 
         withExtendedLifetime(observation) { }
@@ -381,7 +381,7 @@ struct AccessibilityMonitorTests {
         await settle()
 
         #expect(counter.count == 1)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -392,8 +392,8 @@ struct AccessibilityMonitorTests {
     @Test("Ends an observation whose completion holds another observation")
     func endsNestedObservations() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let innerCalls = EmissionCounter()
         let outerCalls = EmissionCounter()
@@ -404,14 +404,14 @@ struct AccessibilityMonitorTests {
         do {
             // Reachable only through the outer completion from here on.
             let inner = ObservationHolder()
-            inner.observation = monitor.observeAccessibilityTracking { _ in innerCalls.increment() }
+            inner.observation = tracker.observeAccessibilityTracking { _ in innerCalls.increment() }
             releasedInner = inner
-            outer = monitor.observeAccessibilityTracking { _ in
+            outer = tracker.observeAccessibilityTracking { _ in
                 withExtendedLifetime(inner) { }
                 outerCalls.increment()
             }
         }
-        let kept = monitor.observeAccessibilityTracking { _ in keptCalls.increment() }
+        let kept = tracker.observeAccessibilityTracking { _ in keptCalls.increment() }
         await poll(until: { innerCalls.count == 1 && outerCalls.count == 1 && keptCalls.count == 1 })
 
         // Releasing the outer observation releases the holder, and with it
@@ -427,7 +427,7 @@ struct AccessibilityMonitorTests {
         #expect(innerCalls.count == 1)
         #expect(outerCalls.count == 1)
         #expect(keptCalls.count == 2)
-        withExtendedLifetime((monitor, kept)) { }
+        withExtendedLifetime((tracker, kept)) { }
     }
 
     ///
@@ -437,11 +437,11 @@ struct AccessibilityMonitorTests {
     @Test("Does not call a cancelled observation for a change already in flight")
     func doesNotCallCancelledObservationForChangeInFlight() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { _ in counter.increment() }
+        let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
         await poll(until: { counter.count == 1 })
 
         // Posted and cancelled in the same turn, so the change's delivery is
@@ -451,7 +451,7 @@ struct AccessibilityMonitorTests {
         await settle()
 
         #expect(counter.count == 1)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -462,14 +462,14 @@ struct AccessibilityMonitorTests {
     @Test("Takes no snapshot for a change while nothing is observing")
     func takesNoSnapshotWithoutObservation() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
+        let tracker = AccessibilityTracker(notificationCenter: center)
         let transformCalls = EmissionCounter()
-        monitor.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
+        tracker.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
         #expect(transformCalls.count == 0)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -479,13 +479,13 @@ struct AccessibilityMonitorTests {
     @Test("Takes no snapshot for a change when the only observer has been released")
     func takesNoSnapshotForReleasedObserver() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
+        let tracker = AccessibilityTracker(notificationCenter: center)
         let transformCalls = EmissionCounter()
-        monitor.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
+        tracker.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
 
         do {
             let observer = SpySnapshotObserver()
-            monitor.addSnapshotObserver(observer)
+            tracker.addSnapshotObserver(observer)
         }
 
         // The observer's own first snapshot, taken when it registered.
@@ -494,7 +494,7 @@ struct AccessibilityMonitorTests {
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
         #expect(transformCalls.count == 1)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -506,17 +506,17 @@ struct AccessibilityMonitorTests {
     func recordsChangesWithoutObservation() async throws {
         let center = NotificationCenter()
         let system = SystemValues()
-        let monitor = AccessibilityMonitor(notificationCenter: center, readState: system.read, launchDate: Date())
+        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date())
         let transformCalls = EmissionCounter()
-        monitor.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
+        tracker.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
 
         system.values[.voiceOver] = .flag(true)
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
-        #expect(monitor.history(for: .voiceOver).map(\.value) == [.flag(false), .flag(true)])
-        #expect(monitor.history(for: .voiceOver).map(\.kind) == [.launch, .change])
+        #expect(tracker.history(for: .voiceOver).map(\.value) == [.flag(false), .flag(true)])
+        #expect(tracker.history(for: .voiceOver).map(\.kind) == [.launch, .change])
         #expect(transformCalls.count == 0)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -526,13 +526,13 @@ struct AccessibilityMonitorTests {
     @Test("Records nothing for a notification that leaves the value as it was")
     func recordsNothingForAnUnchangedValue() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center, readState: SystemValues().read, launchDate: Date())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center, readState: SystemValues().read, launchDate: Date())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
-        #expect(monitor.history(for: .voiceOver).map(\.kind) == [.launch])
-        withExtendedLifetime(monitor) { }
+        #expect(tracker.history(for: .voiceOver).map(\.kind) == [.launch])
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -543,16 +543,16 @@ struct AccessibilityMonitorTests {
     func keepsHistoryOnReconfiguration() async throws {
         let center = NotificationCenter()
         let system = SystemValues()
-        let monitor = AccessibilityMonitor(notificationCenter: center, readState: system.read, launchDate: Date())
+        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date())
         let configuration = try Self.configuration(fetchType: .continuous)
-        monitor.configureAccessibilityTracking(with: configuration)
+        tracker.configureAccessibilityTracking(with: configuration)
         system.values[.voiceOver] = .flag(true)
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
 
-        monitor.configureAccessibilityTracking(with: configuration)
+        tracker.configureAccessibilityTracking(with: configuration)
 
-        #expect(monitor.history(for: .voiceOver).map(\.kind) == [.launch, .change])
-        withExtendedLifetime(monitor) { }
+        #expect(tracker.history(for: .voiceOver).map(\.kind) == [.launch, .change])
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -564,13 +564,13 @@ struct AccessibilityMonitorTests {
     @Test("Drops a change whose own transform reconfigures tracking")
     func dropsChangeWhoseTransformReconfigures() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
+        let tracker = AccessibilityTracker(notificationCenter: center)
         let boldText = try AccessibilityTrackingConfiguration(
             fetchType: .continuous,
             objects: [AccessibilityTrackingObject(type: .boldText)]
         )
         let transformCalls = EmissionCounter()
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [
@@ -578,10 +578,10 @@ struct AccessibilityMonitorTests {
                         type: .voiceOver,
                         // The first call takes the observer's first snapshot,
                         // the second the change's.
-                        transform: { [weak monitor] value in
+                        transform: { [weak tracker] value in
                             transformCalls.increment()
                             if transformCalls.count == 2 {
-                                monitor?.configureAccessibilityTracking(with: boldText)
+                                tracker?.configureAccessibilityTracking(with: boldText)
                             }
                             return value
                         }
@@ -591,7 +591,7 @@ struct AccessibilityMonitorTests {
         )
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
         await poll(until: { observer.snapshots.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
@@ -600,7 +600,7 @@ struct AccessibilityMonitorTests {
 
         #expect(transformCalls.count == 2)
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -610,12 +610,12 @@ struct AccessibilityMonitorTests {
     @Test("Tells an observer added twice only once")
     func tellsAnObserverAddedTwiceOnlyOnce() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
         await poll(until: { !observer.snapshots.isEmpty })
         await settle()
 
@@ -625,16 +625,16 @@ struct AccessibilityMonitorTests {
         await poll(until: { observer.snapshots.count == 2 })
 
         #expect(observer.snapshots.count == 2)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     @Test("Delivers the current snapshot to a newly added snapshot observer")
     func deliversCurrentSnapshotToANewSnapshotObserver() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
 
         // Never inside the registration call, as for the app's completion.
         #expect(observer.snapshots.isEmpty)
@@ -643,24 +643,24 @@ struct AccessibilityMonitorTests {
 
         #expect(observer.snapshots.count == 1)
         #expect(observer.snapshots.first?.states.first?.type == .voiceOver)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     @Test("Notifies snapshot observers on every change")
     func notifiesSnapshotObserversOnEveryChange() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
         await poll(until: { observer.snapshots.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await poll(until: { observer.snapshots.count == 2 })
 
         #expect(observer.snapshots.count == 2)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -671,13 +671,13 @@ struct AccessibilityMonitorTests {
     @Test("Still notifies snapshot observers of a change in flight when an observation is cancelled")
     func notifiesSnapshotObserversAcrossCancelledObservation() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let first = EmissionCounter()
         let observer = SpySnapshotObserver()
-        let observation = monitor.observeAccessibilityTracking { _ in first.increment() }
-        monitor.addSnapshotObserver(observer)
+        let observation = tracker.observeAccessibilityTracking { _ in first.increment() }
+        tracker.addSnapshotObserver(observer)
         await poll(until: { first.count == 1 && observer.snapshots.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
@@ -687,7 +687,7 @@ struct AccessibilityMonitorTests {
 
         #expect(first.count == 1)
         #expect(observer.snapshots.count == 2)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -699,11 +699,11 @@ struct AccessibilityMonitorTests {
     @Test("Drops a change for snapshot observers when the completion reconfigures tracking")
     func dropsChangeForObserversWhenCompletionReconfigures() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
 
         let boldText = try AccessibilityTrackingConfiguration(
             fetchType: .continuous,
@@ -712,10 +712,10 @@ struct AccessibilityMonitorTests {
         let calls = EmissionCounter()
         // Reconfigures when handed the change, not its first snapshot, so the
         // reconfiguration lands between the completion and the observers.
-        let observation = monitor.observeAccessibilityTracking { [weak monitor] _ in
+        let observation = tracker.observeAccessibilityTracking { [weak tracker] _ in
             calls.increment()
             guard calls.count == 2 else { return }
-            monitor?.configureAccessibilityTracking(with: boldText)
+            tracker?.configureAccessibilityTracking(with: boldText)
         }
         await poll(until: { calls.count == 1 && observer.snapshots.count == 1 })
 
@@ -725,7 +725,7 @@ struct AccessibilityMonitorTests {
 
         #expect(calls.count == 2)
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
@@ -738,15 +738,15 @@ struct AccessibilityMonitorTests {
     @Test("Drops a snapshot observer's snapshot from a replaced configuration")
     func dropsSnapshotObserverSnapshotFromReplacedConfiguration() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
         await poll(until: { observer.snapshots.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
@@ -757,7 +757,7 @@ struct AccessibilityMonitorTests {
         await settle()
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText], [.boldText]])
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -768,12 +768,12 @@ struct AccessibilityMonitorTests {
     @Test("Drops a snapshot observer's first snapshot from a replaced configuration")
     func dropsSnapshotObserverFirstSnapshotFromReplacedConfiguration() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
-        monitor.configureAccessibilityTracking(
+        tracker.addSnapshotObserver(observer)
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
@@ -785,7 +785,7 @@ struct AccessibilityMonitorTests {
 
         // The reconfiguration's refresh, then the change; never the stale first.
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.boldText], [.boldText]])
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -795,16 +795,16 @@ struct AccessibilityMonitorTests {
     ///
     @Test("Refreshes snapshot observers, and only them, when tracking is reconfigured")
     func refreshesSnapshotObserversOnReconfiguration() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let counter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { counter.record($0) }
+        let observation = tracker.observeAccessibilityTracking { counter.record($0) }
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
         await poll(until: { counter.count == 1 && observer.snapshots.count == 1 })
 
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .initial,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
@@ -815,7 +815,7 @@ struct AccessibilityMonitorTests {
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
         #expect(counter.emittedTypes == [[.voiceOver]])
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
@@ -826,20 +826,20 @@ struct AccessibilityMonitorTests {
     ///
     @Test("Refreshes snapshot observers asynchronously, once for the last of several reconfigurations")
     func refreshesSnapshotObserversOnceForTheLastReconfiguration() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
         await poll(until: { observer.snapshots.count == 1 })
 
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .reduceMotion)]
@@ -852,7 +852,7 @@ struct AccessibilityMonitorTests {
         await settle()
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.reduceMotion]])
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -864,22 +864,22 @@ struct AccessibilityMonitorTests {
     @Test("Leaves a change already in flight out of an observer added after it")
     func leavesInFlightChangeOutOfALaterObserver() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let earlier = SpySnapshotObserver()
-        monitor.addSnapshotObserver(earlier)
+        tracker.addSnapshotObserver(earlier)
         await poll(until: { earlier.snapshots.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         let later = SpySnapshotObserver()
-        monitor.addSnapshotObserver(later)
+        tracker.addSnapshotObserver(later)
         await poll(until: { earlier.snapshots.count == 2 && !later.snapshots.isEmpty })
         await settle()
 
         #expect(earlier.snapshots.count == 2)
         #expect(later.snapshots.count == 1)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -888,20 +888,20 @@ struct AccessibilityMonitorTests {
     ///
     @Test("Fills in a snapshot observer added before tracking is configured")
     func fillsInASnapshotObserverAddedBeforeConfiguration() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
         await settle()
 
         #expect(observer.snapshots.isEmpty)
 
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
         await poll(until: { !observer.snapshots.isEmpty })
         await settle()
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver]])
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -911,18 +911,18 @@ struct AccessibilityMonitorTests {
     @Test("Does not notify a snapshot observer of a change when fetching once")
     func doesNotNotifySnapshotObserverForInitialFetch() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
+        let tracker = AccessibilityTracker(notificationCenter: center)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let observer = SpySnapshotObserver()
-        monitor.addSnapshotObserver(observer)
+        tracker.addSnapshotObserver(observer)
         await poll(until: { observer.snapshots.count == 1 })
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         await settle()
 
         #expect(observer.snapshots.count == 1)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -931,24 +931,24 @@ struct AccessibilityMonitorTests {
     ///
     @Test("Does not retain its snapshot observers")
     func doesNotRetainSnapshotObservers() throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
         weak var released: SpySnapshotObserver?
 
         do {
             let observer = SpySnapshotObserver()
             released = observer
-            monitor.addSnapshotObserver(observer)
+            tracker.addSnapshotObserver(observer)
         }
 
         #expect(released == nil)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 }
 
 // MARK: - Helpers
 
-private extension AccessibilityMonitorTests {
+private extension AccessibilityTrackerTests {
 
     static func configuration(fetchType: AccessibilityFetchType) throws -> AccessibilityTrackingConfiguration {
         return try AccessibilityTrackingConfiguration(

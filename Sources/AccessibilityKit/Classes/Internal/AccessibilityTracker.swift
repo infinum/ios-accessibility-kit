@@ -1,5 +1,5 @@
 //
-//  AccessibilityMonitor.swift
+//  AccessibilityTracker.swift
 //  AccessibilityKit
 //
 //  Created by Nikola Majcen on 10.02.2022..
@@ -19,11 +19,11 @@ import Foundation
 /// Completions are delivered asynchronously on the main queue.
 ///
 @MainActor
-final class AccessibilityMonitor {
+final class AccessibilityTracker {
 
     // MARK: - Internal properties
 
-    static let shared = AccessibilityMonitor()
+    static let shared = AccessibilityTracker()
 
     /// How tracking reports, or `nil` while tracking is not configured.
     var fetchType: AccessibilityFetchType? {
@@ -149,7 +149,7 @@ final class AccessibilityMonitor {
 
 // MARK: - AccessibilityObserver
 
-extension AccessibilityMonitor: AccessibilityObserver {
+extension AccessibilityTracker: AccessibilityObserver {
 
     ///
     /// The system's value is recorded on every change, whoever is listening,
@@ -167,7 +167,7 @@ extension AccessibilityMonitor: AccessibilityObserver {
 
 // MARK: - Private methods
 
-private extension AccessibilityMonitor {
+private extension AccessibilityTracker {
 
     ///
     /// Subscribes to the new features, carries their history over, and hands
@@ -288,7 +288,7 @@ private extension AccessibilityMonitor {
 // MARK: - Weak snapshot observer
 
 ///
-/// Snapshot observers are held weakly: the view model holds its monitor, so
+/// Snapshot observers are held weakly: the view model holds its tracker, so
 /// holding it back would be a cycle, and a dismissed screen must stop being
 /// told anything.
 ///

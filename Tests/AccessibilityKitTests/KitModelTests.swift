@@ -103,7 +103,7 @@ struct KitViewModelTests {
 
     @Test("Reports nothing tracked before tracking is configured")
     func reportsNothingTracked() async {
-        let viewModel = AccessibilityMonitorViewModel(monitor: AccessibilityMonitor(notificationCenter: NotificationCenter()))
+        let viewModel = AccessibilityMonitorViewModel(tracker: AccessibilityTracker(notificationCenter: NotificationCenter()))
         await settle()
 
         #expect(viewModel.trackingStatus == .notTracked)
@@ -112,9 +112,9 @@ struct KitViewModelTests {
 
     @Test("Reports nothing tracked when tracking is configured with no features")
     func reportsNothingTrackedForAnEmptyConfiguration() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(with: try AccessibilityTrackingConfiguration(fetchType: .continuous, objects: []))
-        let viewModel = AccessibilityMonitorViewModel(monitor: monitor)
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        tracker.configureAccessibilityTracking(with: try AccessibilityTrackingConfiguration(fetchType: .continuous, objects: []))
+        let viewModel = AccessibilityMonitorViewModel(tracker: tracker)
         await settle()
 
         #expect(viewModel.trackingStatus == .notTracked)
@@ -226,7 +226,7 @@ struct KitViewModelTests {
 
         // Changed with no notification, so only the reconfiguration reads it.
         fixture.system.values[.voiceOver] = .flag(true)
-        fixture.monitor.configureAccessibilityTracking(with: try Fixture.configuration(fetchType: .continuous))
+        fixture.tracker.configureAccessibilityTracking(with: try Fixture.configuration(fetchType: .continuous))
         await poll(until: { fixture.viewModel.row(for: "voice_over")?.isOn == true })
 
         #expect(fixture.announcements.messages.isEmpty)
@@ -243,8 +243,8 @@ struct KitViewModelTests {
     func showsHistoryThroughTheTransform() async throws {
         let center = NotificationCenter()
         let system = SystemValues()
-        let monitor = AccessibilityMonitor(notificationCenter: center, readState: system.read, launchDate: Date())
-        monitor.configureAccessibilityTracking(
+        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date())
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [
@@ -256,7 +256,7 @@ struct KitViewModelTests {
                 ]
             )
         )
-        let viewModel = AccessibilityMonitorViewModel(monitor: monitor, announce: { _ in })
+        let viewModel = AccessibilityMonitorViewModel(tracker: tracker, announce: { _ in })
         await poll(until: { !viewModel.states.isEmpty })
 
         // Large to extra large: still not large text.
@@ -274,7 +274,7 @@ struct KitViewModelTests {
 
         #expect(viewModel.row(for: "large_text")?.changeDate != nil)
         #expect(viewModel.history(for: "large_text").map(\.event) == ["Turned on", "Off at launch"])
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     @Test("Shares one plain-text line per setting")
@@ -290,7 +290,7 @@ struct KitViewModelTests {
 // MARK: - Fixture
 
 ///
-/// A monitor tracking three features whose system values the test sets, and
+/// A tracker following three features whose system values the test sets, and
 /// a view model on it that records its announcements. Bold text is on.
 ///
 @MainActor
@@ -298,16 +298,16 @@ private struct Fixture {
 
     let center = NotificationCenter()
     let system = SystemValues()
-    let monitor: AccessibilityMonitor
+    let tracker: AccessibilityTracker
     let announcements = Announcements()
     let viewModel: AccessibilityMonitorViewModel
 
     init(fetchType: AccessibilityFetchType) throws {
         system.values[.boldText] = .flag(true)
-        monitor = AccessibilityMonitor(notificationCenter: center, readState: system.read, launchDate: Date())
-        monitor.configureAccessibilityTracking(with: try Self.configuration(fetchType: fetchType))
+        tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date())
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: fetchType))
         let announcements = self.announcements
-        viewModel = AccessibilityMonitorViewModel(monitor: monitor, announce: { announcements.messages.append($0) })
+        viewModel = AccessibilityMonitorViewModel(tracker: tracker, announce: { announcements.messages.append($0) })
     }
 
     static func configuration(fetchType: AccessibilityFetchType) throws -> AccessibilityTrackingConfiguration {

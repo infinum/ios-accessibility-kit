@@ -35,7 +35,7 @@ func settle() async {
 }
 
 ///
-/// Counts deliveries on the main queue, where the monitor delivers.
+/// Counts deliveries on the main queue, where the tracker delivers.
 ///
 @MainActor
 final class EmissionCounter {
@@ -67,7 +67,7 @@ final class SystemValues {
 
     var values = [AccessibilityType: AccessibilityValue]()
 
-    /// Holds this object strongly: a monitor may outlive the test's reference.
+    /// Holds this object strongly: a tracker may outlive the test's reference.
     var read: AccessibilityStateReader {
         return { type in
             let value = self.values[type] ?? (type == .fontScale ? .scale(1) : .flag(false))
