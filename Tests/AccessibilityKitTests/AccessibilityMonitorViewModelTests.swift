@@ -21,8 +21,9 @@ struct AccessibilityMonitorViewModelTests {
     @Test("Shows snapshots without replacing the app's observation")
     func showsSnapshotsWithoutReplacingAppObservation() async throws {
         let center = NotificationCenter()
-        let monitor = AccessibilityMonitor(notificationCenter: center)
-        monitor.configureAccessibilityTracking(
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .voiceOver)]
@@ -30,11 +31,11 @@ struct AccessibilityMonitorViewModelTests {
         )
 
         let appCounter = EmissionCounter()
-        let observation = monitor.observeAccessibilityTracking { _ in appCounter.increment() }
-        await poll(until: { appCounter.count == 1 })
+        let observation = tracker.observeAccessibilityTracking { _ in appCounter.increment() }
+        queue.run()
 
-        var viewModel: AccessibilityMonitorViewModel? = AccessibilityMonitorViewModel(monitor: monitor)
-        await poll(until: { !(viewModel?.states.isEmpty ?? true) })
+        var viewModel: AccessibilityMonitorViewModel? = AccessibilityMonitorViewModel(tracker: tracker)
+        queue.run()
 
         // Subscribed after the first snapshot has landed, so only the change
         // is counted: the VoiceOver value comes from the system and cannot be
@@ -43,7 +44,7 @@ struct AccessibilityMonitorViewModelTests {
         let subscription = viewModel?.$states.dropFirst().sink { _ in stateUpdates.increment() }
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { appCounter.count == 2 && stateUpdates.count == 1 })
+        queue.run()
 
         #expect(appCounter.count == 2)
         #expect(stateUpdates.count == 1)
@@ -60,10 +61,10 @@ struct AccessibilityMonitorViewModelTests {
         #expect(released == nil)
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { appCounter.count == 3 })
+        queue.run()
 
         #expect(appCounter.count == 3)
-        withExtendedLifetime((monitor, observation)) { }
+        withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
@@ -72,43 +73,45 @@ struct AccessibilityMonitorViewModelTests {
     ///
     @Test("Shows the newly configured features after reconfiguring")
     func showsNewlyConfiguredFeatures() async throws {
-        let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-        monitor.configureAccessibilityTracking(
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .initial,
                 objects: [AccessibilityTrackingObject(type: .voiceOver)]
             )
         )
 
-        let viewModel = AccessibilityMonitorViewModel(monitor: monitor)
-        await poll(until: { viewModel.states.map(\.type) == [.voiceOver] })
+        let viewModel = AccessibilityMonitorViewModel(tracker: tracker)
+        queue.run()
 
-        monitor.configureAccessibilityTracking(
+        tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .initial,
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
-        await poll(until: { viewModel.states.map(\.type) == [.boldText] })
+        queue.run()
 
         #expect(viewModel.states.map(\.type) == [.boldText])
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime(tracker) { }
     }
 
     ///
-    /// The monitor holds the view model weakly, so unless the view model
-    /// holds the monitor, a monitor nobody else keeps goes away and the
+    /// The tracker holds the view model weakly, so unless the view model
+    /// holds the tracker, a tracker nobody else keeps goes away and the
     /// screen silently stops updating.
     ///
-    @Test("Keeps its monitor alive for as long as it lives")
-    func keepsItsMonitorAlive() {
-        weak var released: AccessibilityMonitor?
+    @Test("Keeps its tracker alive for as long as it lives")
+    func keepsItsTrackerAlive() {
+        weak var released: AccessibilityTracker?
         let viewModel: AccessibilityMonitorViewModel
 
         do {
-            let monitor = AccessibilityMonitor(notificationCenter: NotificationCenter())
-            released = monitor
-            viewModel = AccessibilityMonitorViewModel(monitor: monitor)
+            let queue = ManualDeliveryQueue()
+            let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
+            released = tracker
+            viewModel = AccessibilityMonitorViewModel(tracker: tracker)
         }
 
         #expect(released != nil)
@@ -116,33 +119,24 @@ struct AccessibilityMonitorViewModelTests {
     }
 
     ///
-    /// Uses the shared instances, as production does, so the view model's
-    /// default wiring is what is under test: the app's completion must keep
-    /// receiving changes while the kit's UI is open.
+    /// The public `AccessibilityMonitorView` builds its view model with no
+    /// arguments, so the default must be the tracker the shared kit
+    /// configures. The status is read when the view model is created, and a
+    /// tracker nobody configured would report nothing tracked. That the app's
+    /// observation keeps receiving changes while the view model is open is
+    /// covered above, on a tracker of the test's own.
     ///
-    @Test("Leaves the shared observation alone with its default wiring")
-    func leavesSharedObservationAlone() async throws {
-        let kit = AccessibilityKit.shared
-        kit.configureAccessibilityTracking(
+    @Test("Shows the shared kit's tracking with its default wiring")
+    func showsSharedTrackingByDefault() throws {
+        AccessibilityKit.shared.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
                 objects: [AccessibilityTrackingObject(type: .voiceOver)]
             )
         )
 
-        let appCounter = EmissionCounter()
-        let observation = kit.observeAccessibilityTracking { _ in appCounter.increment() }
-        await poll(until: { appCounter.count == 1 })
-
         let viewModel = AccessibilityMonitorViewModel()
-        await poll(until: { !viewModel.states.isEmpty })
 
-        #expect(!viewModel.states.isEmpty)
-
-        NotificationCenter.default.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { appCounter.count == 2 })
-
-        #expect(appCounter.count == 2)
-        withExtendedLifetime((viewModel, observation)) { }
+        #expect(viewModel.trackingStatus == .live)
     }
 }

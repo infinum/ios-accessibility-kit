@@ -57,14 +57,14 @@ public final class AccessibilityKit {
 
     // MARK: - Private properties
 
-    private let monitor: AccessibilityMonitor
+    private let tracker: AccessibilityTracker
     private let coordinator: KitCoordinator
 
     // MARK: - Lifecycle
 
-    init(monitor: AccessibilityMonitor = .shared) {
-        self.monitor = monitor
-        self.coordinator = KitCoordinator(monitor: monitor)
+    init(tracker: AccessibilityTracker = .shared) {
+        self.tracker = tracker
+        self.coordinator = KitCoordinator(tracker: tracker)
     }
 
     // MARK: - Public methods
@@ -83,7 +83,7 @@ public final class AccessibilityKit {
     public func currentAccessibilitySnapshot(for objects: [AccessibilityTrackingObject]) throws -> AccessibilitySnapshot {
         try objects.validateUniqueIdentifiers()
 
-        return monitor.currentAccessibilitySnapshot(for: objects)
+        return tracker.currentAccessibilitySnapshot(for: objects)
     }
 
     ///
@@ -107,7 +107,7 @@ public final class AccessibilityKit {
     /// - Parameter configuration: The features to track and the fetch type.
     ///
     public func configureAccessibilityTracking(with configuration: AccessibilityTrackingConfiguration) {
-        monitor.configureAccessibilityTracking(with: configuration)
+        tracker.configureAccessibilityTracking(with: configuration)
     }
 
     ///
@@ -133,7 +133,7 @@ public final class AccessibilityKit {
     /// - Returns: The observation. Keep it for as long as you want snapshots.
     ///
     public func observeAccessibilityTracking(completion: @escaping (AccessibilitySnapshot) -> Void) -> AccessibilityObservation {
-        return monitor.observeAccessibilityTracking(completion: completion)
+        return tracker.observeAccessibilityTracking(completion: completion)
     }
 
     ///

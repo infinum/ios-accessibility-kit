@@ -26,16 +26,35 @@ func poll(until condition: () -> Bool, timeout: TimeInterval = 5) async {
 }
 
 ///
-/// A fixed wait, used only where the assertion is that nothing *further*
-/// happens — absence cannot be established by polling.
+/// A delivery queue the test runs by hand. Work waits until the test calls
+/// `run()`, so between the call that schedules a delivery and the delivery
+/// itself the test can post, reconfigure or end an observation, as code
+/// running before the main queue's next turn would.
 ///
 @MainActor
-func settle() async {
-    try? await Task.sleep(nanoseconds: 200_000_000)
+final class ManualDeliveryQueue: DeliveryQueue {
+
+    private var pending = [@MainActor @Sendable () -> Void]()
+
+    func schedule(_ work: @escaping @MainActor @Sendable () -> Void) {
+        pending.append(work)
+    }
+
+    ///
+    /// Runs the pending work in the order it was scheduled, including
+    /// anything that work schedules, until nothing is left: everything the
+    /// main queue would have delivered by now. After it returns, a delivery
+    /// that has not happened is one that never will.
+    ///
+    func run() {
+        while !pending.isEmpty {
+            pending.removeFirst()()
+        }
+    }
 }
 
 ///
-/// Counts deliveries on the main queue, where the monitor delivers.
+/// Counts deliveries.
 ///
 @MainActor
 final class EmissionCounter {
@@ -67,7 +86,7 @@ final class SystemValues {
 
     var values = [AccessibilityType: AccessibilityValue]()
 
-    /// Holds this object strongly: a monitor may outlive the test's reference.
+    /// Holds this object strongly: a tracker may outlive the test's reference.
     var read: AccessibilityStateReader {
         return { type in
             let value = self.values[type] ?? (type == .fontScale ? .scale(1) : .flag(false))

@@ -45,13 +45,6 @@ public struct AccessibilitySnapshot: Sendable {
     public let date: Date
 
     ///
-    /// How far the session history had got when the snapshot was taken, so
-    /// the kit shows history up to that point and no further. Ordered by
-    /// recording rather than by clock, so a clock change cannot reorder it.
-    ///
-    var historyMark: Int?
-
-    ///
     /// Creates a snapshot from states that have already been produced.
     ///
     /// Use this to re-wrap states adjusted with

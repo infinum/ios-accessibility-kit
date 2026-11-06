@@ -42,7 +42,7 @@ public final class AccessibilityObservation: Sendable {
 
     // MARK: - Internal properties
 
-    /// Shared with the monitor, which checks it before every delivery.
+    /// Shared with the tracker, which checks it before every delivery.
     let state = ObservationState()
 
     // MARK: - Private properties

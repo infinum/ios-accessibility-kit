@@ -91,7 +91,7 @@ struct AccessibilityTrackingValidationTests {
     @Test("Reads one type raw and corrected under two identifiers")
     func readsOneTypeRawAndCorrected() throws {
         let kit = AccessibilityKit(
-            monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())
+            tracker: AccessibilityTracker(notificationCenter: NotificationCenter())
         )
 
         let snapshot = try kit.currentAccessibilitySnapshot(
@@ -120,7 +120,7 @@ struct AccessibilityTrackingValidationTests {
     @Test("Rejects a snapshot request sharing one identifier between features")
     func rejectsDuplicateIdentifiersInSnapshotRequest() {
         let kit = AccessibilityKit(
-            monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())
+            tracker: AccessibilityTracker(notificationCenter: NotificationCenter())
         )
 
         #expect(throws: AccessibilityTrackingError.duplicateIdentifier("enabled")) {
@@ -136,7 +136,7 @@ struct AccessibilityTrackingValidationTests {
     @Test("Reads a snapshot when each type appears once")
     func readsSnapshotForUniqueTypes() throws {
         let kit = AccessibilityKit(
-            monitor: AccessibilityMonitor(notificationCenter: NotificationCenter())
+            tracker: AccessibilityTracker(notificationCenter: NotificationCenter())
         )
 
         let snapshot = try kit.currentAccessibilitySnapshot(

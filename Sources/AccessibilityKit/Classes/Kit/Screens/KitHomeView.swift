@@ -100,7 +100,7 @@ struct KitHomeView: View {
 struct KitStatusLine: View {
 
     let text: String
-    let status: AccessibilityMonitorViewModel.TrackingStatus
+    let status: TrackingStatus
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
