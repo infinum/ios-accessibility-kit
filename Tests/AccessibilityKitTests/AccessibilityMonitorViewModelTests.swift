@@ -101,7 +101,7 @@ struct AccessibilityMonitorViewModelTests {
     /// screen silently stops updating.
     ///
     @Test("Keeps its tracker alive for as long as it lives")
-    func keepsItsMonitorAlive() {
+    func keepsItsTrackerAlive() {
         weak var released: AccessibilityTracker?
         let viewModel: AccessibilityMonitorViewModel
 
