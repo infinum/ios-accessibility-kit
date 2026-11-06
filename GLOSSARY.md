@@ -30,7 +30,7 @@ An app-supplied correction applied to a feature's value before it is reported, s
 _Avoid_: mapper, converter
 
 **Snapshot**:
-The values of every tracked feature at one moment, after their transforms.
+The values of a set of features at one moment, after their transforms: the features tracking follows, or the ones an app asks for in a one-off read.
 _Avoid_: reading, state dump
 
 **State**:
