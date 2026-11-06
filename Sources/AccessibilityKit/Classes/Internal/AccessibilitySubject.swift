@@ -47,7 +47,7 @@ class AccessibilitySubject {
         notificationCenter.addObserver(
             self,
             selector: #selector(accessibilityStateDidChange(_:)),
-            name: type.feature.notification,
+            name: type.feature.notificationName,
             object: nil
         )
     }

@@ -20,7 +20,7 @@ struct Feature: Sendable {
 
     let name: String
     let group: AccessibilityGroup
-    let notification: Notification.Name
+    let notificationName: Notification.Name
     let read: @MainActor @Sendable () -> AccessibilityValue
 }
 
@@ -76,20 +76,20 @@ extension AccessibilityType {
     var feature: Feature {
         switch self {
 
-        // MARK: Vision
+        // Vision
 
         case .voiceOver:
             return Feature(
                 name: "VoiceOver",
                 group: .vision,
-                notification: UIAccessibility.voiceOverStatusDidChangeNotification,
+                notificationName: UIAccessibility.voiceOverStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isVoiceOverRunning) }
             )
         case .boldText:
             return Feature(
                 name: "Bold text",
                 group: .vision,
-                notification: UIAccessibility.boldTextStatusDidChangeNotification,
+                notificationName: UIAccessibility.boldTextStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isBoldTextEnabled) }
             )
         case .fontScale:
@@ -98,145 +98,145 @@ extension AccessibilityType {
             return Feature(
                 name: "Font scale",
                 group: .vision,
-                notification: UIContentSizeCategory.didChangeNotification,
+                notificationName: UIContentSizeCategory.didChangeNotification,
                 read: { .scale(BodyTextSize(UIApplication.shared.preferredContentSizeCategory).scale) }
             )
         case .buttonShapes:
             return Feature(
                 name: "Button shapes",
                 group: .vision,
-                notification: UIAccessibility.buttonShapesEnabledStatusDidChangeNotification,
+                notificationName: UIAccessibility.buttonShapesEnabledStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.buttonShapesEnabled) }
             )
         case .darkerSystemColors:
             return Feature(
                 name: "Darker system colors",
                 group: .vision,
-                notification: UIAccessibility.darkerSystemColorsStatusDidChangeNotification,
+                notificationName: UIAccessibility.darkerSystemColorsStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isDarkerSystemColorsEnabled) }
             )
         case .invertColors:
             return Feature(
                 name: "Invert colors",
                 group: .vision,
-                notification: UIAccessibility.invertColorsStatusDidChangeNotification,
+                notificationName: UIAccessibility.invertColorsStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isInvertColorsEnabled) }
             )
         case .grayscale:
             return Feature(
                 name: "Grayscale",
                 group: .vision,
-                notification: UIAccessibility.grayscaleStatusDidChangeNotification,
+                notificationName: UIAccessibility.grayscaleStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isGrayscaleEnabled) }
             )
         case .differentiateWithoutColor:
             return Feature(
                 name: "Differentiate without color",
                 group: .vision,
-                notification: UIAccessibility.differentiateWithoutColorDidChangeNotification,
+                notificationName: UIAccessibility.differentiateWithoutColorDidChangeNotification,
                 read: { .flag(UIAccessibility.shouldDifferentiateWithoutColor) }
             )
         case .reduceTransparency:
             return Feature(
                 name: "Reduce transparency",
                 group: .vision,
-                notification: UIAccessibility.reduceTransparencyStatusDidChangeNotification,
+                notificationName: UIAccessibility.reduceTransparencyStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isReduceTransparencyEnabled) }
             )
         case .onOffSwitchLabels:
             return Feature(
                 name: "On/off switch labels",
                 group: .vision,
-                notification: UIAccessibility.onOffSwitchLabelsDidChangeNotification,
+                notificationName: UIAccessibility.onOffSwitchLabelsDidChangeNotification,
                 read: { .flag(UIAccessibility.isOnOffSwitchLabelsEnabled) }
             )
 
-        // MARK: Motion
+        // Motion
 
         case .reduceMotion:
             return Feature(
                 name: "Reduce motion",
                 group: .motion,
-                notification: UIAccessibility.reduceMotionStatusDidChangeNotification,
+                notificationName: UIAccessibility.reduceMotionStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isReduceMotionEnabled) }
             )
         case .crossFadeTransitions:
             return Feature(
                 name: "Cross-fade transitions",
                 group: .motion,
-                notification: UIAccessibility.prefersCrossFadeTransitionsStatusDidChange,
+                notificationName: UIAccessibility.prefersCrossFadeTransitionsStatusDidChange,
                 read: { .flag(UIAccessibility.prefersCrossFadeTransitions) }
             )
         case .videoAutoplay:
             return Feature(
                 name: "Video autoplay",
                 group: .motion,
-                notification: UIAccessibility.videoAutoplayStatusDidChangeNotification,
+                notificationName: UIAccessibility.videoAutoplayStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isVideoAutoplayEnabled) }
             )
 
-        // MARK: Hearing
+        // Hearing
 
         case .monoAudio:
             return Feature(
                 name: "Mono audio",
                 group: .hearing,
-                notification: UIAccessibility.monoAudioStatusDidChangeNotification,
+                notificationName: UIAccessibility.monoAudioStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isMonoAudioEnabled) }
             )
         case .closedCaptioning:
             return Feature(
                 name: "Closed captioning",
                 group: .hearing,
-                notification: UIAccessibility.closedCaptioningStatusDidChangeNotification,
+                notificationName: UIAccessibility.closedCaptioningStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isClosedCaptioningEnabled) }
             )
 
-        // MARK: Interaction
+        // Interaction
 
         case .switchControl:
             return Feature(
                 name: "Switch Control",
                 group: .interaction,
-                notification: UIAccessibility.switchControlStatusDidChangeNotification,
+                notificationName: UIAccessibility.switchControlStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isSwitchControlRunning) }
             )
         case .assistiveTouch:
             return Feature(
                 name: "AssistiveTouch",
                 group: .interaction,
-                notification: UIAccessibility.assistiveTouchStatusDidChangeNotification,
+                notificationName: UIAccessibility.assistiveTouchStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isAssistiveTouchRunning) }
             )
         case .guidedAccess:
             return Feature(
                 name: "Guided Access",
                 group: .interaction,
-                notification: UIAccessibility.guidedAccessStatusDidChangeNotification,
+                notificationName: UIAccessibility.guidedAccessStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isGuidedAccessEnabled) }
             )
         case .shakeToUndo:
             return Feature(
                 name: "Shake to undo",
                 group: .interaction,
-                notification: UIAccessibility.shakeToUndoDidChangeNotification,
+                notificationName: UIAccessibility.shakeToUndoDidChangeNotification,
                 read: { .flag(UIAccessibility.isShakeToUndoEnabled) }
             )
 
-        // MARK: Spoken content
+        // Spoken content
 
         case .speakScreen:
             return Feature(
                 name: "Speak screen",
                 group: .spokenContent,
-                notification: UIAccessibility.speakScreenStatusDidChangeNotification,
+                notificationName: UIAccessibility.speakScreenStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isSpeakScreenEnabled) }
             )
         case .speakSelection:
             return Feature(
                 name: "Speak selection",
                 group: .spokenContent,
-                notification: UIAccessibility.speakSelectionStatusDidChangeNotification,
+                notificationName: UIAccessibility.speakSelectionStatusDidChangeNotification,
                 read: { .flag(UIAccessibility.isSpeakSelectionEnabled) }
             )
         }
