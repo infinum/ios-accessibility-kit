@@ -9,10 +9,11 @@ import UIKit
 @testable import AccessibilityKit
 
 ///
-/// Subjects hold their listeners weakly, so a tracker is kept alive only by
-/// whoever owns it — `AccessibilityKit.shared` in production. Each test must
-/// therefore extend its tracker's lifetime past the last assertion, or ARC
-/// releases it after its final use and the notification reaches nobody.
+/// A tracker's notification registrations hold it weakly, so it is kept
+/// alive only by whoever owns it — `AccessibilityKit.shared` in production.
+/// Each test must therefore extend its tracker's lifetime past the last
+/// assertion, or ARC releases it after its final use and the notification
+/// reaches nobody.
 /// The release test is the exception: letting go of it is what it checks.
 ///
 @Suite("AccessibilityTracker")
@@ -112,7 +113,7 @@ struct AccessibilityTrackerTests {
     ///
     /// Delivers the initial snapshot first, so the tracker has been
     /// configured, observed and has delivered before it is let go: its
-    /// release then shows no subject or pending delivery holds it.
+    /// release then shows no registration or pending delivery holds it.
     ///
     @Test("Releases a configured tracker once nothing else holds it")
     func releasesConfiguredTracker() async throws {
@@ -131,6 +132,87 @@ struct AccessibilityTrackerTests {
 
         #expect(counter.count == 1)
         #expect(released == nil)
+    }
+
+    ///
+    /// The reconfiguration tests post a feature that is no longer tracked.
+    /// This one posts a feature that never was.
+    ///
+    @Test("Ignores notifications for features it does not track")
+    func ignoresUntrackedFeatures() async throws {
+        let center = NotificationCenter()
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let counter = EmissionCounter()
+        let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
+        queue.run()
+
+        center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
+        queue.run()
+
+        #expect(counter.count == 1)
+        withExtendedLifetime((tracker, observation)) { }
+    }
+
+    ///
+    /// The notification centre is not the library's, so anything in the
+    /// process can post these names from a background thread. That must
+    /// reach the tracker as a change rather than trap the process on the
+    /// main-actor assumption.
+    ///
+    @Test("Handles a change posted from a background thread")
+    func handlesChangePostedOffTheMainThread() async throws {
+        let center = NotificationCenter()
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let counter = EmissionCounter()
+        let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
+        queue.run()
+
+        DispatchQueue.global().async {
+            center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
+        }
+
+        // The change reaches the main actor on a later turn, and its
+        // delivery is queued from there.
+        await poll(until: {
+            queue.run()
+            return counter.count == 2
+        })
+
+        #expect(counter.count == 2)
+        withExtendedLifetime((tracker, observation)) { }
+    }
+
+    ///
+    /// The centre is spied on rather than only posted to: Foundation drops
+    /// its own reference to an observer once it is freed, so a tracker that
+    /// never unregistered would stop hearing changes anyway, and the test
+    /// would pass while the contract was broken.
+    ///
+    @Test("Unregisters from the notification centre when released")
+    func unregistersWhenReleased() throws {
+        let center = SpyNotificationCenter()
+
+        do {
+            let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: ManualDeliveryQueue())
+            tracker.configureAccessibilityTracking(
+                with: try AccessibilityTrackingConfiguration(
+                    fetchType: .continuous,
+                    objects: [AccessibilityTrackingObject(type: .voiceOver), AccessibilityTrackingObject(type: .boldText)]
+                )
+            )
+            #expect(center.removedObservers.isEmpty)
+        }
+
+        // One registration per tracked feature, each removed, and nothing else.
+        #expect(center.addedObservers.count == 2)
+        #expect(center.removedObservers.count == 2)
+        #expect(Set(center.removedObservers) == Set(center.addedObservers))
     }
 
     @Test("Keeps an existing observation when tracking is reconfigured")
@@ -169,9 +251,9 @@ struct AccessibilityTrackerTests {
     }
 
     ///
-    /// One subject runs per type, whatever the number of objects tracking
-    /// it, so a change to a feature tracked twice produces one snapshot
-    /// carrying both entries rather than one snapshot per object.
+    /// The tracker registers once per type, whatever the number of objects
+    /// tracking it, so a change to a feature tracked twice produces one
+    /// snapshot carrying both entries rather than one snapshot per object.
     ///
     @Test("Emits once per change for a feature tracked under two identifiers")
     func emitsOnceForFeatureTrackedTwice() async throws {
@@ -530,9 +612,9 @@ struct AccessibilityTrackerTests {
     }
 
     ///
-    /// The session history holds the system's own values, read by the
-    /// subjects anyway, so it is complete when the kit opens later without
-    /// running any of the app's transforms.
+    /// The session history holds the system's own values, read on every
+    /// notification anyway, so it is complete when the kit opens later
+    /// without running any of the app's transforms.
     ///
     @Test("Records the system's value on every change, with nothing observing")
     func recordsChangesWithoutObservation() async throws {
@@ -1242,7 +1324,25 @@ private final class MainThreadRecorder {
     }
 }
 
-// MARK: - Spy
+// MARK: - Spies
+
+// `NotificationCenter` is `@unchecked Sendable`, so a subclass has to restate
+// it. The spy is only ever touched from the test that owns it.
+private final class SpyNotificationCenter: NotificationCenter, @unchecked Sendable {
+
+    private(set) var addedObservers = [ObjectIdentifier]()
+    private(set) var removedObservers = [ObjectIdentifier]()
+
+    override func addObserver(_ observer: Any, selector aSelector: Selector, name aName: NSNotification.Name?, object anObject: Any?) {
+        addedObservers.append(ObjectIdentifier(observer as AnyObject))
+        super.addObserver(observer, selector: aSelector, name: aName, object: anObject)
+    }
+
+    override func removeObserver(_ observer: Any) {
+        removedObservers.append(ObjectIdentifier(observer as AnyObject))
+        super.removeObserver(observer)
+    }
+}
 
 ///
 /// Records every update delivered to it.
