@@ -11,11 +11,8 @@ This library currently supports the **Swift** programming language.
 ## Table of contents
 
 * [Requirements](#requirements)
-* [Concurrency](#concurrency)
-* [Migrating to 2.0](#migrating-to-20)
 * [Getting started](#getting-started)
 * [Usage](#usage)
-* [Example app](#example-app)
 * [Contributing](#contributing)
 * [License](#license)
 * [Credits](#credits)
@@ -24,19 +21,6 @@ This library currently supports the **Swift** programming language.
 
 * iOS 15 and above
 * Xcode 16 and above (Swift 6 toolchain)
-
-## Concurrency
-
-The library is built in the Swift 6 language mode. Reading accessibility state means touching main-actor `UIKit` state, so `AccessibilityKit` is `@MainActor`. Call it from the main actor, or `await` it from elsewhere.
-
-The value types — `AccessibilitySnapshot`, `AccessibilityState`, `AccessibilityValue`, `AccessibilityType`, `AccessibilityGroup`, `AccessibilityTrackingObject`, `AccessibilityTrackingConfiguration` and `AccessibilityFetchType` — are `Sendable`, so a snapshot can be handed to any context. So is `AccessibilityObservation`, which can be released from any thread.
-
-## Migrating to 2.0
-
-* **iOS 15 and above.** The package no longer supports iOS 14.
-* **Keep the observation.** `observeAccessibilityTracking(completion:)` now returns an `AccessibilityObservation`, and the observation ends when it is released. Code that ignores the result still compiles, with an "unused result" warning, but receives no snapshots. Store the result in a property. Calling the method again no longer replaces the previous completion: both receive snapshots until each observation ends.
-* **Display names in sentence case.** `AccessibilityState.name` now matches the new `AccessibilityType.displayName`: "Bold text" rather than "Bold Text", "AssistiveTouch" rather than "Assistive Touch".
-* **Open the kit instead of the monitor.** `presentAccessibilityMonitor(on:)` is deprecated. Use `AccessibilityKit.shared.present()`, or turn on `entryPoints` so people can open the kit themselves. `AccessibilityMonitorView` is still available, and shows the redesigned Monitor.
 
 ## Getting started
 
@@ -65,6 +49,8 @@ targets: [
 ```
 
 The full API reference is written in DocC. In Xcode, choose `Product` -> `Build Documentation` to browse it.
+
+Upgrading from 1.x? See the [migration guide](MIGRATION.md).
 
 ## Usage
 
@@ -277,23 +263,12 @@ To show only the Monitor, in a sheet of your own, embed the view instead:
 }
 ```
 
-## Example app
-
-The Example app is a test bench: one realistic product screen with four accessibility problems planted on purpose, so the kit's tools have something to find. The Monitor ships today; Audit, Inspect, Overlays and Text size, named in the table below, are planned tools. Everything else on the screen is built correctly, as the reference for what good looks like. It tracks every setting and turns on the kit button and shake.
-
-| # | Planted issue | Found by |
-|:--|:--------------|:---------|
-| 1 | The heart button has no accessibility label, so VoiceOver says only "Button" | Audit, Inspect |
-| 2 | The heart button's target is 32 × 32 pt | Audit, Overlays, Inspect |
-| 3 | The delivery line's contrast is 2.7:1 (needs 4.5:1) | Audit |
-| 4 | The size buttons are a fixed 32 × 32 pt, so their numbers clip from about AX2 | Audit, Overlays, Text size |
-
-Each is marked `Planted issue N` in [`ProductView.swift`](Example/AccessibilityKit/ProductView.swift); leave them in when cleaning up. The Example scheme has two launch arguments, off by default, to try the kit's other states: `-kitFetchType initial` (a one-time snapshot) and `-kitTrackNothing` (nothing tracked). The Example app needs iOS 17.
-
 ## Contributing
 
 We believe that the community can help us improve and build better a product.
 Please refer to our [contributing guide](CONTRIBUTING.md) to learn about the types of contributions we accept and the process for submitting them.
+
+The [Example app](Example/README.md) is a test bench for the kit's tools: one product screen with accessibility problems planted on purpose.
 
 To ensure that our community remains respectful and professional, we defined a [code of conduct](CODE_OF_CONDUCT.md) that we expect all contributors to follow.
 
