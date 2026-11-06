@@ -26,10 +26,6 @@ struct VoiceOverAccessibilityObject: AccessibilityObject {
         return .voiceOver
     }
 
-    var name: String {
-        return "VoiceOver"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.voiceOverStatusDidChangeNotification
     }

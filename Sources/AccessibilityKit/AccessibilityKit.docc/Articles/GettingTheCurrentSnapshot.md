@@ -55,7 +55,7 @@ AccessibilityTrackingObject(
 ```
 
 To correct a value you already hold, use ``AccessibilityState/withValue(_:)`` and rebuild the
-snapshot with ``AccessibilitySnapshot/init(states:)``.
+snapshot with ``AccessibilitySnapshot/init(states:date:)``.
 
 ### Sending it onward
 

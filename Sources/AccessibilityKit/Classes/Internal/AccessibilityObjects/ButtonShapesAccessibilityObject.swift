@@ -26,10 +26,6 @@ struct ButtonShapesAccessibilityObject: AccessibilityObject {
         return .buttonShapes
     }
 
-    var name: String {
-        return "Button Shapes"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.buttonShapesEnabledStatusDidChangeNotification
     }

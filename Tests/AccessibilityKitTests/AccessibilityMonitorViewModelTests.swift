@@ -30,7 +30,7 @@ struct AccessibilityMonitorViewModelTests {
         )
 
         let appCounter = EmissionCounter()
-        monitor.observeAccessibilityTracking { _ in appCounter.increment() }
+        let observation = monitor.observeAccessibilityTracking { _ in appCounter.increment() }
         await poll(until: { appCounter.count == 1 })
 
         var viewModel: AccessibilityMonitorViewModel? = AccessibilityMonitorViewModel(monitor: monitor)
@@ -63,7 +63,7 @@ struct AccessibilityMonitorViewModelTests {
         await poll(until: { appCounter.count == 3 })
 
         #expect(appCounter.count == 3)
-        withExtendedLifetime(monitor) { }
+        withExtendedLifetime((monitor, observation)) { }
     }
 
     ///
@@ -117,8 +117,8 @@ struct AccessibilityMonitorViewModelTests {
 
     ///
     /// Uses the shared instances, as production does, so the view model's
-    /// default wiring is what is under test: had it registered through the
-    /// app's single observation slot, the completion below would go quiet.
+    /// default wiring is what is under test: the app's completion must keep
+    /// receiving changes while the kit's UI is open.
     ///
     @Test("Leaves the shared observation alone with its default wiring")
     func leavesSharedObservationAlone() async throws {
@@ -131,7 +131,7 @@ struct AccessibilityMonitorViewModelTests {
         )
 
         let appCounter = EmissionCounter()
-        kit.observeAccessibilityTracking { _ in appCounter.increment() }
+        let observation = kit.observeAccessibilityTracking { _ in appCounter.increment() }
         await poll(until: { appCounter.count == 1 })
 
         let viewModel = AccessibilityMonitorViewModel()
@@ -143,6 +143,6 @@ struct AccessibilityMonitorViewModelTests {
         await poll(until: { appCounter.count == 2 })
 
         #expect(appCounter.count == 2)
-        withExtendedLifetime(viewModel) { }
+        withExtendedLifetime((viewModel, observation)) { }
     }
 }

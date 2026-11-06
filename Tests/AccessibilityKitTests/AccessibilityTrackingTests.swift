@@ -35,7 +35,7 @@ struct AccessibilityTrackingTests {
         kit.configureAccessibilityTracking(with: configuration)
 
         let recorder = SnapshotRecorder()
-        kit.observeAccessibilityTracking { recorder.record($0) }
+        let observation = kit.observeAccessibilityTracking { recorder.record($0) }
         await poll(until: { recorder.snapshot != nil })
         await settle()
 
@@ -43,7 +43,7 @@ struct AccessibilityTrackingTests {
         #expect(recorder.count == 1)
         #expect(recorder.snapshot?.states.first?.value == .flag(true))
         #expect(recorder.snapshot?.states.first?.identifier == "large_text_enabled")
-        withExtendedLifetime(kit) { }
+        withExtendedLifetime((kit, observation)) { }
     }
 }
 

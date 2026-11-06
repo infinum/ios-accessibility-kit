@@ -7,7 +7,19 @@
 
 import Foundation
 
+///
+/// Reads a feature's current state, as the system reports it, under its
+/// default identifier.
+///
+typealias AccessibilityStateReader = @MainActor (AccessibilityType) -> AccessibilityState
+
 enum AccessibilityObjectFactory {
+
+    /// Reads the system's state for a feature. The reader used outside tests.
+    @MainActor
+    static func readState(_ type: AccessibilityType) -> AccessibilityState {
+        return object(for: type).state(customIdentifier: nil)
+    }
 
     @MainActor
     static func object(for type: AccessibilityType) -> AccessibilityObject {

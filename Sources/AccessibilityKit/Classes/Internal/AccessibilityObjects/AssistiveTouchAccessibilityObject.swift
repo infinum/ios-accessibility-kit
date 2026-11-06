@@ -26,10 +26,6 @@ struct AssistiveTouchAccessibilityObject: AccessibilityObject {
         return .assistiveTouch
     }
 
-    var name: String {
-        return "Assistive Touch"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.assistiveTouchStatusDidChangeNotification
     }

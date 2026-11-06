@@ -26,10 +26,6 @@ struct VideoAutoplayAccessibilityObject: AccessibilityObject {
         return .videoAutoplay
     }
 
-    var name: String {
-        return "Video Autoplay"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.videoAutoplayStatusDidChangeNotification
     }

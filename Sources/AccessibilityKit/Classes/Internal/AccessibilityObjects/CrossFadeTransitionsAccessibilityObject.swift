@@ -26,10 +26,6 @@ struct CrossFadeTransitionsAccessibilityObject: AccessibilityObject {
         return .crossFadeTransitions
     }
 
-    var name: String {
-        return "Cross Fade Transitions"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.prefersCrossFadeTransitionsStatusDidChange
     }

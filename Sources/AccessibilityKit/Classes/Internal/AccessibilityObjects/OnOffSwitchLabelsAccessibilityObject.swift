@@ -26,10 +26,6 @@ struct OnOffSwitchLabelsAccessibilityObject: AccessibilityObject {
         return .onOffSwitchLabels
     }
 
-    var name: String {
-        return "On/Off Switch Labels"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.onOffSwitchLabelsDidChangeNotification
     }

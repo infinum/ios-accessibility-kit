@@ -26,10 +26,6 @@ struct ReduceMotionAccessibilityObject: AccessibilityObject {
         return .reduceMotion
     }
 
-    var name: String {
-        return "Reduce Motion"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.reduceMotionStatusDidChangeNotification
     }

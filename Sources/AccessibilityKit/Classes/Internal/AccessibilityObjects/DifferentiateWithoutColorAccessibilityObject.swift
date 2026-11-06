@@ -26,10 +26,6 @@ struct DifferentiateWithoutColorAccessibilityObject: AccessibilityObject {
         return .differentiateWithoutColor
     }
 
-    var name: String {
-        return "Differentiate Without Color"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.differentiateWithoutColorDidChangeNotification
     }

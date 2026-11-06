@@ -26,10 +26,6 @@ struct ShakeToUndoAccessibilityObject: AccessibilityObject {
         return .shakeToUndo
     }
 
-    var name: String {
-        return "Shake To Undo"
-    }
-
     var notificationName: Notification.Name {
         return UIAccessibility.shakeToUndoDidChangeNotification
     }
