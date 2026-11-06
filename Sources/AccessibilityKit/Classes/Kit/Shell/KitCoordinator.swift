@@ -55,7 +55,7 @@ final class KitCoordinator: NSObject {
         // Still mid-transition from the last time; a later tap or shake opens it.
         guard root.presentedViewController == nil else { return }
 
-        let model = AccessibilityMonitorViewModel(tracker: tracker)
+        let model = KitModel(tracker: tracker)
         let controller = KitHostingController(
             rootView: KitRootView(
                 model: model,
