@@ -1,41 +1,28 @@
 //
-//  AccessibilityMonitorViewModel.swift
+//  KitModel.swift
 //  AccessibilityKit
 //
 //  Created by Igor Vatavuk on 08.01.2025..
 //
 
 import SwiftUI
-import UIKit
 
 ///
-/// The kit's model of the tracked settings: what the home status line, the
-/// Monitor and Feature detail show. One instance lives for as long as the
-/// kit is open, so the Monitor's filter and search survive pushes and pops.
+/// The kit's model of the tracked settings: what the kit home's status
+/// line, the Monitor and Feature detail show. One instance lives for as long
+/// as the kit is open; the public Monitor view holds one of its own.
 ///
 /// The tracker hands it each feature's value, displayed history and the
-/// tracking status, worked out together when the snapshot was taken. What
-/// stays here is what belongs to the screen: filter and search, change
-/// marks, announcements, status lines and sharing.
+/// tracking status, worked out together when the snapshot was taken. It
+/// keeps the rows, histories and change marks the screens show and the
+/// status lines, and for the Monitor, its change announcements and what it
+/// shares. The Monitor's filter and search are the Monitor screen's own, in
+/// ``MonitorQuery``.
 ///
 @MainActor
-final class AccessibilityMonitorViewModel: ObservableObject {
+final class KitModel: ObservableObject {
 
     // MARK: - Types
-
-    enum Filter: CaseIterable {
-        case all
-        case on
-        case changed
-
-        var title: String {
-            switch self {
-            case .all: return "All"
-            case .on: return "On"
-            case .changed: return "Changed"
-            }
-        }
-    }
 
     struct Row: Identifiable, Equatable {
         let identifier: String
@@ -61,22 +48,20 @@ final class AccessibilityMonitorViewModel: ObservableObject {
         }
     }
 
-    struct Section: Identifiable, Equatable {
-        let group: AccessibilityGroup
-        let rows: [Row]
-
-        var id: AccessibilityGroup { group }
-    }
-
-    /// What the screens show, replaced as a whole on each delivery.
-    struct Display: Equatable {
+    ///
+    /// What the screens show, and the snapshot it was made from, replaced as
+    /// a whole on each delivery.
+    ///
+    struct Display {
         /// Every tracked setting, grouped and in Settings order.
         var rows = [Row]()
         /// Each setting's history as the app reports it, oldest first:
         /// recorded values through the transform, with values a transform
         /// folds together merged.
         var histories = [String: [AccessibilityHistoryEntry]]()
-        var snapshotDate = Date()
+        /// The snapshot as delivered: what is shared, and what the next
+        /// delivery is compared against to spot a change.
+        var snapshot = AccessibilitySnapshot(states: [])
     }
 
     struct HistoryItem: Identifiable, Equatable {
@@ -87,16 +72,13 @@ final class AccessibilityMonitorViewModel: ObservableObject {
 
     // MARK: - Published properties
 
-    @Published private(set) var states: [AccessibilityState] = []
     @Published private(set) var display = Display()
     @Published private(set) var trackingStatus: TrackingStatus
-    @Published var searchText = ""
-    @Published var filter: Filter = .all
 
     // MARK: - Internal properties
 
     /// Every tracked setting, grouped and in Settings order.
-    var allRows: [Row] {
+    var rows: [Row] {
         return display.rows
     }
 
@@ -106,7 +88,7 @@ final class AccessibilityMonitorViewModel: ObservableObject {
     // MARK: - Private properties
 
     /// Held so the tracker lives as long as the screen showing it. The
-    /// tracker holds this view model weakly, so there is no cycle.
+    /// tracker holds this model weakly, so there is no cycle.
     private let tracker: AccessibilityTracker
     private let announce: @MainActor (String) -> Void
     private var changeTokens = [String: Int]()
@@ -116,7 +98,7 @@ final class AccessibilityMonitorViewModel: ObservableObject {
 
     ///
     /// The tracker holds its listeners weakly, so registering is all this
-    /// needs: the registration ends when the view model does.
+    /// needs: the registration ends when the model does.
     ///
     init(
         tracker: AccessibilityTracker = .shared,
@@ -131,36 +113,12 @@ final class AccessibilityMonitorViewModel: ObservableObject {
     }
 }
 
-// MARK: - Rows and sections
+// MARK: - Rows
 
-extension AccessibilityMonitorViewModel {
-
-    /// The rows the filter and search keep, under their group, empty groups left out.
-    var sections: [Section] {
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let rows = allRows.filter { row in
-            matches(row, filter: filter)
-                && (query.isEmpty
-                    || row.name.localizedCaseInsensitiveContains(query)
-                    || row.identifier.localizedCaseInsensitiveContains(query))
-        }
-        return AccessibilityGroup.allCases.compactMap { group in
-            let groupRows = rows.filter { $0.type.group == group }
-            return groupRows.isEmpty ? nil : Section(group: group, rows: groupRows)
-        }
-    }
-
-    /// The filters on offer. Changed needs live tracking.
-    var availableFilters: [Filter] {
-        return trackingStatus == .live ? Filter.allCases : [.all, .on]
-    }
-
-    func count(for filter: Filter) -> Int {
-        return allRows.filter { matches($0, filter: filter) }.count
-    }
+extension KitModel {
 
     func row(for identifier: String) -> Row? {
-        return allRows.first { $0.identifier == identifier }
+        return rows.first { $0.identifier == identifier }
     }
 
     /// This session's values for a setting, newest first.
@@ -175,20 +133,20 @@ extension AccessibilityMonitorViewModel {
 
 // MARK: - Status lines
 
-extension AccessibilityMonitorViewModel {
+extension KitModel {
 
     var onCount: Int {
-        return count(for: .on)
+        return rows.filter(\.isOn).count
     }
 
     /// The kit home's status line: "Live · 5 of 21 settings on".
     var homeStatusText: String {
-        return statusText(live: "\(onCount) of \(allRows.count) settings on", snapshot: "\(onCount) of \(allRows.count) on")
+        return statusText(live: "\(onCount) of \(rows.count) settings on", snapshot: "\(onCount) of \(rows.count) on")
     }
 
     /// The Monitor's status line: "Live · 21 tracked · 5 on".
     var monitorStatusText: String {
-        let counts = "\(allRows.count) tracked · \(onCount) on"
+        let counts = "\(rows.count) tracked · \(onCount) on"
         return statusText(live: counts, snapshot: counts)
     }
 
@@ -206,17 +164,21 @@ extension AccessibilityMonitorViewModel {
 
 // MARK: - Sharing
 
-extension AccessibilityMonitorViewModel {
+extension KitModel {
 
-    ///
-    /// The snapshot as plain text, one line per setting, plus a JSON file of
-    /// its encoded form when it can be written.
-    ///
-    func shareItems() -> [Any] {
-        let text = allRows
+    /// The snapshot as plain text, one line per setting.
+    var shareText: String {
+        return rows
             .map { "\($0.name) (\($0.identifier)): \($0.presentation.text)" }
             .joined(separator: "\n")
-        var items: [Any] = [text]
+    }
+
+    ///
+    /// The snapshot as plain text, plus a JSON file of its encoded form when
+    /// it can be written.
+    ///
+    func shareItems() -> [Any] {
+        var items: [Any] = [shareText]
 
         // A folder per share, so a file is never replaced underneath a share
         // sheet still reading it. Only one share sheet is open at a time, so
@@ -227,8 +189,7 @@ extension AccessibilityMonitorViewModel {
         let url = folder.appendingPathComponent("accessibility-snapshot.json")
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let snapshot = AccessibilitySnapshot(states: states, date: display.snapshotDate)
-        if let data = try? encoder.encode(snapshot),
+        if let data = try? encoder.encode(display.snapshot),
            (try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)) != nil,
            (try? data.write(to: url, options: .atomic)) != nil {
             items.append(url)
@@ -239,13 +200,13 @@ extension AccessibilityMonitorViewModel {
 
 // MARK: - TrackerListener
 
-extension AccessibilityMonitorViewModel: TrackerListener {
+extension KitModel: TrackerListener {
 
     func trackerDidUpdate(_ update: TrackerUpdate) {
         let snapshot = update.snapshot
         let status = update.status
         let histories = update.histories
-        let previousValues = Dictionary(states.map { ($0.identifier, $0.value) }, uniquingKeysWith: { first, _ in first })
+        let previousValues = Dictionary(display.snapshot.states.map { ($0.identifier, $0.value) }, uniquingKeysWith: { first, _ in first })
         let sortedStates = snapshot.states.sorted(by: Self.displayOrder)
 
         // Only a change the user just made: never a refresh after reconfiguring.
@@ -269,11 +230,7 @@ extension AccessibilityMonitorViewModel: TrackerListener {
         }
 
         trackingStatus = status
-        if !availableFilters.contains(filter) {
-            filter = .all
-        }
-        display = Display(rows: rows, histories: histories, snapshotDate: snapshot.date)
-        states = snapshot.states
+        display = Display(rows: rows, histories: histories, snapshot: snapshot)
 
         announceChanges(changed)
     }
@@ -281,7 +238,7 @@ extension AccessibilityMonitorViewModel: TrackerListener {
 
 // MARK: - Private methods
 
-private extension AccessibilityMonitorViewModel {
+private extension KitModel {
 
     static func displayOrder(_ lhs: AccessibilityState, _ rhs: AccessibilityState) -> Bool {
         if lhs.type.displayIndex != rhs.type.displayIndex {
@@ -306,14 +263,6 @@ private extension AccessibilityMonitorViewModel {
         }
     }
 
-    func matches(_ row: Row, filter: Filter) -> Bool {
-        switch filter {
-        case .all: return true
-        case .on: return row.isOn
-        case .changed: return row.changeDate != nil
-        }
-    }
-
     ///
     /// "Bold text turned on", queued behind whatever VoiceOver is saying.
     /// Only while the Monitor is on screen.
@@ -330,45 +279,5 @@ private extension AccessibilityMonitorViewModel {
                 announce("\(state.type.displayName), \(presentation.spokenText)")
             }
         }
-    }
-}
-
-// MARK: - Announcements and dates
-
-enum KitAnnouncer {
-
-    /// Queues an announcement behind whatever VoiceOver is already saying.
-    @MainActor
-    static func announcePolitely(_ message: String) {
-        let announcement = NSAttributedString(
-            string: message,
-            attributes: [.accessibilitySpeechQueueAnnouncement: true]
-        )
-        UIAccessibility.post(notification: .announcement, argument: announcement)
-    }
-}
-
-enum KitDateFormat {
-
-    private static let shortFormatter = KitShared(makeFormatter(timeStyle: .short))
-    private static let mediumFormatter = KitShared(makeFormatter(timeStyle: .medium))
-
-    /// "14:02", in the user's locale.
-    static func shortTime(_ date: Date) -> String {
-        return shortFormatter.value.string(from: date)
-    }
-
-    /// "14:02:19", in the user's locale.
-    static func mediumTime(_ date: Date) -> String {
-        return mediumFormatter.value.string(from: date)
-    }
-
-    private static func makeFormatter(timeStyle: DateFormatter.Style) -> DateFormatter {
-        let formatter = DateFormatter()
-        // Follows the user's region and 12/24-hour setting as they change.
-        formatter.locale = .autoupdatingCurrent
-        formatter.dateStyle = .none
-        formatter.timeStyle = timeStyle
-        return formatter
     }
 }

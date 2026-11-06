@@ -33,10 +33,9 @@ public struct AccessibilityMonitorView: View {
 
     // `@StateObject`, not `@ObservedObject`: an observed object built inline
     // is re-created whenever the containing view rebuilds this one. Each new
-    // view model registers afresh, loses the filter and search, and under
-    // `.initial` shows the values from the rebuild rather than from when the
-    // monitor was presented.
-    @StateObject private var viewModel = AccessibilityMonitorViewModel()
+    // model registers afresh and, under `.initial`, shows the values from the
+    // rebuild rather than from when the Monitor was presented.
+    @StateObject private var model = KitModel()
     let onDismiss: () -> Void
 
     ///
@@ -54,7 +53,7 @@ public struct AccessibilityMonitorView: View {
     ///
     public var body: some View {
         KitNavigationContainer {
-            MonitorScreen(model: viewModel)
+            MonitorScreen(model: model)
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
                         KitCloseButton(action: onDismiss)

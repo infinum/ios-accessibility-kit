@@ -10,7 +10,7 @@ import SwiftUI
 ///
 struct KitRootView: View {
 
-    @ObservedObject var model: AccessibilityMonitorViewModel
+    @ObservedObject var model: KitModel
     let tools: [any KitTool]
     let close: () -> Void
     let startScreenTool: (KitToolKind) -> Void
@@ -30,7 +30,7 @@ struct KitRootView: View {
 ///
 struct KitHomeView: View {
 
-    @ObservedObject var model: AccessibilityMonitorViewModel
+    @ObservedObject var model: KitModel
     let tools: [any KitTool]
     let close: () -> Void
     let startScreenTool: (KitToolKind) -> Void

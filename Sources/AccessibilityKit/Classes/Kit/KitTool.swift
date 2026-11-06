@@ -40,7 +40,7 @@ enum KitToolKind {
 
 /// What a tool's screen can use.
 struct KitToolContext {
-    let model: AccessibilityMonitorViewModel
+    let model: KitModel
 }
 
 ///

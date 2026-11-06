@@ -1,5 +1,5 @@
 //
-//  AccessibilityMonitorViewModelTests.swift
+//  KitModelTrackerTests.swift
 //  AccessibilityKitTests
 //
 
@@ -10,8 +10,8 @@ import UIKit
 @testable import AccessibilityKit
 
 @MainActor
-@Suite("AccessibilityMonitorViewModel")
-struct AccessibilityMonitorViewModelTests {
+@Suite("KitModel with a tracker")
+struct KitModelTrackerTests {
 
     ///
     /// The monitor UI must be a bystander: presenting it must not replace an
@@ -34,29 +34,29 @@ struct AccessibilityMonitorViewModelTests {
         let observation = tracker.observeAccessibilityTracking { _ in appCounter.increment() }
         queue.run()
 
-        var viewModel: AccessibilityMonitorViewModel? = AccessibilityMonitorViewModel(tracker: tracker)
+        var model: KitModel? = KitModel(tracker: tracker)
         queue.run()
 
         // Subscribed after the first snapshot has landed, so only the change
         // is counted: the VoiceOver value comes from the system and cannot be
         // flipped here, so the rows alone would look the same either way.
-        let stateUpdates = EmissionCounter()
-        let subscription = viewModel?.$states.dropFirst().sink { _ in stateUpdates.increment() }
+        let displayUpdates = EmissionCounter()
+        let subscription = model?.$display.dropFirst().sink { _ in displayUpdates.increment() }
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         queue.run()
 
         #expect(appCounter.count == 2)
-        #expect(stateUpdates.count == 1)
-        #expect(viewModel?.states.first?.type == .voiceOver)
+        #expect(displayUpdates.count == 1)
+        #expect(model?.rows.first?.type == .voiceOver)
         subscription?.cancel()
 
-        // Dismissing the monitor releases its view model, which must leave
+        // Dismissing the Monitor releases its model, which must leave
         // the app's own observation exactly as it was.
         // Declared, then assigned: `weak let` needs Swift 6.2.
-        weak var released: AccessibilityMonitorViewModel?
-        released = viewModel
-        viewModel = nil
+        weak var released: KitModel?
+        released = model
+        model = nil
 
         #expect(released == nil)
 
@@ -68,7 +68,7 @@ struct AccessibilityMonitorViewModelTests {
     }
 
     ///
-    /// Reconfiguring refreshes the monitor, so the view model must take every
+    /// Reconfiguring refreshes the Monitor, so the model must take every
     /// snapshot it is handed, not only its first.
     ///
     @Test("Shows the newly configured features after reconfiguring")
@@ -82,7 +82,7 @@ struct AccessibilityMonitorViewModelTests {
             )
         )
 
-        let viewModel = AccessibilityMonitorViewModel(tracker: tracker)
+        let model = KitModel(tracker: tracker)
         queue.run()
 
         tracker.configureAccessibilityTracking(
@@ -93,37 +93,37 @@ struct AccessibilityMonitorViewModelTests {
         )
         queue.run()
 
-        #expect(viewModel.states.map(\.type) == [.boldText])
+        #expect(model.rows.map(\.type) == [.boldText])
         withExtendedLifetime(tracker) { }
     }
 
     ///
-    /// The tracker holds the view model weakly, so unless the view model
+    /// The tracker holds the model weakly, so unless the model
     /// holds the tracker, a tracker nobody else keeps goes away and the
     /// screen silently stops updating.
     ///
     @Test("Keeps its tracker alive for as long as it lives")
     func keepsItsTrackerAlive() {
         weak var released: AccessibilityTracker?
-        let viewModel: AccessibilityMonitorViewModel
+        let model: KitModel
 
         do {
             let queue = ManualDeliveryQueue()
             let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
             released = tracker
-            viewModel = AccessibilityMonitorViewModel(tracker: tracker)
+            model = KitModel(tracker: tracker)
         }
 
         #expect(released != nil)
-        withExtendedLifetime(viewModel) { }
+        withExtendedLifetime(model) { }
     }
 
     ///
-    /// The public `AccessibilityMonitorView` builds its view model with no
+    /// The public `AccessibilityMonitorView` builds its model with no
     /// arguments, so the default must be the tracker the shared kit
-    /// configures. The status is read when the view model is created, and a
+    /// configures. The status is read when the model is created, and a
     /// tracker nobody configured would report nothing tracked. That the app's
-    /// observation keeps receiving changes while the view model is open is
+    /// observation keeps receiving changes while the model is open is
     /// covered above, on a tracker of the test's own.
     ///
     @Test("Shows the shared kit's tracking with its default wiring")
@@ -135,8 +135,8 @@ struct AccessibilityMonitorViewModelTests {
             )
         )
 
-        let viewModel = AccessibilityMonitorViewModel()
+        let model = KitModel()
 
-        #expect(viewModel.trackingStatus == .live)
+        #expect(model.trackingStatus == .live)
     }
 }

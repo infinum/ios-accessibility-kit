@@ -79,14 +79,14 @@ struct KitValuePresentationTests {
     }
 }
 
-@Suite("AccessibilityMonitorViewModel for the kit")
+@Suite("KitModel")
 @MainActor
-struct KitViewModelTests {
+struct KitModelTests {
 
     // MARK: - Registering with a tracker
 
     ///
-    /// The view model is created as the kit opens and its first update lands
+    /// The model is created as the kit opens and its first update lands
     /// a turn later. A tracked app must not flash the nothing-tracked screen
     /// in between.
     ///
@@ -97,20 +97,20 @@ struct KitViewModelTests {
             fetchType: .continuous,
             objects: [AccessibilityTrackingObject(type: .voiceOver)]
         ))
-        let viewModel = AccessibilityMonitorViewModel(tracker: tracker, announce: { _ in })
+        let model = KitModel(tracker: tracker, announce: { _ in })
 
-        #expect(viewModel.trackingStatus == .live)
-        #expect(viewModel.allRows.isEmpty)
+        #expect(model.trackingStatus == .live)
+        #expect(model.rows.isEmpty)
     }
 
     @Test("Reports nothing tracked before tracking is configured")
     func reportsNothingTracked() {
         let queue = ManualDeliveryQueue()
-        let viewModel = AccessibilityMonitorViewModel(tracker: AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue))
+        let model = KitModel(tracker: AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue))
         queue.run()
 
-        #expect(viewModel.trackingStatus == .notTracked)
-        #expect(viewModel.homeStatusText == "Tracking not set up")
+        #expect(model.trackingStatus == .notTracked)
+        #expect(model.homeStatusText == "Tracking not set up")
     }
 
     @Test("Reports nothing tracked when tracking is configured with no features")
@@ -118,11 +118,11 @@ struct KitViewModelTests {
         let queue = ManualDeliveryQueue()
         let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try AccessibilityTrackingConfiguration(fetchType: .continuous, objects: []))
-        let viewModel = AccessibilityMonitorViewModel(tracker: tracker)
+        let model = KitModel(tracker: tracker)
         queue.run()
 
-        #expect(viewModel.trackingStatus == .notTracked)
-        #expect(viewModel.monitorStatusText == "Tracking not set up")
+        #expect(model.trackingStatus == .notTracked)
+        #expect(model.monitorStatusText == "Tracking not set up")
     }
 
     // MARK: - Showing an update
@@ -132,75 +132,54 @@ struct KitViewModelTests {
         let fixture = Fixture()
         fixture.deliver()
 
-        #expect(fixture.viewModel.trackingStatus == .live)
-        #expect(fixture.viewModel.homeStatusText == "Live · 1 of 3 settings on")
-        #expect(fixture.viewModel.monitorStatusText == "Live · 3 tracked · 1 on")
-        #expect(fixture.viewModel.availableFilters == [.all, .on, .changed])
+        #expect(fixture.model.trackingStatus == .live)
+        #expect(fixture.model.homeStatusText == "Live · 1 of 3 settings on")
+        #expect(fixture.model.monitorStatusText == "Live · 3 tracked · 1 on")
     }
 
-    @Test("Reports a one-time snapshot, without the Changed filter")
+    @Test("Reports a one-time snapshot")
     func reportsASnapshot() {
         let fixture = Fixture()
         fixture.deliver(status: .snapshot(Date()))
 
-        guard case .snapshot = fixture.viewModel.trackingStatus else {
-            Issue.record("Expected a snapshot status, got \(fixture.viewModel.trackingStatus)")
+        guard case .snapshot = fixture.model.trackingStatus else {
+            Issue.record("Expected a snapshot status, got \(fixture.model.trackingStatus)")
             return
         }
-        #expect(fixture.viewModel.homeStatusText.hasPrefix("Snapshot at "))
-        #expect(fixture.viewModel.availableFilters == [.all, .on])
+        #expect(fixture.model.homeStatusText.hasPrefix("Snapshot at "))
     }
 
     ///
-    /// Rows follow Settings, not the alphabet or the raw values: VoiceOver
-    /// and Bold text in Vision, Reduce motion in Motion.
+    /// Rows follow Settings, not the alphabet or the raw values: the update
+    /// lists Bold text, Reduce motion and VoiceOver by raw value, and
+    /// Settings lists VoiceOver and Bold text in Vision before Reduce motion
+    /// in Motion.
     ///
-    @Test("Groups rows into sections in Settings order")
-    func groupsRowsIntoSections() {
+    @Test("Lists rows in Settings order")
+    func listsRowsInSettingsOrder() {
         let fixture = Fixture()
         fixture.deliver()
 
-        let sections = fixture.viewModel.sections
-        #expect(sections.map(\.group) == [.vision, .motion])
-        #expect(sections.first?.rows.map(\.type) == [.voiceOver, .boldText])
+        #expect(fixture.model.rows.map(\.type) == [.voiceOver, .boldText, .reduceMotion])
     }
 
-    @Test("Filters by On and searches names and identifiers")
-    func filtersAndSearches() {
-        let fixture = Fixture()
-        fixture.deliver()
-
-        fixture.viewModel.filter = .on
-        #expect(fixture.viewModel.sections.flatMap(\.rows).map(\.type) == [.boldText])
-
-        fixture.viewModel.filter = .all
-        fixture.viewModel.searchText = "REDUCE_"
-        #expect(fixture.viewModel.sections.flatMap(\.rows).map(\.type) == [.reduceMotion])
-
-        fixture.viewModel.searchText = "voice"
-        #expect(fixture.viewModel.sections.flatMap(\.rows).map(\.type) == [.voiceOver])
-
-        fixture.viewModel.searchText = "nothing like this"
-        #expect(fixture.viewModel.sections.isEmpty)
-    }
-
-    @Test("Marks a change, counts it, and announces it while the Monitor is on screen")
+    @Test("Marks a change and announces it while the Monitor is on screen")
     func marksAndAnnouncesAChange() {
         let fixture = Fixture()
         fixture.deliver()
-        fixture.viewModel.isMonitorVisible = true
+        fixture.model.isMonitorVisible = true
 
         fixture.deliver(on: [.boldText, .voiceOver], reason: .change, changed: [.voiceOver])
 
-        let row = fixture.viewModel.row(for: "voice_over")
-        #expect(fixture.viewModel.count(for: .changed) == 1)
+        let row = fixture.model.row(for: "voice_over")
+        #expect(fixture.model.rows.filter { $0.changeDate != nil }.map(\.type) == [.voiceOver])
         #expect(row?.changeDate != nil)
         #expect(row?.changeToken != 0)
-        #expect(fixture.viewModel.row(for: "bold_text")?.changeToken == 0)
+        #expect(fixture.model.row(for: "bold_text")?.changeToken == 0)
         #expect(row?.accessibilityLabel.hasPrefix("VoiceOver, on, changed at ") == true)
         #expect(fixture.announcements.messages == ["VoiceOver turned on"])
 
-        let history = fixture.viewModel.history(for: "voice_over")
+        let history = fixture.model.history(for: "voice_over")
         #expect(history.map(\.event) == ["Turned on", "Off at launch"])
     }
 
@@ -211,7 +190,7 @@ struct KitViewModelTests {
 
         fixture.deliver(on: [.boldText, .voiceOver], reason: .change, changed: [.voiceOver])
 
-        #expect(fixture.viewModel.row(for: "voice_over")?.isOn == true)
+        #expect(fixture.model.row(for: "voice_over")?.isOn == true)
         #expect(fixture.announcements.messages.isEmpty)
     }
 
@@ -224,14 +203,14 @@ struct KitViewModelTests {
     func announcesNothingForAReconfiguration() {
         let fixture = Fixture()
         fixture.deliver()
-        fixture.viewModel.isMonitorVisible = true
+        fixture.model.isMonitorVisible = true
 
         fixture.deliver(on: [.boldText, .voiceOver], reason: .reconfiguration)
 
-        #expect(fixture.viewModel.row(for: "voice_over")?.isOn == true)
+        #expect(fixture.model.row(for: "voice_over")?.isOn == true)
         #expect(fixture.announcements.messages.isEmpty)
         // Not a change the user made just now, so the row does not flash either.
-        #expect(fixture.viewModel.row(for: "voice_over")?.changeToken == 0)
+        #expect(fixture.model.row(for: "voice_over")?.changeToken == 0)
     }
 
     @Test("Shares one plain-text line per setting")
@@ -239,16 +218,15 @@ struct KitViewModelTests {
         let fixture = Fixture()
         fixture.deliver()
 
-        let text = fixture.viewModel.shareItems().first as? String
-        #expect(text == "VoiceOver (voice_over): Off\nBold text (bold_text): On\nReduce motion (reduce_motion): Off")
+        #expect(fixture.model.shareText == "VoiceOver (voice_over): Off\nBold text (bold_text): On\nReduce motion (reduce_motion): Off")
     }
 }
 
 // MARK: - Fixture
 
 ///
-/// A view model on a tracker that is never configured, so the tracker
-/// delivers nothing: each test hands the view model its updates itself,
+/// A model on a tracker that is never configured, so the tracker
+/// delivers nothing: each test hands the model its updates itself,
 /// for VoiceOver, Bold text and Reduce motion, and reads what it shows.
 /// Announcements are recorded.
 ///
@@ -257,15 +235,15 @@ private struct Fixture {
 
     let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: ManualDeliveryQueue())
     let announcements = Announcements()
-    let viewModel: AccessibilityMonitorViewModel
+    let model: KitModel
 
     init() {
         let announcements = self.announcements
-        viewModel = AccessibilityMonitorViewModel(tracker: tracker, announce: { announcements.messages.append($0) })
+        model = KitModel(tracker: tracker, announce: { announcements.messages.append($0) })
     }
 
     ///
-    /// Hands the view model an update in which the features in `on` are on
+    /// Hands the model an update in which the features in `on` are on
     /// and the rest off. A feature in `changed` was off at launch and changed
     /// to on since; every other feature has had its value since launch.
     ///
@@ -293,7 +271,7 @@ private struct Fixture {
                 ]
             }
         }
-        viewModel.trackerDidUpdate(TrackerUpdate(
+        model.trackerDidUpdate(TrackerUpdate(
             snapshot: AccessibilitySnapshot(states: states),
             histories: histories,
             status: status,

@@ -12,10 +12,11 @@ import UIKit
 ///
 struct MonitorScreen: View {
 
-    @ObservedObject var model: AccessibilityMonitorViewModel
+    @ObservedObject var model: KitModel
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var shareAnchor = KitPresentationAnchor()
+    @State private var query = MonitorQuery()
 
     var body: some View {
         // A container that stays put while its content switches, so appear
@@ -55,8 +56,8 @@ struct MonitorScreen: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 12)
 
-                let sections = model.sections
-                if sections.isEmpty, !model.allRows.isEmpty {
+                let sections = query.sections(of: model.rows, status: model.trackingStatus)
+                if sections.isEmpty, !model.rows.isEmpty {
                     Text(verbatim: "Nothing matches this filter yet.")
                         .font(.body)
                         .foregroundColor(KitColor.text2)
@@ -93,7 +94,7 @@ struct MonitorScreen: View {
                     .background(KitColor.sheet)
             }
 
-            KitSearchField(placeholder: "Search features", text: $model.searchText)
+            KitSearchField(placeholder: "Search features", text: $query.searchText)
 
             chips
         }
@@ -105,13 +106,13 @@ struct MonitorScreen: View {
             ? AnyLayoutStack.vertical
             : AnyLayoutStack.horizontal
         layout.stack {
-            ForEach(model.availableFilters, id: \.self) { filter in
+            ForEach(MonitorQuery.availableFilters(for: model.trackingStatus), id: \.self) { filter in
                 KitChip(
                     title: filter.title,
-                    count: model.count(for: filter),
-                    isSelected: model.filter == filter
+                    count: filter.count(in: model.rows),
+                    isSelected: query.effectiveFilter(for: model.trackingStatus) == filter
                 ) {
-                    model.filter = filter
+                    query.filter = filter
                 }
             }
         }
@@ -145,7 +146,7 @@ private enum AnyLayoutStack {
 ///
 struct KitFeatureRow: View {
 
-    let row: AccessibilityMonitorViewModel.Row
+    let row: KitModel.Row
     let isStacked: Bool
 
     @State private var isHighlighted = false

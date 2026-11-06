@@ -363,7 +363,7 @@ private extension AccessibilityTracker {
 // MARK: - Weak listener
 
 ///
-/// Listeners are held weakly: the view model holds its tracker, so holding
+/// Listeners are held weakly: ``KitModel`` holds its tracker, so holding
 /// it back would be a cycle, and a dismissed screen must stop being told
 /// anything.
 ///

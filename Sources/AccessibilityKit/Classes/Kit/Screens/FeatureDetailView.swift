@@ -12,7 +12,7 @@ import UIKit
 ///
 struct FeatureDetailView: View {
 
-    @ObservedObject var model: AccessibilityMonitorViewModel
+    @ObservedObject var model: KitModel
     let identifier: String
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -43,7 +43,7 @@ struct FeatureDetailView: View {
         return model.row(for: identifier)?.name ?? identifier
     }
 
-    private func content(for row: AccessibilityMonitorViewModel.Row) -> some View {
+    private func content(for row: KitModel.Row) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -67,7 +67,7 @@ struct FeatureDetailView: View {
         }
     }
 
-    private func currentValue(for row: AccessibilityMonitorViewModel.Row) -> some View {
+    private func currentValue(for row: KitModel.Row) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             KitCaption(text: "Current value")
             Text(verbatim: row.presentation.text)
@@ -81,7 +81,7 @@ struct FeatureDetailView: View {
         .accessibilityLabel(Text(verbatim: "Current value, \(row.presentation.spokenText)"))
     }
 
-    private func facts(for row: AccessibilityMonitorViewModel.Row) -> some View {
+    private func facts(for row: KitModel.Row) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 12) {
                 fact(title: "Identifier", value: row.identifier, font: .subheadline.monospaced())
