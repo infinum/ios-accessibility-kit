@@ -82,7 +82,7 @@ final class AccessibilityTracker {
     ///
     init(
         notificationCenter: NotificationCenter = .default,
-        readState: @escaping AccessibilityStateReader = AccessibilityObjectFactory.readState,
+        readState: @escaping AccessibilityStateReader = AccessibilityType.readSystemState,
         launchDate: Date? = ProcessLaunch.date,
         isPrewarmed: Bool = ProcessLaunch.isPrewarmed,
         deliveryQueue: any DeliveryQueue = MainDeliveryQueue()

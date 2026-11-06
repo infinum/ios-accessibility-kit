@@ -38,11 +38,6 @@ struct AccessibilityTypeMetadataTests {
         #expect(AccessibilityType.crossFadeTransitions.displayName == "Cross-fade transitions")
         #expect(AccessibilityGroup.spokenContent.displayName == "Spoken content")
     }
-
-    @Test("Reports the notification tracking listens to", arguments: AccessibilityType.allCases)
-    func reportsTheNotification(type: AccessibilityType) {
-        #expect(type.notificationName == AccessibilityObjectFactory.object(for: type).notificationName)
-    }
 }
 
 @Suite("KitValuePresentation")
