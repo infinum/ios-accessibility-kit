@@ -74,6 +74,9 @@ One thing the kit offers from its home. The Monitor is the first; Audit, Inspect
 The kit's tool that lists every tracked feature with its value, its changes and its history.
 _Avoid_: using "monitor" for the tracker
 
+**Screen tool**:
+A tool that works on the app itself: the kit closes while it runs and its button stays hidden until it finishes.
+
 **Entry point**:
 A way people open the kit: the floating button or a shake of the device.
 _Avoid_: trigger
