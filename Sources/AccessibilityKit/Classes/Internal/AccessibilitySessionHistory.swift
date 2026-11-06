@@ -30,7 +30,7 @@ struct AccessibilityHistoryEntry: Equatable, Sendable {
 ///
 /// What each tracked feature has reported this session, per feature type.
 ///
-/// It holds the system's own values: the states the subjects read on every
+/// It holds the system's own values: the states the tracker reads on every
 /// notification anyway, so recording runs no app code. Transforms belong to
 /// whoever displays the history, which keeps it valid across
 /// reconfigurations that change them.

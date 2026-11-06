@@ -8,18 +8,19 @@
 import Foundation
 
 ///
-/// Holds the tracking configuration, owns a subject per tracked feature,
-/// records each feature's history for the session, and delivers snapshots to
-/// the app's observations and updates to any listeners — the kit — which are
-/// held weakly and never disturb the observations. An update carries what
-/// the kit shows: the snapshot, each feature's displayed history and the
-/// tracking status, worked out together so they agree.
+/// Holds the tracking configuration, follows each tracked feature's change
+/// notification, records each feature's history for the session, and
+/// delivers snapshots to the app's observations and updates to any
+/// listeners — the kit — which are held weakly and never disturb the
+/// observations. An update carries what the kit shows: the snapshot, each
+/// feature's displayed history and the tracking status, worked out together
+/// so they agree.
 ///
 /// Everything it does is main-actor work — reading accessibility state means
-/// touching `@MainActor` UIKit statics — so the main actor serialises subject
-/// configuration against snapshot creation, and no queue of its own is needed.
-/// Completions are delivered asynchronously, on its delivery queue: the main
-/// queue outside tests.
+/// touching `@MainActor` UIKit statics — so the main actor serialises changes
+/// and reconfiguration against snapshot creation, and no queue of its own is
+/// needed. Completions are delivered asynchronously, on its delivery queue:
+/// the main queue outside tests.
 ///
 @MainActor
 final class AccessibilityTracker {
@@ -51,7 +52,7 @@ final class AccessibilityTracker {
     private var completions = [(id: Int, state: ObservationState, completion: (AccessibilitySnapshot) -> Void)]()
     private var nextObservationID = 0
     private var listeners = [WeakListener]()
-    private var subjects = [Subject]()
+    private var registrations = [FeatureRegistration]()
     private var history = AccessibilitySessionHistory()
     ///
     /// Recorded values through their transform, by identifier and entry
@@ -149,48 +150,29 @@ final class AccessibilityTracker {
     }
 }
 
-// MARK: - AccessibilityObserver
-
-extension AccessibilityTracker: AccessibilityObserver {
-
-    ///
-    /// The system's value is recorded on every change, whoever is listening,
-    /// so the session history is complete whenever the kit is opened later.
-    /// It is the state the subject already read, so no app code runs for it.
-    ///
-    func accessibilityStateDidChange(_ state: AccessibilityState) {
-        history.record(state, at: Date())
-
-        guard configuration?.fetchType == .continuous else { return }
-        pruneListeners()
-        takeAndDeliverSnapshot(toObservations: completions.map(\.id), listeners: listeners, reason: .change)
-    }
-}
-
 // MARK: - Private methods
 
 private extension AccessibilityTracker {
 
     ///
-    /// Subscribes to the new features, carries their history over, and hands
-    /// listeners — the kit — the newly configured features without waiting
-    /// for a change, so a screen never keeps showing rows for features that
-    /// are no longer tracked, nor stays empty because its first update was
-    /// dropped. The app's own observations are left alone: reconfiguring
-    /// emits no snapshot to them.
+    /// Registers for the new features' changes, carries their history over,
+    /// and hands listeners — the kit — the newly configured features without
+    /// waiting for a change, so a screen never keeps showing rows for
+    /// features that are no longer tracked, nor stays empty because its first
+    /// update was dropped. The app's own observations are left alone:
+    /// reconfiguring emits no snapshot to them.
     ///
     func configurationDidChange() {
         configurationGeneration += 1
         guard let configuration else { return }
 
-        configureSubjects(for: configuration)
+        // Each feature once, however many objects track it.
+        let types = Set(configuration.objects.map(\.type))
+        registerForChanges(to: types)
 
         // Read once, for the history and for the refresh below alike.
         let now = Date()
-        let states = Dictionary(
-            Set(configuration.objects.map(\.type)).map { ($0, readState($0)) },
-            uniquingKeysWith: { first, _ in first }
-        )
+        let states = Dictionary(uniqueKeysWithValues: types.map { ($0, readState($0)) })
         // A prewarmed process started long before the launch, so its first
         // configuration is taken to be the launch.
         let atLaunch = isPrewarmed
@@ -206,13 +188,32 @@ private extension AccessibilityTracker {
         )
     }
 
-    func configureSubjects(for configuration: AccessibilityTrackingConfiguration) {
-        // The old subjects are released by the assignment below, and a
-        // released subject takes its observer list and its notification
-        // registration with it.
-        subjects = Set(configuration.objects.map(\.type))
-            .map { AccessibilitySubject(type: $0, notificationCenter: notificationCenter, readState: readState) }
-        subjects.forEach { $0.addObserver(self) }
+    ///
+    /// One registration per feature, so a feature several objects track has
+    /// each change handled once.
+    ///
+    func registerForChanges(to types: Set<AccessibilityType>) {
+        // Replacing the registrations releases the old ones, and each
+        // unregisters as it goes.
+        registrations = types.map { type in
+            FeatureRegistration(name: type.feature.notificationName, notificationCenter: notificationCenter) { [weak self] in
+                self?.featureDidChange(type)
+            }
+        }
+    }
+
+    ///
+    /// The system's value is read and recorded on every change, whoever is
+    /// listening, so the session history is complete whenever the kit is
+    /// opened later. Recording runs no app code: transforms run only when a
+    /// snapshot is taken.
+    ///
+    func featureDidChange(_ type: AccessibilityType) {
+        history.record(readState(type), at: Date())
+
+        guard configuration?.fetchType == .continuous else { return }
+        pruneListeners()
+        takeAndDeliverSnapshot(toObservations: completions.map(\.id), listeners: listeners, reason: .change)
     }
 
     ///
@@ -369,4 +370,66 @@ private extension AccessibilityTracker {
 private struct WeakListener {
 
     weak var listener: TrackerListener?
+}
+
+// MARK: - Feature registration
+
+///
+/// Receives one feature's change notification for as long as it lives, and
+/// unregisters when it is freed.
+///
+@MainActor
+private final class FeatureRegistration {
+
+    // MARK: - Private properties
+
+    private let notificationCenter: NotificationCenter
+    private let onChange: @MainActor () -> Void
+
+    // MARK: - Lifecycle
+
+    init(
+        name: Notification.Name,
+        notificationCenter: NotificationCenter,
+        onChange: @escaping @MainActor () -> Void
+    ) {
+        self.notificationCenter = notificationCenter
+        self.onChange = onChange
+
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(notificationDidPost(_:)),
+            name: name,
+            object: nil
+        )
+    }
+
+    deinit {
+        notificationCenter.removeObserver(self)
+    }
+
+    // MARK: - Internal methods
+
+    ///
+    /// `NotificationCenter` dispatches this selector on whichever thread
+    /// posted, so it cannot be main-actor isolated by declaration. UIKit
+    /// posts its accessibility status notifications on the main thread, which
+    /// is the path that matters and is handled without a hop, so the tracker
+    /// hears of the change in the same turn.
+    ///
+    /// A post from any other thread is carried to the main actor instead of
+    /// trapping there. The registration is on a notification centre the
+    /// library does not own, so anything in the process can post these names
+    /// from anywhere, and `MainActor.assumeIsolated` would make that somebody
+    /// else's background post a crash in a shipped app.
+    ///
+    @objc
+    nonisolated func notificationDidPost(_ notification: Notification) {
+        guard Thread.isMainThread else {
+            Task { @MainActor [weak self] in self?.onChange() }
+            return
+        }
+
+        MainActor.assumeIsolated { onChange() }
+    }
 }
