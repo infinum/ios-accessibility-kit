@@ -16,7 +16,8 @@ import Foundation
 /// Everything it does is main-actor work — reading accessibility state means
 /// touching `@MainActor` UIKit statics — so the main actor serialises subject
 /// configuration against snapshot creation, and no queue of its own is needed.
-/// Completions are delivered asynchronously on the main queue.
+/// Completions are delivered asynchronously, on its delivery queue: the main
+/// queue outside tests.
 ///
 @MainActor
 final class AccessibilityTracker {
@@ -56,6 +57,8 @@ final class AccessibilityTracker {
     private let notificationCenter: NotificationCenter
     private let readState: AccessibilityStateReader
     private let launchDate: Date?
+    private let isPrewarmed: Bool
+    private let deliveryQueue: any DeliveryQueue
 
     // MARK: - Lifecycle
 
@@ -66,15 +69,23 @@ final class AccessibilityTracker {
     ///     their own, so values can change on cue.
     ///   - launchDate: When the app launched, so history started soon after
     ///     reads as "at launch".
+    ///   - isPrewarmed: Whether the system started the process ahead of the
+    ///     launch, in which case the first configuration counts as the launch.
+    ///   - deliveryQueue: Where deliveries run, on a later main-queue turn.
+    ///     Tests supply one they run step by step.
     ///
     init(
         notificationCenter: NotificationCenter = .default,
         readState: @escaping AccessibilityStateReader = AccessibilityObjectFactory.readState,
-        launchDate: Date? = ProcessLaunch.date
+        launchDate: Date? = ProcessLaunch.date,
+        isPrewarmed: Bool = ProcessLaunch.isPrewarmed,
+        deliveryQueue: any DeliveryQueue = MainDeliveryQueue()
     ) {
         self.notificationCenter = notificationCenter
         self.readState = readState
         self.launchDate = launchDate
+        self.isPrewarmed = isPrewarmed
+        self.deliveryQueue = deliveryQueue
     }
 
     // MARK: - Internal methods
@@ -106,7 +117,7 @@ final class AccessibilityTracker {
         completions.append((id: id, state: observation.state, completion: completion))
         // Still alive a turn later means the caller kept it.
         let state = observation.state
-        DispatchQueue.main.async { state.markKept() }
+        deliveryQueue.schedule { state.markKept() }
 
         takeAndDeliverSnapshot(toObservations: [id], observers: [], reason: .registration)
 
@@ -191,7 +202,7 @@ private extension AccessibilityTracker {
         )
         // A prewarmed process started long before the launch, so its first
         // configuration is taken to be the launch.
-        let atLaunch = ProcessLaunch.isPrewarmed
+        let atLaunch = isPrewarmed
             || launchDate.map { now.timeIntervalSince($0) < ProcessLaunch.window } ?? true
         history.track(Array(states.values), at: now, atLaunch: atLaunch)
 
@@ -247,8 +258,8 @@ private extension AccessibilityTracker {
     }
 
     ///
-    /// Delivers a snapshot on a later main-queue turn, never inside the call
-    /// that scheduled it, to the observations and then to the observers. Both
+    /// Delivers a snapshot on the delivery queue, never inside the call that
+    /// scheduled it, to the observations and then to the observers. Both
     /// are captured now, so a snapshot goes only to whoever was registered
     /// when it was taken.
     ///
@@ -264,7 +275,7 @@ private extension AccessibilityTracker {
         observers: [WeakSnapshotObserver],
         reason: SnapshotDeliveryReason
     ) {
-        DispatchQueue.main.async { [weak self] in
+        deliveryQueue.schedule { [weak self] in
             guard let self else { return }
 
             for id in ids {

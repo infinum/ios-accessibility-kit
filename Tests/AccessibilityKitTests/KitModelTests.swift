@@ -103,8 +103,9 @@ struct KitViewModelTests {
 
     @Test("Reports nothing tracked before tracking is configured")
     func reportsNothingTracked() async {
-        let viewModel = AccessibilityMonitorViewModel(tracker: AccessibilityTracker(notificationCenter: NotificationCenter()))
-        await settle()
+        let queue = ManualDeliveryQueue()
+        let viewModel = AccessibilityMonitorViewModel(tracker: AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue))
+        queue.run()
 
         #expect(viewModel.trackingStatus == .notTracked)
         #expect(viewModel.homeStatusText == "Tracking not set up")
@@ -112,10 +113,11 @@ struct KitViewModelTests {
 
     @Test("Reports nothing tracked when tracking is configured with no features")
     func reportsNothingTrackedForAnEmptyConfiguration() async throws {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try AccessibilityTrackingConfiguration(fetchType: .continuous, objects: []))
         let viewModel = AccessibilityMonitorViewModel(tracker: tracker)
-        await settle()
+        queue.run()
 
         #expect(viewModel.trackingStatus == .notTracked)
         #expect(viewModel.monitorStatusText == "Tracking not set up")
@@ -124,7 +126,7 @@ struct KitViewModelTests {
     @Test("Reports live tracking with its counts")
     func reportsLiveTracking() async throws {
         let fixture = try Fixture(fetchType: .continuous)
-        await poll(until: { !fixture.viewModel.states.isEmpty })
+        fixture.queue.run()
 
         #expect(fixture.viewModel.trackingStatus == .live)
         #expect(fixture.viewModel.homeStatusText == "Live · 1 of 3 settings on")
@@ -135,7 +137,7 @@ struct KitViewModelTests {
     @Test("Reports a one-time snapshot, without the Changed filter")
     func reportsASnapshot() async throws {
         let fixture = try Fixture(fetchType: .initial)
-        await poll(until: { !fixture.viewModel.states.isEmpty })
+        fixture.queue.run()
 
         guard case .snapshot = fixture.viewModel.trackingStatus else {
             Issue.record("Expected a snapshot status, got \(fixture.viewModel.trackingStatus)")
@@ -152,7 +154,7 @@ struct KitViewModelTests {
     @Test("Groups rows into sections in Settings order")
     func groupsRowsIntoSections() async throws {
         let fixture = try Fixture(fetchType: .continuous)
-        await poll(until: { !fixture.viewModel.states.isEmpty })
+        fixture.queue.run()
 
         let sections = fixture.viewModel.sections
         #expect(sections.map(\.group) == [.vision, .motion])
@@ -162,7 +164,7 @@ struct KitViewModelTests {
     @Test("Filters by On and searches names and identifiers")
     func filtersAndSearches() async throws {
         let fixture = try Fixture(fetchType: .continuous)
-        await poll(until: { !fixture.viewModel.states.isEmpty })
+        fixture.queue.run()
 
         fixture.viewModel.filter = .on
         #expect(fixture.viewModel.sections.flatMap(\.rows).map(\.type) == [.boldText])
@@ -181,13 +183,13 @@ struct KitViewModelTests {
     @Test("Marks a change, counts it, and announces it while the Monitor is on screen")
     func marksAndAnnouncesAChange() async throws {
         let fixture = try Fixture(fetchType: .continuous)
-        await poll(until: { !fixture.viewModel.states.isEmpty })
+        fixture.queue.run()
         fixture.viewModel.isMonitorVisible = true
 
         fixture.system.values[.voiceOver] = .flag(true)
         fixture.center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        // The history records the change at once; the snapshot lands a turn later.
-        await poll(until: { fixture.viewModel.row(for: "voice_over")?.isOn == true })
+        // The history records the change at once; the snapshot lands when the queue runs.
+        fixture.queue.run()
 
         let row = fixture.viewModel.row(for: "voice_over")
         #expect(fixture.viewModel.count(for: .changed) == 1)
@@ -204,11 +206,11 @@ struct KitViewModelTests {
     @Test("Announces nothing while the Monitor is off screen")
     func announcesNothingOffScreen() async throws {
         let fixture = try Fixture(fetchType: .continuous)
-        await poll(until: { !fixture.viewModel.states.isEmpty })
+        fixture.queue.run()
 
         fixture.system.values[.voiceOver] = .flag(true)
         fixture.center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { fixture.viewModel.row(for: "voice_over")?.isOn == true })
+        fixture.queue.run()
 
         #expect(fixture.announcements.messages.isEmpty)
     }
@@ -221,13 +223,13 @@ struct KitViewModelTests {
     @Test("Announces nothing for a refresh after reconfiguring")
     func announcesNothingForAReconfiguration() async throws {
         let fixture = try Fixture(fetchType: .continuous)
-        await poll(until: { !fixture.viewModel.states.isEmpty })
+        fixture.queue.run()
         fixture.viewModel.isMonitorVisible = true
 
         // Changed with no notification, so only the reconfiguration reads it.
         fixture.system.values[.voiceOver] = .flag(true)
         fixture.tracker.configureAccessibilityTracking(with: try Fixture.configuration(fetchType: .continuous))
-        await poll(until: { fixture.viewModel.row(for: "voice_over")?.isOn == true })
+        fixture.queue.run()
 
         #expect(fixture.announcements.messages.isEmpty)
         // Not a change the user made just now, so the row does not flash either.
@@ -243,7 +245,8 @@ struct KitViewModelTests {
     func showsHistoryThroughTheTransform() async throws {
         let center = NotificationCenter()
         let system = SystemValues()
-        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
@@ -257,12 +260,12 @@ struct KitViewModelTests {
             )
         )
         let viewModel = AccessibilityMonitorViewModel(tracker: tracker, announce: { _ in })
-        await poll(until: { !viewModel.states.isEmpty })
+        queue.run()
 
         // Large to extra large: still not large text.
         system.values[.fontScale] = .scale(19.0 / 17)
         center.post(name: UIContentSizeCategory.didChangeNotification, object: nil)
-        await settle()
+        queue.run()
 
         #expect(viewModel.row(for: "large_text")?.changeDate == nil)
         #expect(viewModel.history(for: "large_text").map(\.event) == ["Off at launch"])
@@ -270,7 +273,7 @@ struct KitViewModelTests {
         // Then to an accessibility size: now it is.
         system.values[.fontScale] = .scale(40.0 / 17)
         center.post(name: UIContentSizeCategory.didChangeNotification, object: nil)
-        await poll(until: { viewModel.row(for: "large_text")?.isOn == true })
+        queue.run()
 
         #expect(viewModel.row(for: "large_text")?.changeDate != nil)
         #expect(viewModel.history(for: "large_text").map(\.event) == ["Turned on", "Off at launch"])
@@ -280,7 +283,7 @@ struct KitViewModelTests {
     @Test("Shares one plain-text line per setting")
     func sharesPlainText() async throws {
         let fixture = try Fixture(fetchType: .continuous)
-        await poll(until: { !fixture.viewModel.states.isEmpty })
+        fixture.queue.run()
 
         let text = fixture.viewModel.shareItems().first as? String
         #expect(text == "VoiceOver (voice_over): Off\nBold text (bold_text): On\nReduce motion (reduce_motion): Off")
@@ -298,13 +301,14 @@ private struct Fixture {
 
     let center = NotificationCenter()
     let system = SystemValues()
+    let queue = ManualDeliveryQueue()
     let tracker: AccessibilityTracker
     let announcements = Announcements()
     let viewModel: AccessibilityMonitorViewModel
 
     init(fetchType: AccessibilityFetchType) throws {
         system.values[.boldText] = .flag(true)
-        tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date())
+        tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: fetchType))
         let announcements = self.announcements
         viewModel = AccessibilityMonitorViewModel(tracker: tracker, announce: { announcements.messages.append($0) })

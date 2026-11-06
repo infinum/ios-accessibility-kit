@@ -19,33 +19,36 @@ import UIKit
 @MainActor
 struct AccessibilityTrackerTests {
 
-    @Test("Emits the initial snapshot on the main queue")
-    func emitsInitialSnapshotOnMainQueue() async throws {
+    ///
+    /// The one test on the real main queue, which the tracker delivers on
+    /// outside tests; every other test runs a delivery queue by hand.
+    ///
+    @Test("Delivers on the main queue by default")
+    func deliversOnTheMainQueueByDefault() async throws {
         let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let recorder = MainThreadRecorder()
         let observation = tracker.observeAccessibilityTracking { _ in recorder.record(Thread.isMainThread) }
         await poll(until: { recorder.wasMainThread != nil })
-        await settle()
 
         #expect(recorder.wasMainThread == true)
-        #expect(recorder.count == 1)
         withExtendedLifetime((tracker, observation)) { }
     }
 
     @Test("Does not emit again for a change when fetching once")
     func doesNotEmitAgainForInitialFetch() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await settle()
+        queue.run()
 
         #expect(counter.count == 1)
         withExtendedLifetime((tracker, observation)) { }
@@ -54,20 +57,21 @@ struct AccessibilityTrackerTests {
     @Test("Emits again for every change when observing continuously")
     func emitsForEveryChangeWhenContinuous() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { counter.count == 2 })
+        queue.run()
 
         #expect(counter.count == 2)
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { counter.count == 3 })
+        queue.run()
 
         #expect(counter.count == 3)
         withExtendedLifetime((tracker, observation)) { }
@@ -76,7 +80,8 @@ struct AccessibilityTrackerTests {
     @Test("Observes the features supplied by the newest configuration")
     func observesTheNewestConfiguration() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
         tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
@@ -87,26 +92,25 @@ struct AccessibilityTrackerTests {
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await poll(until: { counter.count == 2 })
+        queue.run()
 
-        // Asserted before the next post: polling returns at its timeout
-        // without failing, so a boldText change that never arrived would
-        // otherwise be covered by the voiceOver post below.
+        // Asserted before the next post, so a boldText change that never
+        // arrived cannot be covered by the voiceOver post below.
         #expect(counter.count == 2)
 
         // The replaced configuration's feature must no longer be observed.
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await settle()
+        queue.run()
 
         #expect(counter.count == 2)
         withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
-    /// Waits for the initial snapshot first, so the tracker has been
+    /// Delivers the initial snapshot first, so the tracker has been
     /// configured, observed and has delivered before it is let go: its
     /// release then shows no subject or pending delivery holds it.
     ///
@@ -116,11 +120,12 @@ struct AccessibilityTrackerTests {
         weak var released: AccessibilityTracker?
 
         do {
-            let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+            let queue = ManualDeliveryQueue()
+            let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
             tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
             let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
             released = tracker
-            await poll(until: { counter.count == 1 })
+            queue.run()
             withExtendedLifetime(observation) { }
         }
 
@@ -131,12 +136,13 @@ struct AccessibilityTrackerTests {
     @Test("Keeps an existing observation when tracking is reconfigured")
     func keepsObservationAcrossReconfiguration() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
         tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
@@ -144,19 +150,19 @@ struct AccessibilityTrackerTests {
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
-        await settle()
+        queue.run()
 
         // Reconfiguring emits no snapshot of its own to the completion.
         #expect(counter.count == 1)
 
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await poll(until: { counter.count == 2 })
+        queue.run()
 
         #expect(counter.count == 2)
 
         // The replaced configuration's feature must no longer be observed.
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await settle()
+        queue.run()
 
         #expect(counter.count == 2)
         withExtendedLifetime((tracker, observation)) { }
@@ -170,7 +176,8 @@ struct AccessibilityTrackerTests {
     @Test("Emits once per change for a feature tracked under two identifiers")
     func emitsOnceForFeatureTrackedTwice() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
                 fetchType: .continuous,
@@ -187,11 +194,10 @@ struct AccessibilityTrackerTests {
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { counter.record($0) }
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
         center.post(name: UIContentSizeCategory.didChangeNotification, object: nil)
-        await poll(until: { counter.count >= 2 })
-        await settle()
+        queue.run()
 
         #expect(counter.count == 2)
         #expect(Set(counter.lastIdentifiers) == ["font_scale", "large_text_enabled"])
@@ -199,24 +205,21 @@ struct AccessibilityTrackerTests {
     }
 
     ///
-    /// Runs on the main actor so the change, the reconfiguration and the
-    /// second observation all happen before the main queue gets a chance to
-    /// deliver the snapshot the change queued.
-    ///
-    /// Observing again queues the new configuration's initial snapshot
-    /// behind the stale one on the main queue, so its arrival bounds the
-    /// wait without a fixed delay: had the stale snapshot been delivered, it
-    /// would have arrived first.
+    /// The change, the reconfiguration and the second observation all happen
+    /// before the queue runs, so the snapshot the change queued is still
+    /// pending when tracking is replaced. Had it been delivered, it would
+    /// have arrived ahead of the second observation's first snapshot.
     ///
     @Test("Drops a snapshot taken under a configuration that has since been replaced")
     func dropsSnapshotFromReplacedConfiguration() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { counter.record($0) }
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         tracker.configureAccessibilityTracking(
@@ -226,10 +229,31 @@ struct AccessibilityTrackerTests {
             )
         )
         let observation2 = tracker.observeAccessibilityTracking { counter.record($0) }
-        await poll(until: { counter.emittedTypes.contains([.boldText]) })
+        queue.run()
 
         #expect(counter.emittedTypes == [[.voiceOver], [.boldText]])
         withExtendedLifetime((tracker, observation, observation2)) { }
+    }
+
+    ///
+    /// The debug warning for an observation that was never stored fires when
+    /// one ends in the turn it was created in. Still alive when the queue
+    /// next runs, it counts as kept.
+    ///
+    @Test("Counts an observation as kept once it outlives the turn it was created in")
+    func countsAnObservationAsKeptAfterItsFirstTurn() throws {
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        let observation = tracker.observeAccessibilityTracking { _ in }
+
+        #expect(observation.state.wasKept == false)
+
+        queue.run()
+
+        #expect(observation.state.wasKept == true)
+        withExtendedLifetime(tracker) { }
     }
 
     ///
@@ -238,7 +262,8 @@ struct AccessibilityTrackerTests {
     ///
     @Test("Delivers the first snapshot after observing returns, never inside it")
     func deliversFirstSnapshotAfterObservingReturns() async throws {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
@@ -246,23 +271,23 @@ struct AccessibilityTrackerTests {
 
         #expect(counter.count == 0)
 
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
         #expect(counter.count == 1)
         withExtendedLifetime((tracker, observation)) { }
     }
 
     ///
-    /// Observing and reconfiguring in one turn leaves the first snapshot in
-    /// flight under the replaced configuration. A change posted after the
-    /// reconfiguration is delivered behind it, so its arrival bounds the
-    /// wait: had the stale first snapshot been delivered, it would have
-    /// arrived first.
+    /// Observing and reconfiguring before the queue runs leaves the first
+    /// snapshot pending under the replaced configuration. Had it been
+    /// delivered, it would have arrived ahead of the change posted after the
+    /// reconfiguration.
     ///
     @Test("Drops a first snapshot taken under a configuration that has since been replaced")
     func dropsFirstSnapshotFromReplacedConfiguration() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
@@ -274,7 +299,7 @@ struct AccessibilityTrackerTests {
             )
         )
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await poll(until: { counter.emittedTypes.contains([.boldText]) })
+        queue.run()
 
         #expect(counter.emittedTypes == [[.boldText]])
         withExtendedLifetime((tracker, observation)) { }
@@ -282,11 +307,12 @@ struct AccessibilityTrackerTests {
 
     @Test("Delivers nothing when tracking has not been configured")
     func deliversNothingWithoutConfiguration() async {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
-        await settle()
+        queue.run()
 
         #expect(counter.count == 0)
         withExtendedLifetime((tracker, observation)) { }
@@ -295,23 +321,23 @@ struct AccessibilityTrackerTests {
     @Test("Delivers every change to every observation")
     func deliversToEveryObservation() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let first = EmissionCounter()
         let second = EmissionCounter()
         let firstObservation = tracker.observeAccessibilityTracking { _ in first.increment() }
-        await poll(until: { first.count == 1 })
+        queue.run()
 
         let secondObservation = tracker.observeAccessibilityTracking { _ in second.increment() }
-        await poll(until: { second.count == 1 })
-        await settle()
+        queue.run()
 
         // Each observation gets its own first snapshot, and only its own.
         #expect(first.count == 1)
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { first.count == 2 && second.count == 2 })
+        queue.run()
 
         #expect(first.count == 2)
         #expect(second.count == 2)
@@ -324,15 +350,15 @@ struct AccessibilityTrackerTests {
     ///
     @Test("Delivers each observation its own first snapshot once when observing twice in one turn")
     func deliversEachFirstSnapshotOnce() async throws {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let first = EmissionCounter()
         let second = EmissionCounter()
         let firstObservation = tracker.observeAccessibilityTracking { _ in first.increment() }
         let secondObservation = tracker.observeAccessibilityTracking { _ in second.increment() }
-        await poll(until: { first.count == 1 && second.count == 1 })
-        await settle()
+        queue.run()
 
         #expect(first.count == 1)
         #expect(second.count == 1)
@@ -342,19 +368,19 @@ struct AccessibilityTrackerTests {
     @Test("Stops calling an observation once it is cancelled")
     func stopsCallingACancelledObservation() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let cancelled = EmissionCounter()
         let kept = EmissionCounter()
         let cancelledObservation = tracker.observeAccessibilityTracking { _ in cancelled.increment() }
         let keptObservation = tracker.observeAccessibilityTracking { _ in kept.increment() }
-        await poll(until: { cancelled.count == 1 && kept.count == 1 })
+        queue.run()
 
         cancelledObservation.cancel()
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { kept.count == 2 })
-        await settle()
+        queue.run()
 
         #expect(cancelled.count == 1)
         #expect(kept.count == 2)
@@ -368,17 +394,18 @@ struct AccessibilityTrackerTests {
     @Test("Stops calling an observation once it is released")
     func stopsCallingAReleasedObservation() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         var observation: AccessibilityObservation? = tracker.observeAccessibilityTracking { _ in counter.increment() }
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
         withExtendedLifetime(observation) { }
         observation = nil
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await settle()
+        queue.run()
 
         #expect(counter.count == 1)
         withExtendedLifetime(tracker) { }
@@ -392,7 +419,8 @@ struct AccessibilityTrackerTests {
     @Test("Ends an observation whose completion holds another observation")
     func endsNestedObservations() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let innerCalls = EmissionCounter()
@@ -412,7 +440,7 @@ struct AccessibilityTrackerTests {
             }
         }
         let kept = tracker.observeAccessibilityTracking { _ in keptCalls.increment() }
-        await poll(until: { innerCalls.count == 1 && outerCalls.count == 1 && keptCalls.count == 1 })
+        queue.run()
 
         // Releasing the outer observation releases the holder, and with it
         // the inner observation, from inside the outer one's removal.
@@ -420,8 +448,7 @@ struct AccessibilityTrackerTests {
         outer = nil
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { keptCalls.count == 2 })
-        await settle()
+        queue.run()
 
         #expect(releasedInner == nil)
         #expect(innerCalls.count == 1)
@@ -437,18 +464,19 @@ struct AccessibilityTrackerTests {
     @Test("Does not call a cancelled observation for a change already in flight")
     func doesNotCallCancelledObservationForChangeInFlight() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { _ in counter.increment() }
-        await poll(until: { counter.count == 1 })
+        queue.run()
 
-        // Posted and cancelled in the same turn, so the change's delivery is
-        // still scheduled when the observation ends.
+        // Posted and cancelled before the queue runs, so the change's
+        // delivery is still pending when the observation ends.
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         observation.cancel()
-        await settle()
+        queue.run()
 
         #expect(counter.count == 1)
         withExtendedLifetime(tracker) { }
@@ -457,12 +485,13 @@ struct AccessibilityTrackerTests {
     ///
     /// A snapshot nobody can receive is not worth reading: a transform runs
     /// once per snapshot taken, so counting its calls shows whether one was.
-    /// A change is handled inside the post, so no wait is needed.
+    /// A change is handled inside the post, so the queue need not run.
     ///
     @Test("Takes no snapshot for a change while nothing is observing")
     func takesNoSnapshotWithoutObservation() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         let transformCalls = EmissionCounter()
         tracker.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
 
@@ -479,7 +508,8 @@ struct AccessibilityTrackerTests {
     @Test("Takes no snapshot for a change when the only observer has been released")
     func takesNoSnapshotForReleasedObserver() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         let transformCalls = EmissionCounter()
         tracker.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
 
@@ -506,7 +536,8 @@ struct AccessibilityTrackerTests {
     func recordsChangesWithoutObservation() async throws {
         let center = NotificationCenter()
         let system = SystemValues()
-        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date(), deliveryQueue: queue)
         let transformCalls = EmissionCounter()
         tracker.configureAccessibilityTracking(with: try Self.configuration(countingTransformsIn: transformCalls))
 
@@ -520,13 +551,34 @@ struct AccessibilityTrackerTests {
     }
 
     ///
+    /// A first configuration long after the process started reads as "when
+    /// tracking started", unless the system prewarmed the process: then the
+    /// process started long before the launch, and the configuration is the
+    /// launch.
+    ///
+    @Test("Records the first values at launch only when the process was prewarmed or just started", arguments: [false, true])
+    func recordsFirstValuesAtLaunchWhenPrewarmed(isPrewarmed: Bool) throws {
+        let tracker = AccessibilityTracker(
+            notificationCenter: NotificationCenter(),
+            readState: SystemValues().read,
+            launchDate: Date(timeIntervalSinceNow: -60),
+            isPrewarmed: isPrewarmed,
+            deliveryQueue: ManualDeliveryQueue()
+        )
+        tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
+
+        #expect(tracker.history(for: .voiceOver).map(\.kind) == [isPrewarmed ? .launch : .start])
+    }
+
+    ///
     /// A notification can arrive without the value having changed — this
     /// suite posts them freely — and must not read as a change.
     ///
     @Test("Records nothing for a notification that leaves the value as it was")
     func recordsNothingForAnUnchangedValue() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center, readState: SystemValues().read, launchDate: Date())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, readState: SystemValues().read, launchDate: Date(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
@@ -543,7 +595,8 @@ struct AccessibilityTrackerTests {
     func keepsHistoryOnReconfiguration() async throws {
         let center = NotificationCenter()
         let system = SystemValues()
-        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, readState: system.read, launchDate: Date(), deliveryQueue: queue)
         let configuration = try Self.configuration(fetchType: .continuous)
         tracker.configureAccessibilityTracking(with: configuration)
         system.values[.voiceOver] = .flag(true)
@@ -564,7 +617,8 @@ struct AccessibilityTrackerTests {
     @Test("Drops a change whose own transform reconfigures tracking")
     func dropsChangeWhoseTransformReconfigures() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         let boldText = try AccessibilityTrackingConfiguration(
             fetchType: .continuous,
             objects: [AccessibilityTrackingObject(type: .boldText)]
@@ -592,11 +646,10 @@ struct AccessibilityTrackerTests {
 
         let observer = SpySnapshotObserver()
         tracker.addSnapshotObserver(observer)
-        await poll(until: { observer.snapshots.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { observer.snapshots.count >= 2 })
-        await settle()
+        queue.run()
 
         #expect(transformCalls.count == 2)
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
@@ -610,19 +663,19 @@ struct AccessibilityTrackerTests {
     @Test("Tells an observer added twice only once")
     func tellsAnObserverAddedTwiceOnlyOnce() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
         tracker.addSnapshotObserver(observer)
         tracker.addSnapshotObserver(observer)
-        await poll(until: { !observer.snapshots.isEmpty })
-        await settle()
+        queue.run()
 
         #expect(observer.snapshots.count == 1)
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { observer.snapshots.count == 2 })
+        queue.run()
 
         #expect(observer.snapshots.count == 2)
         withExtendedLifetime(tracker) { }
@@ -630,7 +683,8 @@ struct AccessibilityTrackerTests {
 
     @Test("Delivers the current snapshot to a newly added snapshot observer")
     func deliversCurrentSnapshotToANewSnapshotObserver() async throws {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let observer = SpySnapshotObserver()
@@ -639,7 +693,7 @@ struct AccessibilityTrackerTests {
         // Never inside the registration call, as for the app's completion.
         #expect(observer.snapshots.isEmpty)
 
-        await poll(until: { !observer.snapshots.isEmpty })
+        queue.run()
 
         #expect(observer.snapshots.count == 1)
         #expect(observer.snapshots.first?.states.first?.type == .voiceOver)
@@ -649,15 +703,16 @@ struct AccessibilityTrackerTests {
     @Test("Notifies snapshot observers on every change")
     func notifiesSnapshotObserversOnEveryChange() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
         tracker.addSnapshotObserver(observer)
-        await poll(until: { observer.snapshots.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { observer.snapshots.count == 2 })
+        queue.run()
 
         #expect(observer.snapshots.count == 2)
         withExtendedLifetime(tracker) { }
@@ -671,19 +726,19 @@ struct AccessibilityTrackerTests {
     @Test("Still notifies snapshot observers of a change in flight when an observation is cancelled")
     func notifiesSnapshotObserversAcrossCancelledObservation() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let first = EmissionCounter()
         let observer = SpySnapshotObserver()
         let observation = tracker.observeAccessibilityTracking { _ in first.increment() }
         tracker.addSnapshotObserver(observer)
-        await poll(until: { first.count == 1 && observer.snapshots.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         observation.cancel()
-        await poll(until: { observer.snapshots.count == 2 })
-        await settle()
+        queue.run()
 
         #expect(first.count == 1)
         #expect(observer.snapshots.count == 2)
@@ -699,7 +754,8 @@ struct AccessibilityTrackerTests {
     @Test("Drops a change for snapshot observers when the completion reconfigures tracking")
     func dropsChangeForObserversWhenCompletionReconfigures() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
@@ -717,11 +773,10 @@ struct AccessibilityTrackerTests {
             guard calls.count == 2 else { return }
             tracker?.configureAccessibilityTracking(with: boldText)
         }
-        await poll(until: { calls.count == 1 && observer.snapshots.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await poll(until: { observer.snapshots.count >= 2 })
-        await settle()
+        queue.run()
 
         #expect(calls.count == 2)
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
@@ -729,21 +784,22 @@ struct AccessibilityTrackerTests {
     }
 
     ///
-    /// The change, the reconfiguration and the second change all run in one
-    /// main-actor turn, so the stale snapshot, the reconfiguration's refresh
-    /// and the second change are all queued before any is delivered. Waiting
-    /// for three deliveries bounds the wait: had the stale snapshot been
-    /// delivered, it would have been the second.
+    /// The change, the reconfiguration and the second change all happen
+    /// before the queue runs, so the stale snapshot, the reconfiguration's
+    /// refresh and the second change are all pending before any is
+    /// delivered. Had the stale snapshot been delivered, it would have been
+    /// the second.
     ///
     @Test("Drops a snapshot observer's snapshot from a replaced configuration")
     func dropsSnapshotObserverSnapshotFromReplacedConfiguration() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
         tracker.addSnapshotObserver(observer)
-        await poll(until: { observer.snapshots.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         tracker.configureAccessibilityTracking(
@@ -753,8 +809,7 @@ struct AccessibilityTrackerTests {
             )
         )
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await poll(until: { observer.snapshots.count >= 3 })
-        await settle()
+        queue.run()
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText], [.boldText]])
         withExtendedLifetime(tracker) { }
@@ -768,7 +823,8 @@ struct AccessibilityTrackerTests {
     @Test("Drops a snapshot observer's first snapshot from a replaced configuration")
     func dropsSnapshotObserverFirstSnapshotFromReplacedConfiguration() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
@@ -780,8 +836,7 @@ struct AccessibilityTrackerTests {
             )
         )
         center.post(name: UIAccessibility.boldTextStatusDidChangeNotification, object: nil)
-        await poll(until: { observer.snapshots.count >= 2 })
-        await settle()
+        queue.run()
 
         // The reconfiguration's refresh, then the change; never the stale first.
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.boldText], [.boldText]])
@@ -795,14 +850,15 @@ struct AccessibilityTrackerTests {
     ///
     @Test("Refreshes snapshot observers, and only them, when tracking is reconfigured")
     func refreshesSnapshotObserversOnReconfiguration() async throws {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let counter = EmissionCounter()
         let observation = tracker.observeAccessibilityTracking { counter.record($0) }
         let observer = SpySnapshotObserver()
         tracker.addSnapshotObserver(observer)
-        await poll(until: { counter.count == 1 && observer.snapshots.count == 1 })
+        queue.run()
 
         tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
@@ -810,8 +866,7 @@ struct AccessibilityTrackerTests {
                 objects: [AccessibilityTrackingObject(type: .boldText)]
             )
         )
-        await poll(until: { observer.snapshots.count >= 2 })
-        await settle()
+        queue.run()
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.boldText]])
         #expect(counter.emittedTypes == [[.voiceOver]])
@@ -826,12 +881,13 @@ struct AccessibilityTrackerTests {
     ///
     @Test("Refreshes snapshot observers asynchronously, once for the last of several reconfigurations")
     func refreshesSnapshotObserversOnceForTheLastReconfiguration() async throws {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let observer = SpySnapshotObserver()
         tracker.addSnapshotObserver(observer)
-        await poll(until: { observer.snapshots.count == 1 })
+        queue.run()
 
         tracker.configureAccessibilityTracking(
             with: try AccessibilityTrackingConfiguration(
@@ -848,8 +904,7 @@ struct AccessibilityTrackerTests {
 
         #expect(observer.snapshots.count == 1)
 
-        await poll(until: { observer.snapshots.count >= 2 })
-        await settle()
+        queue.run()
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver], [.reduceMotion]])
         withExtendedLifetime(tracker) { }
@@ -864,18 +919,18 @@ struct AccessibilityTrackerTests {
     @Test("Leaves a change already in flight out of an observer added after it")
     func leavesInFlightChangeOutOfALaterObserver() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
 
         let earlier = SpySnapshotObserver()
         tracker.addSnapshotObserver(earlier)
-        await poll(until: { earlier.snapshots.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
         let later = SpySnapshotObserver()
         tracker.addSnapshotObserver(later)
-        await poll(until: { earlier.snapshots.count == 2 && !later.snapshots.isEmpty })
-        await settle()
+        queue.run()
 
         #expect(earlier.snapshots.count == 2)
         #expect(later.snapshots.count == 1)
@@ -888,17 +943,17 @@ struct AccessibilityTrackerTests {
     ///
     @Test("Fills in a snapshot observer added before tracking is configured")
     func fillsInASnapshotObserverAddedBeforeConfiguration() async throws {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
 
         let observer = SpySnapshotObserver()
         tracker.addSnapshotObserver(observer)
-        await settle()
+        queue.run()
 
         #expect(observer.snapshots.isEmpty)
 
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
-        await poll(until: { !observer.snapshots.isEmpty })
-        await settle()
+        queue.run()
 
         #expect(observer.snapshots.map { $0.states.map(\.type) } == [[.voiceOver]])
         withExtendedLifetime(tracker) { }
@@ -911,15 +966,16 @@ struct AccessibilityTrackerTests {
     @Test("Does not notify a snapshot observer of a change when fetching once")
     func doesNotNotifySnapshotObserverForInitialFetch() async throws {
         let center = NotificationCenter()
-        let tracker = AccessibilityTracker(notificationCenter: center)
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: center, deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .initial))
 
         let observer = SpySnapshotObserver()
         tracker.addSnapshotObserver(observer)
-        await poll(until: { observer.snapshots.count == 1 })
+        queue.run()
 
         center.post(name: UIAccessibility.voiceOverStatusDidChangeNotification, object: nil)
-        await settle()
+        queue.run()
 
         #expect(observer.snapshots.count == 1)
         withExtendedLifetime(tracker) { }
@@ -931,7 +987,8 @@ struct AccessibilityTrackerTests {
     ///
     @Test("Does not retain its snapshot observers")
     func doesNotRetainSnapshotObservers() throws {
-        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter())
+        let queue = ManualDeliveryQueue()
+        let tracker = AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         tracker.configureAccessibilityTracking(with: try Self.configuration(fetchType: .continuous))
         weak var released: SpySnapshotObserver?
 
@@ -997,18 +1054,16 @@ private final class ObservationHolder {
 private final class MainThreadRecorder {
 
     private(set) var wasMainThread: Bool?
-    private(set) var count = 0
 
     func record(_ value: Bool) {
         wasMainThread = value
-        count += 1
     }
 }
 
 // MARK: - Spy
 
 ///
-/// Records every snapshot delivered to it, on the main queue.
+/// Records every snapshot delivered to it.
 ///
 @MainActor
 private final class SpySnapshotObserver: AccessibilitySnapshotObserver {

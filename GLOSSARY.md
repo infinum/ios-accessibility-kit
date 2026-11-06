@@ -47,6 +47,9 @@ _Avoid_: monitor
 **Delivery**:
 Handing a snapshot to the observations and the kit that were registered when it was taken.
 
+**Delivery queue**:
+Where deliveries wait to run, always after the call that caused them returns: the main queue in an app, a queue the test runs step by step in tests.
+
 **Recorded history**:
 A feature's system values this session, before any transform: the value at launch or when tracking started, then each change.
 _Avoid_: raw history, log

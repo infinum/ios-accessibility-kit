@@ -18,8 +18,9 @@ struct AccessibilityTrackingTests {
     ///
     @Test("Applies transforms to observed snapshots")
     func appliesTransformToObservedSnapshot() async throws {
+        let queue = ManualDeliveryQueue()
         let kit = AccessibilityKit(
-            tracker: AccessibilityTracker(notificationCenter: NotificationCenter())
+            tracker: AccessibilityTracker(notificationCenter: NotificationCenter(), deliveryQueue: queue)
         )
 
         let configuration = try AccessibilityTrackingConfiguration(
@@ -36,8 +37,7 @@ struct AccessibilityTrackingTests {
 
         let recorder = SnapshotRecorder()
         let observation = kit.observeAccessibilityTracking { recorder.record($0) }
-        await poll(until: { recorder.snapshot != nil })
-        await settle()
+        queue.run()
 
         // `.initial` reports once, through the kit as through the tracker.
         #expect(recorder.count == 1)
@@ -50,8 +50,8 @@ struct AccessibilityTrackingTests {
 // MARK: - Recorder
 
 ///
-/// Holds the last delivered snapshot so the test can poll for it, and counts
-/// deliveries so a repeated one shows.
+/// Holds the last delivered snapshot, and counts deliveries so a repeated
+/// one shows.
 ///
 @MainActor
 private final class SnapshotRecorder {
