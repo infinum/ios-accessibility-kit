@@ -54,12 +54,6 @@ struct ProductView: View {
         .safeAreaInset(edge: .bottom) {
             addToBag
         }
-        .navigationBarBackButtonHidden()
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                backButton
-            }
-        }
         .tint(Color.benchText)
     }
 }
@@ -67,25 +61,6 @@ struct ProductView: View {
 // MARK: - Sections
 
 private extension ProductView {
-
-    /// A navigation icon button: the system draws it on iOS 26 and later, a
-    /// 44 pt `sheet` circle before that.
-    @ViewBuilder
-    var backButton: some View {
-        let button = Button {
-            // The screen is the app's root, so there is nowhere to go back to.
-        } label: {
-            Image(systemName: "chevron.left")
-                .font(.body.weight(.semibold))
-        }
-        .accessibilityLabel("Back")
-
-        if #available(iOS 26, *) {
-            button
-        } else {
-            button.buttonStyle(CircleIconButtonStyle())
-        }
-    }
 
     var photo: some View {
         ZStack(alignment: .topTrailing) {
@@ -200,18 +175,6 @@ private extension ProductView {
 
 // MARK: - Styles and drawings
 
-private struct CircleIconButtonStyle: ButtonStyle {
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .foregroundStyle(Color.benchText)
-            .frame(width: 44, height: 44)
-            .background(Circle().fill(Color.benchSheet))
-            .contentShape(Circle())
-            .opacity(configuration.isPressed ? 0.5 : 1)
-    }
-}
-
 private struct PrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
@@ -272,19 +235,4 @@ private struct HeartShape: Shape {
         path.closeSubpath()
         return path
     }
-}
-
-// MARK: - Colours
-
-/// The test bench's colours, from the same Infinum tokens the kit uses.
-private extension Color {
-    static let benchBg = Color("benchBg")
-    static let benchSheet = Color("benchSheet")
-    static let benchText = Color("benchText")
-    static let benchText2 = Color("benchText2")
-    static let benchAction = Color("benchAction")
-    static let benchOnAction = Color("benchOnAction")
-    static let benchSelected = Color("benchSelected")
-    static let benchOnSelected = Color("benchOnSelected")
-    static let benchDisabled = Color("benchDisabled")
 }
