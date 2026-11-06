@@ -111,7 +111,7 @@ struct AccessibilityTrackerTests {
     /// release then shows no subject or pending delivery holds it.
     ///
     @Test("Releases a configured tracker once nothing else holds it")
-    func releasesConfiguredMonitor() async throws {
+    func releasesConfiguredTracker() async throws {
         let counter = EmissionCounter()
         weak var released: AccessibilityTracker?
 
