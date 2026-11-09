@@ -7,8 +7,9 @@ Look at the accessibility settings while your app runs.
 The kit is a development aid that sits above your app. It has one way in and one home: open it,
 and a sheet shows the kit's tools. Its first tool is the Monitor, which lists every tracked
 feature under the identifier it is reported under, with the same `transform` applied, as in the
-snapshots your app receives. Each feature opens a detail screen with its identifier, the
-notification tracking listens to, and what it has done this session.
+snapshots your app receives, grouped as in Settings. Search it, filter it to the settings that are
+on or that changed, and share the snapshot as text and JSON. Each feature opens a detail screen
+with its identifier, the notification tracking listens to, and what it has done this session.
 
 The Monitor follows changes only when tracking is configured with
 ``AccessibilityFetchType/continuous``, marking each setting that changed since launch. Under
@@ -29,8 +30,8 @@ AccessibilityKit.shared.entryPoints = [.floatingButton, .shake]
 #endif
 ```
 
-The floating button lives in a window of the kit's own, above your app's. Drag it to any corner;
-long-press it to hide it until the next launch. Shaking is off unless you include it, so an app
+The floating button lives in a window of the kit's own, above your app's. Drag it to any corner,
+where it stays across launches; long-press it to hide it until the next launch. Shaking is off unless you include it, so an app
 that uses shake to undo keeps it.
 
 To open the kit from code, call ``AccessibilityKit/AccessibilityKit/present()``.

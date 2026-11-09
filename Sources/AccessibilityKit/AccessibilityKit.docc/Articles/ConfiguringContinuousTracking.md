@@ -75,3 +75,6 @@ main actor, or `await` it from elsewhere:
 ```swift
 await AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 ```
+
+The library's value types are `Sendable`: snapshots, states, values, tracking objects and
+configurations can be passed to any context, and an ``AccessibilityObservation`` can be released from any thread.
