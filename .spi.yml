@@ -1,0 +1,4 @@
+version: 1
+builders:
+  - platform: ios
+    documentation_targets: [AccessibilityKit]
