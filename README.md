@@ -48,7 +48,7 @@ targets: [
 ]
 ```
 
-The full API reference is written in DocC. In Xcode, choose `Product` -> `Build Documentation` to browse it.
+The full API reference and guides are written in DocC and published on the [Swift Package Index](https://swiftpackageindex.com/infinum/ios-accessibility-kit/documentation). You can also browse them in Xcode with `Product` -> `Build Documentation`.
 
 Upgrading from 1.x? See the [migration guide](MIGRATION.md).
 
