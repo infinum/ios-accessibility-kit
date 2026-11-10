@@ -31,7 +31,39 @@ long as the two are reported under different identifiers, so give at least one o
 
 ### Reporting a feature under your own identifier
 
-Pass a `customIdentifier` when the identifier you record differs from the library's default:
+Every feature is reported under a default identifier, the raw value of its ``AccessibilityType``:
+
+| Feature                     | Default identifier            | Value |
+|:----------------------------|:------------------------------|:------|
+| AssistiveTouch              | `assistive_touch`             | flag  |
+| Bold text                   | `bold_text`                   | flag  |
+| Button shapes               | `button_shapes`               | flag  |
+| Closed captioning           | `closed_captioning`           | flag  |
+| Cross-fade transitions      | `cross_fade_transitions`      | flag  |
+| Darker system colors        | `darker_system_colors`        | flag  |
+| Differentiate without color | `differentiate_without_color` | flag  |
+| Font scale                  | `font_scale`                  | scale |
+| Grayscale                   | `grayscale`                   | flag  |
+| Guided Access               | `guided_access`               | flag  |
+| Invert colors               | `invert_colors`               | flag  |
+| Mono audio                  | `mono_audio`                  | flag  |
+| On/off switch labels        | `on_off_switch_labels`        | flag  |
+| Reduce motion               | `reduce_motion`               | flag  |
+| Reduce transparency         | `reduce_transparency`         | flag  |
+| Shake to undo               | `shake_to_undo`               | flag  |
+| Speak screen                | `speak_screen`                | flag  |
+| Speak selection             | `speak_selection`             | flag  |
+| Switch Control              | `switch_control`              | flag  |
+| Video autoplay              | `video_autoplay`              | flag  |
+| VoiceOver                   | `voice_over`                  | flag  |
+
+A flag is ``AccessibilityValue/flag(_:)``, whether the setting is on. A scale is
+``AccessibilityValue/scale(_:)``, where `1.0` is the default text size. These are the values
+before any `transform`: a transform can return a different kind of value under the same
+identifier, so when yours does, give the feature a `customIdentifier` and anyone reading the
+output won't expect the default kind.
+
+Pass a `customIdentifier` when the identifier you record differs from the default:
 
 ```swift
 AccessibilityTrackingObject(type: .fontScale, customIdentifier: "text_size")

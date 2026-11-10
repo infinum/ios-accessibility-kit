@@ -51,8 +51,12 @@ observation = AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 ```
 
 Keep the ``AccessibilityObservation`` it returns: the observation lasts until you call
-``AccessibilityObservation/cancel()`` or release it. An observation that has ended is not called
-again, not even for a snapshot already in flight.
+``AccessibilityObservation/cancel()`` or release it. Once it has ended on the main actor, its
+completion is not called again, not even for a snapshot already in flight. Released on another
+thread, it ends before the next delivery begins; a delivery already running on the main actor
+finishes first. The library holds the completion until the
+observation ends, so a completion that strongly captures the object holding its observation keeps
+both alive for good: capture that owner weakly.
 
 Completions are delivered asynchronously on the main queue, so a completion never runs inside your
 own call to observe. Any number of observations can run side by side; each receives its own first
@@ -75,3 +79,6 @@ main actor, or `await` it from elsewhere:
 ```swift
 await AccessibilityKit.shared.configureAccessibilityTracking(with: configuration)
 ```
+
+The library's value types are `Sendable`: snapshots, states, values, tracking objects and
+configurations can be passed to any context, and an ``AccessibilityObservation`` can be released from any thread.
