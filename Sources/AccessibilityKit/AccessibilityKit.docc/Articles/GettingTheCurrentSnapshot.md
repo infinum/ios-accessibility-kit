@@ -58,7 +58,10 @@ Every feature is reported under a default identifier, the raw value of its ``Acc
 | VoiceOver                   | `voice_over`                  | flag  |
 
 A flag is ``AccessibilityValue/flag(_:)``, whether the setting is on. A scale is
-``AccessibilityValue/scale(_:)``, where `1.0` is the default text size.
+``AccessibilityValue/scale(_:)``, where `1.0` is the default text size. These are the values
+before any `transform`: a transform can return a different kind of value under the same
+identifier, so when yours does, give the feature a `customIdentifier` and anyone reading the
+output won't expect the default kind.
 
 Pass a `customIdentifier` when the identifier you record differs from the default:
 

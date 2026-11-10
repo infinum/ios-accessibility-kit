@@ -97,7 +97,7 @@ observation = AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 }
 ```
 
-Keep `observation` in a property: releasing it ends the observation. Snapshots are delivered on the main queue.
+Keep `observation` in a property: releasing it ends the observation. The kit holds the completion until then, so capture the object that owns `observation` weakly, or neither is ever released. Snapshots are delivered on the main queue.
 
 ### Opening the kit
 
