@@ -51,8 +51,10 @@ observation = AccessibilityKit.shared.observeAccessibilityTracking { snapshot in
 ```
 
 Keep the ``AccessibilityObservation`` it returns: the observation lasts until you call
-``AccessibilityObservation/cancel()`` or release it. An observation that has ended is not called
-again, not even for a snapshot already in flight. The library holds the completion until the
+``AccessibilityObservation/cancel()`` or release it. Once it has ended on the main actor, its
+completion is not called again, not even for a snapshot already in flight. Released on another
+thread, it ends before the next delivery begins; a delivery already running on the main actor
+finishes first. The library holds the completion until the
 observation ends, so a completion that strongly captures the object holding its observation keeps
 both alive for good: capture that owner weakly.
 
